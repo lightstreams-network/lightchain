@@ -13,10 +13,40 @@ make get_vendor_deps
 make install
 ```
 
-### Install Tendermint
+### Build Lightchain
 
-@Todo: add tendermint installation instructions.
-@Todo: use submodules?
+```
+make build
+```
+
+OR to compile with debug flags
+
+```
+make build-dev
+```
+
+### Install Tendermint 0.25.1-rc0
+
+Following official [docs](https://tendermint.com/docs/introduction/install.html):
+
+```
+mkdir -p $GOPATH/src/github.com/tendermint
+cd $GOPATH/src/github.com/tendermint
+git clone https://github.com/tendermint/tendermint.git
+cd tendermint
+git reset --hard tags/v0.25.1-rc0
+
+make get_tools
+make get_vendor_deps
+
+make install
+```
+
+### Build Tendermint
+
+```
+make build
+```
   
 ## Usage
 
