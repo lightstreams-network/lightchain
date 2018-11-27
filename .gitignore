@@ -1,0 +1,11 @@
+*.log
+*.swp
+*.swo
+.bak
+*.bak
+.DS_Store
+build/*
+vendor
+*/vendor
+*/.glide
+.idea
