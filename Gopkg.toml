@@ -1,0 +1,30 @@
+[[constraint]]
+  name = "github.com/ethereum/go-ethereum"
+  version = "1.8.18"
+
+[[override]]
+  name = "google.golang.org/genproto"
+  revision = "7fd901a49ba6a7f87732eb344f6e3c5b19d1b200"
+
+[[override]]
+  name = "github.com/tendermint/iavl"
+  version = "=v0.11.0"
+
+[[override]]
+  name = "github.com/tendermint/tendermint"
+  version = "=0.25.1-rc0"
+
+[[override]]
+  name = "github.com/tendermint/go-amino"
+  version = "=v0.12.0"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"
+  version = "=1.2.2"
+
+[[override]]
+  name = "gopkg.in/fatih/set.v0"
+  version = "=0.1.0"
+
+[prune]
+  go-tests = true
