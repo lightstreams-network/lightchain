@@ -6,7 +6,7 @@ import "strings"
 const Major = "0"
 
 // Minor version component of the current release
-const Minor = "1"
+const Minor = "0"
 
 // Fix version component of the current release
 const Fix = "0"
