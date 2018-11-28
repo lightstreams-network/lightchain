@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/ethdb"
 	ethLog "github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/params"
 	mintApp "github.com/lightstreams-network/lightchain/app"
 	emtUtils "github.com/lightstreams-network/lightchain/cmd/utils"
 	"github.com/lightstreams-network/lightchain/ethereum"
@@ -125,8 +124,8 @@ func kvStoreCmd(ctx *cli.Context) {
 }
 
 func VersionCmd(ctx *cli.Context) error {
-	fmt.Println("lightchain: ", version.Version)
-	fmt.Println("go-ethereum: ", params.Version)
+	fmt.Println("Version: ", version.Version)
+
 	return nil
 }
 
