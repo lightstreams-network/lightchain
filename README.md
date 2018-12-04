@@ -25,16 +25,15 @@ OR to compile with debug flags
 make build-dev
 ```
 
-### Install Tendermint 0.25.1-rc0
+### Install Tendermint 0.25.0 (patched)
 
 Following official [docs](https://tendermint.com/docs/introduction/install.html):
 
 ```
 mkdir -p $GOPATH/src/github.com/tendermint
 cd $GOPATH/src/github.com/tendermint
-git clone https://github.com/tendermint/tendermint.git
+git clone https://github.com/lightstreams-network/tendermint.git
 cd tendermint
-git reset --hard tags/v0.25.1-rc0
 
 make get_tools
 make get_vendor_deps
