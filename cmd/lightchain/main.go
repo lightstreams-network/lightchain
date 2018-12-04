@@ -141,7 +141,7 @@ func InitCmd(ctx *cli.Context) error {
 	}
 
 	keystoreDir := filepath.Join(lightchainDataDir, "keystore")
-	if err := os.MkdirAll(keystoreDir, 0666); err != nil {
+	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
 		ethUtils.Fatalf("mkdirAll keyStoreDir: %v", err)
 	}
 
