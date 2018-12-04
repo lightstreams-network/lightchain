@@ -47,6 +47,7 @@ func (b *Backend) BroadcastTx(tx *ethTypes.Transaction) error {
 		log.Error("Broadcasts a transaction to Tendermint core", "err", err)
 		return err
 	}
+	// TODO: Review
 	params := map[string]interface{}{
 		"tx": buf.Bytes(),
 	}
