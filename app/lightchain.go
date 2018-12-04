@@ -307,17 +307,18 @@ func (app *LightchainApplication) validateTx(tx *ethTypes.Transaction) abciTypes
 			Log: err.Error()}
 	}
 	
-	isValid, err := app.txHandler.IsValid(*tx)
-	if err != nil {
-		return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrInternalError.Code),
-			Log: err.Error()}
-	}
-	if !isValid {
-		msg := fmt.Sprintf("account %v not authorized to perform transaction %v", from.String(), tx.Hash().String())
-		app.logger.Info(msg)
-		return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrInternalError.Code),
-			Log: err.Error()}
-	}
+	// TODO: Evaluate usage of whitelist validation
+	//isValid, err := app.txHandler.IsValid(*tx)
+	//if err != nil {
+	//	return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrInternalError.Code),
+	//		Log: err.Error()}
+	//}
+	//if !isValid {
+	//	msg := fmt.Sprintf("account %v not authorized to perform transaction %v", from.String(), tx.Hash().String())
+	//	app.logger.Info(msg)
+	//	return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrInternalError.Code),
+	//		Log: err.Error()}
+	//}
 
 	// Update ether balances
 	// amount + gasprice * gaslimit

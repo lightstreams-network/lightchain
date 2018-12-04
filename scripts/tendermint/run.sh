@@ -26,7 +26,8 @@ while [ "$1" != "" ]; do
             HARD_MODE=1 
         ;;
         * )
-            echo "Invalid argument"
+            echo "Invalid argument ${1}"
+            exit 1
     esac
     shift
 done
