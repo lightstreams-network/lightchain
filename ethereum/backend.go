@@ -100,7 +100,7 @@ func (b *Backend) AccumulateRewards(strategy *emtTypes.Strategy) {
 
 // Commit finalises the current block
 func (b *Backend) Commit(receiver common.Address) (common.Hash, error) {
-	log.Info("Ethemint.Backend::Commit", "data", receiver)
+	log.Info("Ethemint.Backend::Commit", "data", b.ethState.work)
 	return b.ethState.Commit(receiver)
 }
 
