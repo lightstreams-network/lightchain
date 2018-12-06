@@ -153,19 +153,19 @@ func (app *LightchainApplication) CheckTx(txBytes []byte) abciTypes.ResponseChec
 
 // DeliverTx executes a transaction against the latest state
 func (app *LightchainApplication) DeliverTx(txBytes []byte) abciTypes.ResponseDeliverTx {
-	app.logger.Info("LightchainApplication::DeliverTx()", "data", txBytes)
+	app.logger.Info("LightchainApplication::DeliverTx()", "tx_length", len(txBytes))
 	tx, err := decodeRLP(txBytes)
 	if err != nil {
 		// nolint: errcheck
 		app.logger.Info("DelivexTx: Received invalid transaction", "tx", tx, "err", err)
 		return abciTypes.ResponseDeliverTx{Code: uint32(abciTypesLegacy.ErrEncodingError.Code), Log: err.Error()}
 	}
-	app.logger.Info("DeliverTx: Received valid transaction", "tx", tx) // nolint: errcheck
+	app.logger.Info("DeliverTx: Received valid transaction", "tx", tx.Hash().String()) // nolint: errcheck
 
 	res := app.ethBackend.DeliverTx(tx)
 	if res.IsErr() {
 		// nolint: errcheck
-		app.logger.Error("DeliverTx: Error delivering tx to ethereum ethBackend", "tx", tx,
+		app.logger.Error("DeliverTx: Error delivering tx to ethereum ethBackend", "tx", tx.Hash().String(),
 			"err", err)
 		return res
 	}
@@ -352,7 +352,7 @@ func (app *LightchainApplication) Receiver() common.Address {
 
 // CollectTx invokes CollectTx on the strategy
 func (app *LightchainApplication) CollectTx(tx *ethTypes.Transaction) {
-	app.logger.Info("LightchainApplication::CollectTx()", "data", tx)
+	app.logger.Info("LightchainApplication::CollectTx()", "data", tx.Hash().String())
 	app.logger.Debug("CollectTx") // nolint: errcheck
 	if app.strategy != nil {
 		app.strategy.CollectTx(tx)
