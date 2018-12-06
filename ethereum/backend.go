@@ -89,7 +89,7 @@ func (b *Backend) Config() *eth.Config {
 
 // DeliverTx appends a transaction to the current block
 func (b *Backend) DeliverTx(tx *ethTypes.Transaction) abciTypes.ResponseDeliverTx {
-	log.Info("Ethemint.Backend::DeliverTx", "data", tx)
+	log.Info("Ethemint.Backend::DeliverTx", "tx", tx.Hash().String())
 	return b.ethState.DeliverTx(tx)
 }
 
