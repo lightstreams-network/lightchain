@@ -249,12 +249,7 @@ func (ws *workState) commit(blockchain *core.BlockChain, db ethdb.Database) (com
 func (ws *workState) updateHeaderWithTimeInfo(
 	config *params.ChainConfig, parentTime uint64, numTx uint64) {
 
-	lastBlock := ws.parent
-	parentHeader := &ethTypes.Header{
-		Difficulty: lastBlock.Difficulty(),
-		Number:     lastBlock.Number(),
-		Time:       lastBlock.Time(),
-	}
+	parentHeader := ws.parent.Header()
 	ws.header.Time = new(big.Int).SetUint64(parentTime)
 	ws.header.Difficulty = ethash.CalcDifficulty(config, parentTime, parentHeader)
 	ws.transactions = make([]*ethTypes.Transaction, 0, numTx)

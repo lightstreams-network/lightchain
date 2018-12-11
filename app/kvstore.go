@@ -140,7 +140,7 @@ func (app *KVStoreApplication) Query(reqQuery abciTypes.RequestQuery) (resQuery 
 
 // Track the block hash and header information
 func (app *KVStoreApplication) BeginBlock(req abciTypes.RequestBeginBlock) abciTypes.ResponseBeginBlock {
-	app.logger.Info("KVStoreApplication::BeginBlock()", "data", req)
+	app.logger.Info("KVStoreApplication::BeginBlock()", "data", req.String())
 	// reset valset changes
 	app.ValUpdates = make([]abciTypes.ValidatorUpdate, 0)
 	return abciTypes.ResponseBeginBlock{}
@@ -148,6 +148,6 @@ func (app *KVStoreApplication) BeginBlock(req abciTypes.RequestBeginBlock) abciT
 
 // Update the validator set
 func (app *KVStoreApplication) EndBlock(req abciTypes.RequestEndBlock) abciTypes.ResponseEndBlock {
-	app.logger.Info("KVStoreApplication::EndBlock()", "data", req)
+	app.logger.Info("KVStoreApplication::EndBlock()", "data", string(req.String()))
 	return abciTypes.ResponseEndBlock{ValidatorUpdates: app.ValUpdates}
 }
