@@ -28,9 +28,9 @@ func (b *Backend) txBroadcastLoop() {
 	log.Info("Block for tendermint endpoint to start", "info", "Success")
 
 	for obj := range b.txsCh {
-		log.Info("New Trxs Event")
+		log.Info("Captured NewTxsEvent from pool")
 		for _, tx := range obj.Txs {
-			log.Info("New Trx", "data", tx)
+			log.Info("New Trx", "data", tx.Hash().String())
 			if err := b.BroadcastTx(tx); err != nil {
 				log.Error("Broadcast error", "err", err)
 			}

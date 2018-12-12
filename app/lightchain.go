@@ -125,35 +125,33 @@ func (app *LightchainApplication) Info(req abciTypes.RequestInfo) abciTypes.Resp
 
 // SetOption sets a configuration option
 func (app *LightchainApplication) SetOption(req abciTypes.RequestSetOption) abciTypes.ResponseSetOption {
-	app.logger.Info("LightchainApplication::SetOption()", "data", req)
-	app.logger.Debug("SetOption", "key", req.Key, "value", req.Value) // nolint: errcheck
+	app.logger.Info("LightchainApplication::SetOption()")
 	return abciTypes.ResponseSetOption{Code: abciTypes.CodeTypeOK, Log: ""}
 }
 
 // InitChain initializes the validator set
 func (app *LightchainApplication) InitChain(req abciTypes.RequestInitChain) abciTypes.ResponseInitChain {
-	app.logger.Info("LightchainApplication::InitChain()", "data", req)
-	app.logger.Debug("InitChain") // nolint: errcheck
+	app.logger.Info("LightchainApplication::InitChain()")
 	return abciTypes.ResponseInitChain{}
 }
 
 // CheckTx checks a transaction is valid but does not mutate the state
 func (app *LightchainApplication) CheckTx(txBytes []byte) abciTypes.ResponseCheckTx {
-	app.logger.Info("LightchainApplication::CheckTx()", "data", txBytes)
+	app.logger.Info("LightchainApplication::CheckTx()")
 	tx, err := decodeRLP(txBytes)
 	if err != nil {
 		// nolint: errcheck
-		app.logger.Info("CheckTx: Received invalid transaction", "tx", tx)
+		app.logger.Error("Received invalid transaction", "tx", tx.Hash().String())
 		return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrEncodingError.Code), Log: err.Error()}
 	}
-	app.logger.Info("CheckTx: Received valid transaction", "tx", tx) // nolint: errcheck
 
+	app.logger.Info("Received valid transaction", "tx", tx.Hash().String()) // nolint: errcheck
 	return app.validateTx(tx)
 }
 
 // DeliverTx executes a transaction against the latest state
 func (app *LightchainApplication) DeliverTx(txBytes []byte) abciTypes.ResponseDeliverTx {
-	app.logger.Info("LightchainApplication::DeliverTx()", "tx_length", len(txBytes))
+	app.logger.Info("LightchainApplication::DeliverTx()")
 	tx, err := decodeRLP(txBytes)
 	if err != nil {
 		// nolint: errcheck
@@ -176,7 +174,7 @@ func (app *LightchainApplication) DeliverTx(txBytes []byte) abciTypes.ResponseDe
 
 // BeginBlock starts a new Ethereum block
 func (app *LightchainApplication) BeginBlock(req abciTypes.RequestBeginBlock) abciTypes.ResponseBeginBlock {
-	app.logger.Info("LightchainApplication::BeginBlock()", "data", req)
+	app.logger.Info("LightchainApplication::BeginBlock()")
 	app.logger.Debug("BeginBlock") // nolint: errcheck
 
 	// update the eth header with the tendermint header
@@ -186,8 +184,7 @@ func (app *LightchainApplication) BeginBlock(req abciTypes.RequestBeginBlock) ab
 
 // EndBlock accumulates rewards for the validators and updates them
 func (app *LightchainApplication) EndBlock(req abciTypes.RequestEndBlock) abciTypes.ResponseEndBlock {
-	app.logger.Info("LightchainApplication::EndBlock()", "data", req)
-	app.logger.Debug("EndBlock", "height", req.Height) // nolint: errcheck
+	app.logger.Info("LightchainApplication::EndBlock()")
 	//app.ethBackend.AccumulateRewards(app.strategy)
 	return abciTypes.ResponseEndBlock{}
 }
@@ -238,8 +235,7 @@ func (app *LightchainApplication) Query(query abciTypes.RequestQuery) abciTypes.
 // validateTx checks the validity of a tx against the blockchain's current state.
 // it duplicates the logic in ethereum's tx_pool
 func (app *LightchainApplication) validateTx(tx *ethTypes.Transaction) abciTypes.ResponseCheckTx {
-	app.logger.Debug("validateTx") // nolint: errcheck
-	app.logger.Info("LightchainApplication::validateTx()", "data", tx)
+	app.logger.Info("LightchainApplication::validateTx()", "data", tx.Hash().String())
 	// Heuristic limit, reject transactions over 32KB to prevent DOS attacks
 	if tx.Size() > maxTransactionSize {
 		return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrInternalError.Code),
