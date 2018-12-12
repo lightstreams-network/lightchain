@@ -74,13 +74,13 @@ func (app *KVStoreApplication) SetLogger(log tmLog.Logger) {
 }
 
 func (app *KVStoreApplication) Info(req abciTypes.RequestInfo) (resInfo abciTypes.ResponseInfo) {
-	app.logger.Info("KVStoreApplication::Info()", "data", req)
+	app.logger.Info("KVStoreApplication::Info()")
 	return abciTypes.ResponseInfo{Data: fmt.Sprintf("{\"size\":%v}", app.state.Size)}
 }
 
 // tx is either "key=value" or just arbitrary bytes
 func (app *KVStoreApplication) DeliverTx(tx []byte) abciTypes.ResponseDeliverTx {
-	app.logger.Info("KVStoreApplication::DeliverTx()", "data", tx)
+	app.logger.Info("KVStoreApplication::DeliverTx()")
 	var key, value []byte
 	parts := bytes.Split(tx, []byte("="))
 	if len(parts) == 2 {
@@ -99,7 +99,7 @@ func (app *KVStoreApplication) DeliverTx(tx []byte) abciTypes.ResponseDeliverTx 
 }
 
 func (app *KVStoreApplication) CheckTx(tx []byte) abciTypes.ResponseCheckTx {
-	app.logger.Info("KVStoreApplication::CheckTx()", "data", tx)
+	app.logger.Info("KVStoreApplication::CheckTx()")
 	return abciTypes.ResponseCheckTx{Code: code.CodeTypeOK}
 }
 
@@ -140,7 +140,7 @@ func (app *KVStoreApplication) Query(reqQuery abciTypes.RequestQuery) (resQuery 
 
 // Track the block hash and header information
 func (app *KVStoreApplication) BeginBlock(req abciTypes.RequestBeginBlock) abciTypes.ResponseBeginBlock {
-	app.logger.Info("KVStoreApplication::BeginBlock()", "data", req.String())
+	app.logger.Info("KVStoreApplication::BeginBlock()")
 	// reset valset changes
 	app.ValUpdates = make([]abciTypes.ValidatorUpdate, 0)
 	return abciTypes.ResponseBeginBlock{}
@@ -148,6 +148,6 @@ func (app *KVStoreApplication) BeginBlock(req abciTypes.RequestBeginBlock) abciT
 
 // Update the validator set
 func (app *KVStoreApplication) EndBlock(req abciTypes.RequestEndBlock) abciTypes.ResponseEndBlock {
-	app.logger.Info("KVStoreApplication::EndBlock()", "data", string(req.String()))
+	app.logger.Info("KVStoreApplication::EndBlock()")
 	return abciTypes.ResponseEndBlock{ValidatorUpdates: app.ValUpdates}
 }
