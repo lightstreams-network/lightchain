@@ -205,6 +205,9 @@ func (app *LightchainApplication) Commit() abciTypes.ResponseCommit {
 	
 	app.logger.Info("LightchainApplication::Commit()", "blockHash", blockHash.Bytes())
 	app.checkTxState = ethState.Copy()
+	// The app should respond to the Commit request with a byte array, which is the deterministic state root of the 
+	// application. It is included in the header of the next block. It can be used to provide easily verified 
+	// Merkle-proofs of the state of the application.
 	return abciTypes.ResponseCommit{Data: blockHash.Bytes()}
 }
 
