@@ -29,8 +29,8 @@ done
 INIT_ARGS="--datadir ${DATA_DIR}"
 
 NODE_ARGS="--datadir ${DATA_DIR}"
-NODE_ARGS="${NODE_ARGS} --rpc --rpcaddr=0.0.0.0 --ws --wsaddr=0.0.0.0 --rpcapi eth,net,web3,personal,admin"
-#NODE_ARGS="${NODE_ARGS} --abci_laddr=tcp://0.0.0.0:26658 --tendermint_addr=tcp://127.0.0.1:26657"
+NODE_ARGS="${NODE_ARGS} --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --ws --wsaddr=0.0.0.0 --wsport=8546 --rpcapi eth,net,web3,personal,admin"
+NODE_ARGS="${NODE_ARGS} --abci_laddr=tcp://0.0.0.0:26658 --tendermint_addr=tcp://127.0.0.1:26657"
 
 pushd "$ROOT_PATH"
 

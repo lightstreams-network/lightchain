@@ -38,10 +38,8 @@ pushd "$ROOT_PATH"
 INIT_ARGS="--home ${HOME_DIR}"
 
 NODE_ARGS="--home ${HOME_DIR}"
-if [ -n "${NOT_EMPTY_BLOCK}" ]; then
-	NODE_ARGS="${NODE_ARGS} --consensus.create_empty_blocks=false"
-fi
-#NODE_ARGS="${NODE_ARGS} --p2p.laddr=tcp://0.0.0.0:26657 --proxy_app=tcp://127.0.0.1:26658"
+NODE_ARGS="${NODE_ARGS} --consensus.create_empty_blocks=false --p2p.seed_mode=true --log_level='*:debug' "
+NODE_ARGS="${NODE_ARGS} --p2p.laddr=tcp://0.0.0.0:26656 --proxy_app=tcp://127.0.0.1:26658 --rpc.laddr=tcp://127.0.0.1:26657"
 
 if [ -n "${CLEAN}" ]; then
 	if [ -n "${HARD_MODE}" ]; then
