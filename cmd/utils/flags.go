@@ -96,6 +96,7 @@ var (
 		ethUtils.RPCListenAddrFlag,
 		ethUtils.RPCPortFlag,
 		ethUtils.RPCCORSDomainFlag,
+		ethUtils.RPCVirtualHostsFlag,
 		ethUtils.RPCApiFlag,
 		ethUtils.IPCDisabledFlag,
 		ethUtils.WSEnabledFlag,
