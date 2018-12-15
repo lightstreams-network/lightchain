@@ -149,7 +149,7 @@ pex = true
 # peers. If another node asks it for addresses, it responds and disconnects.
 #
 # Does not work if the peer-exchange reactor is disabled.
-seed_mode = true
+seed_mode = false
 
 # Comma separated list of peer IDs to keep private (will not be gossiped to other peers)
 private_peer_ids = ""
@@ -191,8 +191,8 @@ timeout_commit = "1s"
 skip_timeout_commit = false
 
 # EmptyBlocks mode and possible interval between empty blocks
-create_empty_blocks = false
-create_empty_blocks_interval = "0s"
+create_empty_blocks = true
+create_empty_blocks_interval = "5s"
 
 # Reactor sleep duration parameters
 peer_gossip_sleep_duration = "100ms"
