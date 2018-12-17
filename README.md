@@ -25,7 +25,7 @@ OR to compile with debug flags
 make build-dev
 ```
 
-### Install Tendermint 0.25.0 (patched)
+### Install Tendermint 0.27.0 (patched)
 
 Following official [docs](https://tendermint.com/docs/introduction/install.html):
 
