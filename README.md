@@ -108,3 +108,7 @@ tendermint --home ${HOME}/.lightchain/tendermint --consensus.create_empty_blocks
 ```
 lightchain --datadir ${HOME}/.lightchain --rpc --rpcaddr=0.0.0.0 --ws --wsaddr=0.0.0.0 --rpcapi eth,net,web3,personal,admin node
 ```
+
+## Tests
+
+[Read how to run tests.](./Tests.md)
