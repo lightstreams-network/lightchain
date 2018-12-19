@@ -2,6 +2,7 @@ pragma solidity ^0.4.24;
 
 contract HelloBlockchainWorld {
     address public owner;
+    uint public helloCount;
 
     constructor() public {
         owner = msg.sender;
@@ -12,7 +13,12 @@ contract HelloBlockchainWorld {
         _;
     }
 
-    function sayHello() onlyOwner public view returns (string memory message) {
+    function sayHello() public pure returns (string memory message) {
         return "hello";
+    }
+
+    function incrementHelloCount() onlyOwner public returns (uint) {
+        helloCount = helloCount + 1;
+        return helloCount;
     }
 }

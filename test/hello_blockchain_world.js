@@ -17,6 +17,7 @@ contract('HelloBlockchainWorld', function(accounts) {
 
     it('should query account balance using web3', async function () {
         const balance = await web3.eth.getBalance(accounts[0]);
+
         assert(balance > 0, "Sirius blockchain coinbase account should have balance greater than 0");
     });
 
@@ -25,11 +26,50 @@ contract('HelloBlockchainWorld', function(accounts) {
         const toBalancePreTx = await web3.eth.getBalance(accounts[1]);
         const receipt = await web3.eth.sendTransaction({from: accounts[0],to: accounts[1], value: amount});
         const toBalancePostTx = await web3.eth.getBalance(accounts[1]);
-
         const expectedBalance = new BN(toBalancePreTx).add(amount);
 
-        assert.equal(expectedBalance, toBalancePostTx, "recipient account balance is incorrect");
-        assert.equal(21000, receipt.gasUsed, "transfer should consume fixed amount of gas for security purposes");
-        assert.equal(true, receipt.status, "tx receipt should return a successful status")
+        assert.equal(toBalancePostTx, expectedBalance, "recipient account balance is incorrect");
+        assert.equal(receipt.gasUsed, 21000, "transfer should consume fixed amount of gas for security purposes");
+        assert.equal(receipt.status, true, "tx receipt should return a successful status");
+    });
+
+    it('should fail transfer on insufficient funds', async function () {
+        const balance = await web3.eth.getBalance(accounts[0]);
+        const overflowAmount = new BN(balance).add(new BN(web3.utils.toWei("1", "ether")));
+
+        try {
+            const receipt = await web3.eth.sendTransaction({from: accounts[0],to: accounts[1], value: overflowAmount});
+        } catch (e) {
+            assert.equal("Returned error: insufficient funds for gas * price + value", e.message);
+        }
+    });
+
+    it("should fail transaction and cost it gas if contract transaction gets rejected", async function() {
+        const from = accounts[1];
+        const balancePreTx = await web3.eth.getBalance(from);
+        let txReceipt = null;
+
+        await HelloBlockchainWorld.deployed()
+        .then(
+            function(instance) {
+                return instance.incrementHelloCount({ from: from });
+            }
+        )
+        .then(
+            function(response) {
+            },
+            function(error) {
+                txReceipt = error.receipt;
+            }
+        );
+
+        const gasPrice = new BN(await web3.eth.getGasPrice());
+        const gasUsed = new BN(txReceipt.gasUsed);
+        const txCost = gasUsed.mul(gasPrice);
+        const expectedBalance = new BN(balancePreTx).sub(txCost);
+        const balancePostTx = await web3.eth.getBalance(from);
+
+        assert.equal(balancePostTx, expectedBalance);
+        assert.equal(txReceipt.status, "0x0", "failed TX status expected");
     });
 });
