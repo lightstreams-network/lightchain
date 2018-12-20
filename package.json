@@ -9,14 +9,12 @@
   "author": "Lukas Lukac",
   "license": "GNU 3",
   "dependencies": {
+    "async": "^2.6.1",
     "chai": "^4.1.2",
     "ganache-cli": "^6.1.6",
     "mocha": "^5.2.0",
     "truffle": "^4.1.14",
     "web3": "^1.0.0-beta.26"
   },
-  "devDependencies": {
-    "chai-as-promised": "^7.1.1",
-    "truffle-privatekey-provider": "^0.1.0"
-  }
+  "devDependencies": {}
 }
