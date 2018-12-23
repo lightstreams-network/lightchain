@@ -7,6 +7,7 @@ Official Lightstreams blockchain based on go-ethereum and Tendermint.
 ### Install Lightchain
 
 ```
+export GIT_TERMINAL_PROMPT=1
 go get -u github.com/lightstreams-network/lightchain
 cd ${GOPATH}/src/github.com/lightstreams-network/lightchain
 make get_vendor_deps
