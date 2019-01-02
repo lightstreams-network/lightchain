@@ -18,7 +18,7 @@ on the genesis block `/setup/genesis.json`.
 
 Once environment is ready we can run the test
 ```
-truffle test --network=sirius
+npm run test
 ```
 
 ### Notes

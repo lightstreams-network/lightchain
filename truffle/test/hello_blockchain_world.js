@@ -49,7 +49,7 @@ contract('HelloBlockchainWorld', () => {
           value: weiAmount
         });
         
-        const txReceipt = await fetchTxReceipt(txReceiptId , 15);
+        const txReceipt = await fetchTxReceipt(txReceiptId, 15);
         assert.equal(txReceipt.gasUsed, 21000, "transfer should consume fixed amount of gas for security purposes");
         assert.equal(txReceipt.status, "0x1", "tx receipt should return a successful status");
 

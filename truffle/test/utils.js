@@ -7,7 +7,7 @@ module.exports.convertEtherToWeiBN = function (ether) {
   return web3._extend.utils.toBigNumber(etherInWei);
 };
 
-module.exports.fetchTxReceipt = function(txReceiptId, timeoutInSec) {
+module.exports.fetchTxReceipt = function(txReceiptId, timeoutInSec = 30) {
     const startTime = new Date();
     const retryInSec = 2;
     
@@ -17,7 +17,7 @@ module.exports.fetchTxReceipt = function(txReceiptId, timeoutInSec) {
         })
     };
 
-    console.log(`Fetching tx ${txReceiptId}. Timeout in ${timeoutInSec}s`);
+    console.log(`Fetching tx ${txReceiptId}`);
     
     return new Promise(async (resolve, reject) => {
         while (true) {
@@ -31,7 +31,7 @@ module.exports.fetchTxReceipt = function(txReceiptId, timeoutInSec) {
             const now = new Date();
             if (now.getTime() - startTime.getTime() > timeoutInSec * 1000) {
                 console.log('Receipt not found');
-                reject("Timeout after 5 seconds");
+                reject(`Timeout after ${timeoutInSec} seconds`);
                 return;
             }
             
