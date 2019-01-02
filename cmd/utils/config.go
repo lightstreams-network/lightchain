@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"time"
 )
 
 const (
@@ -83,20 +84,24 @@ func DefaultNodeConfig() node.Config {
 	return cfg
 }
 
-// SetLightchainNodeConfig takes a node configuration and applies lightchain specific configuration
-// #unstable
-func SetLightchainNodeConfig(cfg *node.Config) {
+// SetLightchainNodeDefaultConfig takes a node configuration and applies lightchain specific configuration
+func SetLightchainNodeDefaultConfig(cfg *node.Config) {
 	cfg.P2P.MaxPeers = 0
 	cfg.P2P.NoDiscovery = true
 }
 
-// SetLightchainEthConfig takes a ethereum configuration and applies lightchain specific configuration
-// #unstable
-func SetLightchainEthConfig(cfg *eth.Config) {
-	// @TODO(ggarri): Replace hardcoded PoW mode by cmd argument
+// SetLightchainEthDefaultConfig takes a ethereum configuration and applies lightchain specific configuration
+func SetLightchainEthDefaultConfig(cfg *eth.Config) {
+	// PoW is being replaced by PoA with the usage of Tendermint
 	cfg.Ethash.PowMode = ethash.ModeFake
-	// (ggarri): Properties had been removed and seem to not have a correspondence on the newer version
-	//cfg.MaxPeers = 0
+	
+	// Due to the low usages of the blockchain we need to reduce cache size to prevent huge number
+	// block replies on every restart. 
+	// @TODO once the usage of blockchain is larger we should tune these values again accordingly
+	cfg.DatabaseCache  = 32; // MB
+	cfg.TrieCleanCache = 16;  // MB
+	cfg.TrieDirtyCache = 0;  // MB
+	cfg.TrieTimeout = 5 * time.Minute;
 }
 
 func MakeGenesisPath(ctx *cli.Context) string {

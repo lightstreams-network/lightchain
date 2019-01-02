@@ -1,10 +1,6 @@
 package ethereum
 
 import (
-	"gopkg.in/urfave/cli.v1"
-
-	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
-	"github.com/ethereum/go-ethereum/eth"
 	"github.com/ethereum/go-ethereum/node"
 )
 
@@ -31,26 +27,18 @@ func (n *Node) Start() error {
 		return err
 	}
 
-	// stop it
+	// Stop it Eth.p2p server
 	n.Node.Server().Stop()
 
 	return nil
 }
 
-// NewNodeConfig for p2p and network layer
-// #unstable
-func NewNodeConfig(ctx *cli.Context) *node.Config {
-	nodeConfig := new(node.Config)
-	ethUtils.SetNodeConfig(ctx, nodeConfig)
 
-	return nodeConfig
-}
+func (n *Node) Stop() error {
+	err := n.Node.Stop()
+	if err != nil {
+		return err
+	}
 
-// NewEthConfig for the ethereum services
-// #unstable
-func NewEthConfig(ctx *cli.Context, stack *node.Node) *eth.Config {
-	ethConfig := new(eth.Config)
-	ethUtils.SetEthConfig(ctx, stack, ethConfig)
-
-	return ethConfig
+	return nil
 }

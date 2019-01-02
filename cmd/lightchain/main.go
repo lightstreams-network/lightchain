@@ -35,6 +35,11 @@ func BeforeCmd(ctx *cli.Context) error {
 	return nil
 }
 
+func AfterCmd(ctx *cli.Context) error {
+	//ethUtils.SetupNetwork(ctx)
+	return nil
+}
+
 func LightchainNodeCmd(ctx *cli.Context) {
 	fmt.Println("Start Node")
 	// Step 1: Setup the go-ethereum node and start it
@@ -224,6 +229,7 @@ func init() {
 	app.Action = LightchainNodeCmd // Fallback command
 	app.HideVersion = true
 	app.Before = BeforeCmd
+	app.After = AfterCmd
 	app.Commands = []cli.Command{
 		{
 			Name:    "version",

@@ -1,0 +1,30 @@
+{
+    "genesis_time": "2018-12-16T15:20:31.254715867Z",
+    "chain_id": "lightstreams-sirius-testnet",
+    "consensus_params": {
+        "block_size": {
+            "max_bytes": "22020096",
+            "max_gas": "-1"
+        },
+        "evidence": {
+            "max_age": "100000"
+        },
+        "validator": {
+            "pub_key_types": [
+                "ed25519"
+            ]
+        }
+    },
+    "validators": [
+        {
+            "address": "2DE3B810E4EAC51A10A3740D15AE92142B01DC7B",
+            "pub_key": {
+                "type": "tendermint/PubKeyEd25519",
+                "value": "Eg4FsTNkUETQ330nlaCRlbRPPKMArLlnsPwHGURL8Xs="
+            },
+            "power": "10",
+            "name": "sirius-node-1"
+        }
+    ],
+    "app_hash": ""
+}

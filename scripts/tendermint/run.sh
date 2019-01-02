@@ -6,6 +6,8 @@ ROOT_PATH="$(cd "$(dirname "$0")" && pwd)/.."
 
 HOME_DIR="${HOME}/.lightchain/tendermint"
 EXEC_BIN="${GOPATH}/src/github.com/tendermint/tendermint/build/tendermint"
+CONFIG_FILE="${GOPATH}/src/github.com/lightstreams-network/lightchain/setup/tendermint/config.toml"
+GENESIS_FILE="${GOPATH}/src/github.com/lightstreams-network/lightchain/setup/tendermint/genesis.json"
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -38,13 +40,19 @@ pushd "$ROOT_PATH"
 INIT_ARGS="--home ${HOME_DIR}"
 
 NODE_ARGS="--home ${HOME_DIR}"
-NODE_ARGS="${NODE_ARGS} --consensus.create_empty_blocks=false --p2p.seed_mode=true --log_level='*:debug' "
-NODE_ARGS="${NODE_ARGS} --p2p.laddr=tcp://0.0.0.0:26656 --proxy_app=tcp://127.0.0.1:26658 --rpc.laddr=tcp://0.0.0.0:26657"
+#NODE_ARGS="${NODE_ARGS} --log_level='*:debug' "
+#NODE_ARGS="${NODE_ARGS} --p2p.laddr=tcp://0.0.0.0:26656 --proxy_app=tcp://127.0.0.1:26658 --rpc.laddr=tcp://0.0.0.0:26657"
+
+if [ -n "${NOT_EMPTY_BLOCK}" ]; then
+	NODE_ARGS="${NODE_ARGS} --consensus.create_empty_blocks=false"
+fi
 
 if [ -n "${CLEAN}" ]; then
 	if [ -n "${HARD_MODE}" ]; then
 		run "rm -rf ${HOME_DIR}"
 		run "${EXEC_BIN} ${INIT_ARGS} init"
+		run "cp ${CONFIG_FILE} ${HOME_DIR}/config/config.toml"
+		run "cp ${GENESIS_FILE} ${HOME_DIR}/config/genesis.json"
 	else
 	    run "rm -rf ${HOME_DIR}/data"
 	    run "${EXEC_BIN} unsafe_reset_priv_validator"

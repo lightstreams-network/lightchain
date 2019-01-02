@@ -191,7 +191,6 @@ func (app *LightchainApplication) EndBlock(req abciTypes.RequestEndBlock) abciTy
 
 // Commits the block and returns a hash of the current state
 func (app *LightchainApplication) Commit() abciTypes.ResponseCommit {
-	app.logger.Debug("Commit") // nolint: errcheck
 	blockHash, err := app.ethBackend.Commit(app.Receiver())
 	if err != nil {
 		// nolint: errcheck
@@ -203,7 +202,7 @@ func (app *LightchainApplication) Commit() abciTypes.ResponseCommit {
 		app.logger.Error("Error getting latest state", "err", err) // nolint: errcheck
 	}
 	
-	app.logger.Info("LightchainApplication::Commit()", "blockHash", blockHash.Bytes())
+	app.logger.Info("LightchainApplication::Commit()", "blockHash", blockHash.Hex())
 	app.checkTxState = ethState.Copy()
 	// The app should respond to the Commit request with a byte array, which is the deterministic state root of the 
 	// application. It is included in the header of the next block. It can be used to provide easily verified 
