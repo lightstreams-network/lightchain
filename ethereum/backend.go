@@ -143,7 +143,8 @@ func (b *Backend) APIs() []rpc.API {
 	return retApis
 }
 
-// Start implements node.Service, starting all internal goroutines needed by the Ethereum protocol implementation.
+// Start implements node.Service, starting all internal goroutines needed by the Ethereum 
+// protocol implementation.
 func (b *Backend) Start(_ *p2p.Server) error {
 	go b.txBroadcastLoop()
 	return nil
@@ -151,13 +152,14 @@ func (b *Backend) Start(_ *p2p.Server) error {
 
 // Stop implements node.Service, terminating all internal goroutines used by the Ethereum protocol.
 func (b *Backend) Stop() error {
-	if err := b.FlushStateTrieDb(); err != nil {
-		log.Error("Error flushing cache state", "err", err)
-	}
 	b.txSub.Unsubscribe()
-	if err := b.ethereum.Stop(); err != nil {
-		return err
-	}
+	b.ethereum.BlockChain().Stop()
+	b.ethereum.Engine().Close()
+	b.ethereum.TxPool().Stop()
+	b.ethereum.ChainDb().Close()
+	//if err := b.ethereum.Stop(); err != nil {
+	//	return err
+	//}
 	return nil
 }
 

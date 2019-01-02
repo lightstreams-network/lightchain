@@ -14,8 +14,6 @@ import (
 	rpcTypes "github.com/tendermint/tendermint/rpc/core/types"
 	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
 	"gopkg.in/urfave/cli.v1"
-	"os"
-	"os/signal"
 	"strings"
 )
 
@@ -122,20 +120,6 @@ func initNode(stack *ethereum.Node) {
 	if err := stack.Start(); err != nil {
 		ethUtils.Fatalf("Error starting protocol stack: %v", err)
 	}
-	go func() {
-		sigc := make(chan os.Signal, 1)
-		signal.Notify(sigc, os.Interrupt)
-		defer signal.Stop(sigc)
-		<-sigc
-		log.Info("Got interrupt, shutting down...")
-		go stack.Stop() // nolint: errcheck
-		for i := 10; i > 0; i-- {
-			<-sigc
-			if i > 1 {
-				log.Warn("Already shutting down, interrupt more to panic.", "times", i-1)
-			}
-		}
-	}()
 }
 
 // tries unlocking the specified account a few times.

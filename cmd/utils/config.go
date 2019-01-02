@@ -99,7 +99,7 @@ func SetLightchainEthDefaultConfig(cfg *eth.Config) {
 	// block replies on every restart. 
 	// @TODO once the usage of blockchain is larger we should tune these values again accordingly
 	cfg.DatabaseCache  = 32; // MB
-	cfg.TrieCleanCache = 16;  // MB
+	cfg.TrieCleanCache = 8;  // MB
 	cfg.TrieDirtyCache = 0;  // MB
 	cfg.TrieTimeout = 5 * time.Minute;
 }
