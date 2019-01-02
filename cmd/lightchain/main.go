@@ -94,7 +94,12 @@ func LightchainNodeCmd(ctx *cli.Context) {
 	}
 
 	cmn.TrapSignal(func() {
-		appSrv.Stop()
+		if err := appSrv.Stop(); err != nil {
+			fmt.Errorf("Error stopping Application service", err)
+		}
+		if err := node.Stop(); err != nil {
+			fmt.Errorf("Error stopping EthNode service", err)
+		}
 	})
 }
 
