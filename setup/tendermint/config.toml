@@ -112,10 +112,10 @@ external_address = ""
 seeds = ""
 
 # Comma separated list of nodes to keep persistent connections to
-persistent_peers = ""
+persistent_peers = "2de3b810e4eac51a10a3740d15ae92142b01dc7b@sirius-t-p2p.dev.lsops.biz:26656"
 
 # UPNP port forwarding
-upnp = false
+upnp = true
 
 # Path to address book
 addr_book_file = "config/addrbook.json"

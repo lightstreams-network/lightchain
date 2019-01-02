@@ -73,6 +73,7 @@ var (
 		ethUtils.DataDirFlag,
 		ethUtils.KeyStoreDirFlag,
 		ethUtils.NoUSBFlag,
+		ethUtils.NetworkIdFlag,
 		// Performance tuning
 		ethUtils.CacheFlag,
 		ethUtils.TrieCacheGenFlag,

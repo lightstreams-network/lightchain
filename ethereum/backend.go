@@ -89,7 +89,7 @@ func (b *Backend) Config() *eth.Config {
 
 // DeliverTx appends a transaction to the current block
 func (b *Backend) DeliverTx(tx *ethTypes.Transaction) abciTypes.ResponseDeliverTx {
-	log.Info("Ethemint.Backend::DeliverTx", "tx", tx.Hash().String())
+	log.Info("Lightchain.Backend::DeliverTx", "tx", tx.Hash().String())
 	return b.ethState.DeliverTx(tx)
 }
 
@@ -100,13 +100,13 @@ func (b *Backend) AccumulateRewards(strategy *emtTypes.Strategy) {
 
 // Commit finalises the current block
 func (b *Backend) Commit(receiver common.Address) (common.Hash, error) {
-	log.Info("Ethemint.Backend::Commit", "data", b.ethState.work)
+	log.Info("Lightchain.Backend::Commit", "data", b.ethState.work)
 	return b.ethState.Commit(receiver)
 }
 
 // InitEthState initializes the EthState
 func (b *Backend) InitEthState(receiver common.Address) error {
-	log.Info("Ethemint.Backend::InitEthState", "data", receiver)
+	log.Info("Lightchain.Backend::InitEthState", "data", receiver)
 	return b.ethState.ResetWorkState(receiver)
 }
 
@@ -151,13 +151,28 @@ func (b *Backend) Start(_ *p2p.Server) error {
 
 // Stop implements node.Service, terminating all internal goroutines used by the Ethereum protocol.
 func (b *Backend) Stop() error {
+	if err := b.FlushStateTrieDb(); err != nil {
+		log.Error("Error flushing cache state", "err", err)
+	}
 	b.txSub.Unsubscribe()
-	b.ethereum.Stop() // nolint: errcheck
+	if err := b.ethereum.Stop(); err != nil {
+		return err
+	}
 	return nil
 }
 
 // Protocols implements node.Service, returning all the currently configured network protocols to start.
 func (b *Backend) Protocols() []p2p.Protocol {
+	return nil
+}
+
+func (b *Backend) FlushStateTrieDb() error {
+	bc := b.Ethereum().BlockChain()
+	triedb := bc.StateCache().TrieDB()
+	root := bc.CurrentBlock().Root()
+	if err := triedb.Commit(root, true); err != nil {
+		return err
+	}
 	return nil
 }
 
