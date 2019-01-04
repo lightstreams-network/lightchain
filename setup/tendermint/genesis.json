@@ -23,7 +23,25 @@
                 "value": "Eg4FsTNkUETQ330nlaCRlbRPPKMArLlnsPwHGURL8Xs="
             },
             "power": "10",
-            "name": "sirius-node-1"
+            "name": "sirius-validator-node1"
+        },
+        {
+            "address": "21B62C962F60618DB4DA34CD623C39FC7CC35CE6",
+            "pub_key": {
+                "type": "tendermint/PubKeyEd25519",
+                "value": "jkxtFjBaS/cfK76HRlaW65O8woOHgmlC5bguzlQWsD4="
+            },
+            "power": "10",
+            "name": "sirius-validator-node2"
+        },
+        {
+            "address": "B7DFDC424F64EC89C42A502F89EB29F811144CA1",
+            "pub_key": {
+                "type": "tendermint/PubKeyEd25519",
+                "value": "j5XWFDrV58Bqz3UdVKBAA4jGps5OTPv0PnaXqCEhZR8="
+            },
+            "power": "10",
+            "name": "sirius-validator-node3"
         }
     ],
     "app_hash": ""
