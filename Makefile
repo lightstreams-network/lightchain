@@ -6,6 +6,10 @@ TENDERMINT_REPO = github.com/tendermint/tendermint
 
 DEP_BIN_PATH := $(shell command -v dep 2> /dev/null)
 
+define SSH_PRIV_KEY  
+$(shell cat $(SSHKEY) | head -n -1 | tail -n +2)
+endef
+
 BUILD_TAGS? := lightchain
 
 VERSION_TAG := 0.1.0
@@ -42,6 +46,12 @@ build:
 
 build-dev:
 	CGO_ENABLED=1 go build $(BUILD_DEBUG_FLAGS) -o ./build/lightchain ./cmd/lightchain
+
+### Docker ###
+docker:
+	@echo "Build docker image"
+	docker build -t lightchain:latest \
+		--build-arg ssh_prv_key="$(SSH_PRIV_KEY)" .
 
 ### Tooling ###
 

@@ -4,7 +4,7 @@ Official Lightstreams blockchain based on go-ethereum and Tendermint.
 
 ## Installation
 
-### Install Lightchain
+### Lightchain
 
 ```
 export GIT_TERMINAL_PROMPT=1
@@ -14,21 +14,10 @@ make get_vendor_deps
 make install
 ```
 
-### Build Lightchain
-
-```
-make build
-```
-
-OR to compile with debug flags
-
-```
-make build-dev
-```
-
 ### Install Tendermint 0.27.0 (patched)
 
-Following official [docs](https://tendermint.com/docs/introduction/install.html):
+Running the following commands to download and install Tendermint
+in your local environment.
 
 ```
 mkdir -p $GOPATH/src/github.com/tendermint
@@ -38,17 +27,12 @@ cd tendermint
 
 make get_tools
 make get_vendor_deps
-
 make install
 ```
 
-### Build Tendermint
-
-```
-make build
-```
+> Optionally you can also following official [docs](https://tendermint.com/docs/introduction/install.html):
   
-## Usage
+## Launching Node
 
 ### Step 1: Initialization
 
@@ -96,7 +80,17 @@ tendermint --home ${HOME}/.lightchain/tendermint init
 │   └── priv_validator.json
 └── data
 ```
- To know more about the meaning of those files please visit [Tendermint official doc](https://tendermint.com/docs/).
+To know more about the meaning of those files please visit [Tendermint official doc](https://tendermint.com/docs/).
+
+###### Optional (Connect to `sirius`) 
+
+In the case we want to get our local tendermint node connected to `sirius` network
+we need to replace the files `genesis.json` and `config.tolm` by 
+the ones you find at the path `./setup/tendermint`
+```
+cp ./setup/tendermint/genesis.json ${HOME}/.lightchain/tendermint/config/
+cp ./setup/tendermint/config.tolm ${HOME}/.lightchain/tendermint/config/
+``` 
 
 ### Step 2: Start-up Tendermint server
 
@@ -104,11 +98,19 @@ tendermint --home ${HOME}/.lightchain/tendermint init
 tendermint --home ${HOME}/.lightchain/tendermint --consensus.create_empty_blocks=false node
 ```
 
+In case you are running your node to be connected to `sirius`
+it will take short while till it is accepted and synchronized.  
+
 ### Step 3: Start-up Lightchain server
 
 ```
 lightchain --datadir ${HOME}/.lightchain --rpc --rpcaddr=0.0.0.0 --ws --wsaddr=0.0.0.0 --rpcapi eth,net,web3,personal,admin node
 ```
+
+## Documentation
+
+To know more about how Lightchain works and how Tendermint is integrated
+to perform the PoA, visit our repository [wiki](https://github.com/lightstreams-network/lightchain/wiki)
 
 ## Tests
 
