@@ -2,8 +2,8 @@ package validator
 
 import (
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/lightstreams-network/lightchain/core/config"
-	"github.com/lightstreams-network/lightchain/core/transaction/validator/deployment"
+	"github.com/lightstreams-network/lightchain/config"
+	"github.com/lightstreams-network/lightchain/blockchain/transaction/validator/deployment"
 )
 
 type Validator struct {

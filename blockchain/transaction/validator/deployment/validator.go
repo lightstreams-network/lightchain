@@ -2,9 +2,9 @@ package deployment
 
 import (
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/lightstreams-network/lightchain/core/config"
-	"github.com/lightstreams-network/lightchain/core/transaction/validator/deployment/whitelist"
-	"github.com/lightstreams-network/lightchain/cmd/utils"
+	"github.com/lightstreams-network/lightchain/config"
+	"github.com/lightstreams-network/lightchain/utils"
+	"github.com/lightstreams-network/lightchain/blockchain/transaction/validator/deployment/whitelist"
 )
 
 type Validator struct {
