@@ -1,9 +1,10 @@
 // nolint=lll
-package utils
+package main
 
 import (
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
 	"gopkg.in/urfave/cli.v1"
+	"github.com/lightstreams-network/lightchain/config"
 )
 
 var (
@@ -54,7 +55,7 @@ var (
 	TargetGasLimitFlag = cli.Uint64Flag{
 		Name:  "targetgaslimit",
 		Usage: "Target gas limit sets the artificial target gas floor for the blocks to mine",
-		Value: GenesisTargetGasLimit,
+		Value: config.GenesisTargetGasLimit,
 	}
 
 	// WithTendermintFlag asks to start Tendermint

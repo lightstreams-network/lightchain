@@ -2,7 +2,7 @@ package whitelist
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/lightstreams-network/lightchain/core/config"
+	"github.com/lightstreams-network/lightchain/config"
 )
 
 type AccountWhitelist struct {

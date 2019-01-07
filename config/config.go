@@ -1,4 +1,4 @@
-package utils
+package config
 
 import (
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
@@ -12,6 +12,8 @@ import (
 	"path"
 	"path/filepath"
 	"time"
+	"fmt"
+	"encoding/json"
 )
 
 const (
@@ -33,37 +35,70 @@ var GenesisPathFlag = ethUtils.DirectoryFlag{
 	Usage: "Genesis path",
 }
 
+// The config folder name inside the lightchain's node --datadir ~/.lightchain
+const ConfigFolderName = "lightchain"
+
+// The config filename inside the ConfigFolderName
+const ConfigFilename = "lightstreams_config.json"
+
+type Config struct {
+	DeploymentWhitelist []string `json:"deploymentWhitelist"`
+}
+
+
 var projectRootPath = filepath.Join(os.Getenv("GOPATH"), "src/github.com/lightstreams-network", "lightchain")
 
 type ethstatsConfig struct {
 	URL string `toml:",omitempty"`
 }
 
-type gethConfig struct {
+type GethConfig struct {
 	Eth      eth.Config
 	Node     node.Config
 	Ethstats ethstatsConfig
 }
 
+func NewLightchainConfig(path string) (Config, error) {
+	buffer, err := ioutil.ReadFile(path)
+	if err != nil {
+		return Config{}, fmt.Errorf("unable to open LS's configuration file %s", path)
+	}
+
+	cfg := new(Config)
+	err = json.Unmarshal(buffer, cfg)
+	if err != nil {
+		return Config{}, err
+	}
+
+	return *cfg, nil
+}
+
+func ReadDefaultLsConfigBlob() ([]byte) {
+	return []byte(`
+{
+    "deploymentWhitelist": [""]
+}`)
+}
+
+
 // makeDataDir retrieves the currently requested data directory
-// #unstable
 func MakeDataDir(ctx *cli.Context) string {
-	path := node.DefaultDataDir()
+	dPath := node.DefaultDataDir()
 
 	emHome := os.Getenv(emHome)
 	if emHome != "" {
-		path = emHome
+		dPath = emHome
 	}
 
 	if ctx.GlobalIsSet(ethUtils.DataDirFlag.Name) {
-		path = ctx.GlobalString(ethUtils.DataDirFlag.Name)
+		dPath = ctx.GlobalString(ethUtils.DataDirFlag.Name)
 	}
 
-	if path == "" {
+	if dPath == "" {
 		ethUtils.Fatalf("Cannot determine default data directory, please set manually (--datadir)")
 	}
 
-	return path
+	return dPath
 }
 
 // DefaultNodeConfig returns the default configuration for a go-ethereum node
@@ -128,22 +163,21 @@ func ReadGenesisPath(genesisPath string) ([]byte, error) {
 }
 
 func ReadDefaultGenesis() ([]byte, error) {
-	path, err := filepath.Abs(filepath.Join(projectRootPath, "setup/genesis.json"))
+	fPath, err := filepath.Abs(filepath.Join(projectRootPath, "setup/genesis.json"))
 	if err != nil {
 		return nil, err
 	}
-	return ReadGenesisPath(path)
+	return ReadGenesisPath(fPath)
 }
 
-
 func ReadDefaultKeystore() (map[string][]byte, error) {
-	path, err := filepath.Abs(filepath.Join(projectRootPath, "setup/keystore"))
+	dPath, err := filepath.Abs(filepath.Join(projectRootPath, "setup/keystore"))
 	if err != nil {
 		return nil, err
 	}
 
 	var files = make(map[string][]byte)
-	err = filepath.Walk(path, func(file string, info os.FileInfo, err error) error {
+	err = filepath.Walk(dPath, func(file string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil
 		}
@@ -164,4 +198,20 @@ func ReadDefaultKeystore() (map[string][]byte, error) {
 	}
 
 	return files, nil
+}
+
+func ReadTendermintDefaultGenesis() ([]byte, error) {
+	fPath, err := filepath.Abs(filepath.Join(projectRootPath, "setup/tendermint/genesis.json"))
+	if err != nil {
+		return nil, err
+	}
+	return ReadGenesisPath(fPath)
+}
+
+func ReadTendermintDefaultConfig() ([]byte, error) {
+	fPath, err := filepath.Abs(filepath.Join(projectRootPath, "setup/tendermint/config.toml"))
+	if err != nil {
+		return nil, err
+	}
+	return ReadGenesisPath(fPath)
 }
