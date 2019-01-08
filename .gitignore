@@ -9,3 +9,4 @@ vendor
 */vendor
 */.glide
 .idea
+truffle/.env
