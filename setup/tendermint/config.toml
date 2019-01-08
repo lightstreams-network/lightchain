@@ -21,8 +21,9 @@ db_backend = "leveldb"
 # Database directory
 db_dir = "data"
 
-# Output level for logging, including package level options
-log_level = "main:info,state:info,*:error,*:debug"
+# Output level for logging, including package level options. Second line for debug.
+log_level = "main:info,state:info,*:error"
+# log_level = "main:info,state:info,*:error,*:debug"
 
 # Output format: 'plain' (colored text) or 'json'
 log_format = "plain"
