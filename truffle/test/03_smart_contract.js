@@ -7,7 +7,7 @@
  */
 
 
-const { convertFromWeiBnToPht, convertPhtToWeiBN, fetchTxReceipt, gasToWei } = require('./utils');
+const { convertFromWeiBnToPht, convertPhtToWeiBN, fetchTxReceipt, calculateGasCostBN } = require('./utils');
 
 const HelloBlockchainWorld = artifacts.require("HelloBlockchainWorld");
 
@@ -22,7 +22,7 @@ contract('HelloBlockchainWorld', () => {
     assert.equal(owner, ROOT_ACCOUNT, "Owner doesn't match the msg.sender");
   });
 
-  it("should create account for testing proposes, not asserting", async () => {
+  it("should create an account for testing purposes, not asserting", async () => {
     NEW_ACCOUNT_ADDR = await web3.personal.newAccount(NEW_ACCOUNT_PASS);
     await web3.personal.unlockAccount(NEW_ACCOUNT_ADDR, NEW_ACCOUNT_PASS, 1000);
 
@@ -35,7 +35,7 @@ contract('HelloBlockchainWorld', () => {
     await fetchTxReceipt(txReceiptId, 15);
   });
 
-  it("should NOT  be allowed to perform the smart contract call and gas reduced from balance", async () => {
+  it("should deduct gas cost performing a failed transaction", async () => {
     const instance = await HelloBlockchainWorld.deployed();
     const weiBNBalancePreTx = await web3.eth.getBalance(NEW_ACCOUNT_ADDR);
 
@@ -52,13 +52,14 @@ contract('HelloBlockchainWorld', () => {
       }
     }
 
-    assert.equal(txReceipt.status, "0x0", "failed TX status expected");
     const weiBNBalancePostTx = await web3.eth.getBalance(NEW_ACCOUNT_ADDR);
-    const expectedBalance = weiBNBalancePreTx.toNumber() - gasToWei(txReceipt.gasUsed);
-    assert.equal(weiBNBalancePostTx.toNumber(), expectedBalance);
+    const expectedBalance = weiBNBalancePreTx.sub(calculateGasCostBN(txReceipt.gasUsed));
+
+    assert.equal(txReceipt.status, "0x0", "failed TX status expected");
+    assert.equal(weiBNBalancePostTx.toNumber(), expectedBalance.toNumber());
   });
 
-  it("should be allowed to perform the smart contract call and gas reduced from balance", async () => {
+  it("should be allowed to perform a smart contract transaction and gas should be reduced from the balance", async () => {
     const instance = await HelloBlockchainWorld.deployed();
 
     try {

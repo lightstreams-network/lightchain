@@ -49,7 +49,7 @@ contract('WalletTest', () => {
     assert.equal(isLocked, true, "Account should be locked cause session has expired");
   });
 
-  it('should receive one ', async function() {
+  it('should be able to transfer funds', async function() {
     const weiSentAmountBN = convertPhtToWeiBN(0.1);
 
     const weiBalancePreTxBN = await web3.eth.getBalance(NEW_ACCOUNT_ADDR);
@@ -62,7 +62,10 @@ contract('WalletTest', () => {
     await fetchTxReceipt(txReceiptId, 15);
     
     const weiBalancePostTxBN = await web3.eth.getBalance(NEW_ACCOUNT_ADDR);
-    assert.equal(weiBalancePostTxBN.toNumber(), weiBalancePreTxBN.toNumber() + weiSentAmountBN.toNumber(), 
-        "recipient account balance is incorrect");
+    assert.equal(
+        weiBalancePostTxBN.toNumber(),
+        weiBalancePreTxBN.toNumber() + weiSentAmountBN.toNumber(),
+        "recipient account balance is incorrect"
+    );
   });
 });
