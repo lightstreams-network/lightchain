@@ -7,8 +7,8 @@ module.exports.convertPhtToWeiBN = function(ether) {
   return web3._extend.utils.toBigNumber(etherInWei);
 };
 
-module.exports.gasToWei = function(gasAmount) {
-  return gasAmount * web3.eth.gasPrice.toNumber();
+module.exports.calculateGasCostBN = function(gasAmount) {
+  return web3.eth.gasPrice.mul(gasAmount);
 };
 
 module.exports.fetchTxReceipt = function(txReceiptId, timeoutInSec = 30) {
@@ -21,25 +21,20 @@ module.exports.fetchTxReceipt = function(txReceiptId, timeoutInSec = 30) {
     })
   };
 
-  console.log(`Fetching tx ${txReceiptId}`);
-
   return new Promise(async (resolve, reject) => {
     while ( true ) {
       let txReceipt = web3.eth.getTransactionReceipt(txReceiptId);
       if (txReceipt != null && typeof txReceipt !== 'undefined') {
-        console.log('Receipt found');
         resolve(txReceipt);
         return;
       }
 
       const now = new Date();
       if (now.getTime() - startTime.getTime() > timeoutInSec * 1000) {
-        console.log('Receipt not found');
         reject(`Timeout after ${timeoutInSec} seconds`);
         return;
       }
 
-      console.log(`Now: ${now.toISOString()}, StartTime: ${startTime.toISOString()}...retrying in ${retryInSec} seconds`);
       await waitTime(retryInSec)
     }
   });
