@@ -35,7 +35,7 @@ contract('HelloBlockchainWorld', () => {
     await fetchTxReceipt(txReceiptId, 15);
   });
 
-  it("should NOT  be allowed to perform the smart contract call and gas reduced from balance", async () => {
+  it("should not be allowed to perform the smart contract transaction and gas reduced from balance", async () => {
     const instance = await HelloBlockchainWorld.deployed();
     const weiBNBalancePreTx = await web3.eth.getBalance(NEW_ACCOUNT_ADDR);
 
@@ -58,7 +58,7 @@ contract('HelloBlockchainWorld', () => {
     assert.equal(weiBNBalancePostTx.toNumber(), expectedBalance);
   });
 
-  it("should be allowed to perform the smart contract call and gas reduced from balance", async () => {
+  it("should be allowed to perform the smart contract transaction and gas should be reduced from the balance", async () => {
     const instance = await HelloBlockchainWorld.deployed();
 
     try {
