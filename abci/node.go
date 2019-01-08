@@ -1,26 +1,119 @@
-package utils
+package abci
 
 import (
 	"fmt"
+	"gopkg.in/urfave/cli.v1"
+	"strings"
+	"path/filepath"
+	"os"
+	"io/ioutil"
+	
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
+	ethLog "github.com/ethereum/go-ethereum/log"
+	
+	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/console"
 	"github.com/ethereum/go-ethereum/eth"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/node"
-	"github.com/lightstreams-network/lightchain/ethereum"
+	"github.com/ethereum/go-ethereum/core"
+	
 	rpcTypes "github.com/tendermint/tendermint/rpc/core/types"
 	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
-	"gopkg.in/urfave/cli.v1"
-	"strings"
+	
+	"github.com/lightstreams-network/lightchain/ethereum"
+	"github.com/lightstreams-network/lightchain/config"
+	"github.com/lightstreams-network/lightchain/utils"
 )
 
-// nolint
+func InitNode(ctx *cli.Context) error {
+	// Step 1: Init chain within --datadir by read genesis
+	homeDir := config.MakeDataDir(ctx)
+	ethLog.Info("Initializing HomeDir", "dir", homeDir)
+	dataDir := filepath.Join(homeDir, config.ConfigFolderName)
+	
+	chainDb, err := ethdb.NewLDBDatabase(filepath.Join(dataDir, "chaindata"), 0, 0)
+	if err != nil {
+		ethUtils.Fatalf("could not open database: %v", err)
+	}
+
+	keystoreDir := filepath.Join(homeDir, "keystore")
+	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
+		ethUtils.Fatalf("mkdirAll keyStoreDir: %v", err)
+	}
+
+	keystoreCfg, err := config.ReadDefaultKeystore()
+	if err != nil {
+		ethUtils.Fatalf("could not open read keystore: %v", err)
+	}
+
+	for filename, content := range keystoreCfg {
+		storeFileName := filepath.Join(keystoreDir, filename)
+		f, err := os.Create(storeFileName)
+		if err != nil {
+			ethLog.Error("Cannot create file", storeFileName, err)
+			continue
+		}
+		if _, err := f.Write(content); err != nil {
+			ethLog.Error("write content %q err: %v", storeFileName, err)
+		}
+		if err := f.Close(); err != nil {
+			return err
+		}
+
+		ethLog.Info("Successfully wrote keystore files", "keystore", storeFileName)
+	}
+
+	genesisPath := config.MakeGenesisPath(ctx)
+	ethLog.Info("Trying to reading genesis", "dir", genesisPath)
+	genesisBlob, err := config.ReadGenesisPath(genesisPath)
+	if err != nil {
+		ethLog.Warn("Error reading genesisPath", err)
+		genesisBlob, err = config.ReadDefaultGenesis()
+		if err != nil {
+			ethUtils.Fatalf("genesis read error: %v", err)
+		}
+	}
+	genesis, err := utils.ParseBlobGenesis(genesisBlob)
+	if err != nil {
+		ethUtils.Fatalf("genesisJSON err: %v", err)
+	}
+
+	genesisFileName := filepath.Join(homeDir, "genesis.json")
+	f, err := os.Create(genesisFileName)
+	if _, err := f.Write(genesisBlob); err != nil {
+		ethLog.Error("write content %q err: %v", genesisFileName, err)
+	}
+
+	ethLog.Info("Using genesis block", "block", genesis)
+
+	_, hash, err := core.SetupGenesisBlock(chainDb, genesis)
+	if err != nil {
+		ethUtils.Fatalf("failed to write genesis block: %v", err)
+	}
+
+	ethLog.Info("Successfully wrote genesis block and/or chain rule set", "hash", hash)
+
+	// Lightstreams configs
+	lsCfgPath := filepath.Join(homeDir, config.ConfigFolderName, config.ConfigFilename)
+	err = ioutil.WriteFile(lsCfgPath, config.ReadDefaultLsConfigBlob(), 0666)
+	if err != nil {
+		ethUtils.Fatalf("Config err: %v", err)
+	} else {
+		ethLog.Info(fmt.Sprintf("successfully copied LS config into: %s", lsCfgPath))
+	}
+
+	return nil
+}
+
 // startNode copies the logic from go-ethereum (go-ethereum/cmd/geth/main.go)
 func StartNode(ctx *cli.Context, stack *ethereum.Node) {
-	initNode(stack)
+	if err := stack.Start(); err != nil {
+		ethUtils.Fatalf("Error starting protocol stack: %v", err)
+	}
 
 	// Unlock any account specifically requested
 	ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
@@ -79,11 +172,9 @@ func StartNode(ctx *cli.Context, stack *ethereum.Node) {
 }
 
 // makeFullNode creates a full go-ethereum node
-// #unstable
-func MakeFullNode(ctx *cli.Context) *ethereum.Node {
+func CreateNode(tendermintLAddr string, ctx *cli.Context) *ethereum.Node {
 	stack, cfg := makeConfigNode(ctx)
 
-	tendermintLAddr := ctx.GlobalString(TendermintAddrFlag.Name)
 	// Register New ABCI Application Service
 	if err := stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
 		client := rpcClient.NewURIClient(tendermintLAddr) // tendermint RPC client
@@ -96,34 +187,26 @@ func MakeFullNode(ctx *cli.Context) *ethereum.Node {
 	return stack
 }
 
-func makeConfigNode(ctx *cli.Context) (*ethereum.Node, gethConfig) {
-	cfg := gethConfig{
+func makeConfigNode(ctx *cli.Context) (*ethereum.Node, config.GethConfig) {
+	cfg := config.GethConfig{
 		Eth:  eth.DefaultConfig,
-		Node: DefaultNodeConfig(),
+		Node: config.DefaultNodeConfig(),
 	}
 
-	SetLightchainNodeDefaultConfig(&cfg.Node)
+	config.SetLightchainNodeDefaultConfig(&cfg.Node)
 	ethUtils.SetNodeConfig(ctx, &cfg.Node)
 	stack, err := ethereum.New(&cfg.Node)
 	if err != nil {
 		ethUtils.Fatalf("Failed to create the protocol stack: %v", err)
 	}
 
-	SetLightchainEthDefaultConfig(&cfg.Eth)
+	config.SetLightchainEthDefaultConfig(&cfg.Eth)
 	ethUtils.SetEthConfig(ctx, &stack.Node, &cfg.Eth)
 
 	return stack, cfg
 }
 
-// StartNode will start up the node.
-func initNode(stack *ethereum.Node) {
-	if err := stack.Start(); err != nil {
-		ethUtils.Fatalf("Error starting protocol stack: %v", err)
-	}
-}
-
 // tries unlocking the specified account a few times.
-// nolint: unparam
 func unlockAccount(ks *keystore.KeyStore,
 	address string,
 	i int,

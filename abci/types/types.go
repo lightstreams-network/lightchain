@@ -1,4 +1,4 @@
-package abci
+package types
 
 import "github.com/golang/protobuf/proto"
 import "fmt"

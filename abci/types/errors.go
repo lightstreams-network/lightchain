@@ -1,4 +1,4 @@
-package abci
+package types
 
 var (
 	OK = NewResultOK(nil, "")
