@@ -3,22 +3,22 @@ package ethereum
 import (
 	"math/big"
 	"sync"
-
+	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/state"
-	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/eth"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/params"
 
-	abciTypes "github.com/tendermint/tendermint/abci/types"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	
+	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
+	tmtCode "github.com/tendermint/tendermint/abci/example/code"
 
-	"fmt"
-	emtTypes "github.com/lightstreams-network/lightchain/types"
-	"github.com/tendermint/tendermint/abci/example/code"
+	coreUtils "github.com/lightstreams-network/lightchain/utils"
 )
 
 //----------------------------------------------------------------------
@@ -57,18 +57,18 @@ func (es *EthState) SetEthConfig(ethConfig *eth.Config) {
 }
 
 // Execute the transaction.
-func (es *EthState) DeliverTx(tx *ethTypes.Transaction) abciTypes.ResponseDeliverTx {
+func (es *EthState) DeliverTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
 	es.mtx.Lock()
 	defer es.mtx.Unlock()
 
-	blockchain := es.ethereum.BlockChain()
-	chainConfig := es.ethereum.APIBackend.ChainConfig()
+	bc := es.ethereum.BlockChain()
+	chainCfg := es.ethereum.APIBackend.ChainConfig()
 	blockHash := common.Hash{}
-	return es.work.deliverTx(blockchain, es.ethConfig, chainConfig, blockHash, tx)
+	return es.work.deliverTx(bc, es.ethConfig, chainCfg, blockHash, tx)
 }
 
 // Accumulate validator rewards.
-func (es *EthState) AccumulateRewards(strategy *emtTypes.Strategy) {
+func (es *EthState) AccumulateRewards(strategy *coreUtils.Strategy) {
 	es.mtx.Lock()
 	defer es.mtx.Unlock()
 	// @TODO (ggarri): Pending to define reward strategy
@@ -104,7 +104,7 @@ func (es *EthState) ResetWorkState(receiver common.Address) error {
 func (es *EthState) resetWorkState(receiver common.Address) error {
 
 	blockchain := es.ethereum.BlockChain()
-	state, err := blockchain.State()
+	bcState, err := blockchain.State()
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (es *EthState) resetWorkState(receiver common.Address) error {
 	es.work = workState{
 		header:       ethHeader,
 		parent:       currentBlock,
-		state:        state,
+		state:        bcState,
 		txIndex:      0,
 		totalUsedGas: uint64(0),
 		gp:           new(core.GasPool).AddGas(ethHeader.GasLimit),
@@ -173,22 +173,22 @@ type workState struct {
 }
 
 // nolint: unparam
-func (ws *workState) accumulateRewards(strategy *emtTypes.Strategy) {
+func (ws *workState) accumulateRewards(strategy *coreUtils.Strategy) {
 	// @Deprecated: Chain Engine is responsible of the rewards
 }
 
 // Runs ApplyTransaction against the ethereum blockchain, fetches any logs,
 // and appends the tx, receipt, and logs.
-func (ws *workState) deliverTx(blockchain *core.BlockChain,
+func (ws *workState) deliverTx(bc *core.BlockChain,
 	config *eth.Config,
 	chainConfig *params.ChainConfig,
 	blockHash common.Hash,
-	tx *ethTypes.Transaction) abciTypes.ResponseDeliverTx {
+	tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
 
 	ws.state.Prepare(tx.Hash(), blockHash, ws.txIndex)
 	receipt, _, err := core.ApplyTransaction(
 		chainConfig,
-		blockchain,
+		bc,
 		nil, // defaults to address of the author of the header
 		ws.gp,
 		ws.state,
@@ -198,8 +198,8 @@ func (ws *workState) deliverTx(blockchain *core.BlockChain,
 		vm.Config{EnablePreimageRecording: config.EnablePreimageRecording},
 	)
 	if err != nil {
-		return abciTypes.ResponseDeliverTx{
-			Code: code.CodeTypeEncodingError,
+		return tmtAbciTypes.ResponseDeliverTx{
+			Code: tmtCode.CodeTypeEncodingError,
 			Log:  fmt.Sprintf("Got %v", err)}
 	}
 
@@ -212,13 +212,13 @@ func (ws *workState) deliverTx(blockchain *core.BlockChain,
 	ws.receipts = append(ws.receipts, receipt)
 	ws.allLogs = append(ws.allLogs, logs...)
 
-	return abciTypes.ResponseDeliverTx{Code: abciTypes.CodeTypeOK}
+	return tmtAbciTypes.ResponseDeliverTx{Code: tmtAbciTypes.CodeTypeOK}
 }
 
 // Commit the ethereum state, update the header, make a new block and add it to
 // the ethereum blockchain. The application root hash is the hash of the
 // ethereum block.
-func (ws *workState) commit(blockchain *core.BlockChain, db ethdb.Database) (common.Hash, error) {
+func (ws *workState) commit(bc *core.BlockChain, db ethdb.Database) (common.Hash, error) {
 
 	// Commit ethereum state and update the header.
 	hashArray, err := ws.state.Commit(false)
@@ -238,7 +238,7 @@ func (ws *workState) commit(blockchain *core.BlockChain, db ethdb.Database) (com
 
 	// Save the block to disk.
 	// log.Info("Committing block", "stateHash", hashArray, "blockHash", blockHash)
-	_, err = blockchain.InsertChain([]*ethTypes.Block{block})
+	_, err = bc.InsertChain([]*ethTypes.Block{block})
 	if err != nil {
 		// log.Info("Error inserting ethereum block in chain", "err", err)
 		return common.Hash{}, err

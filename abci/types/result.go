@@ -1,4 +1,4 @@
-package abci
+package types
 
 func NewError(code CodeType, log string) Result {
 	return Result{

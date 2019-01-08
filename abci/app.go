@@ -1,4 +1,4 @@
-package app
+package abci
 
 import (
 	"encoding/json"
@@ -11,15 +11,14 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/lightstreams-network/lightchain/ethereum"
-	emtTypes "github.com/lightstreams-network/lightchain/types"
-
+	"github.com/lightstreams-network/lightchain/utils"
 	"bytes"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
-	abciTypesLegacy "github.com/lightstreams-network/lightchain/types/abci"
-	abciTypes "github.com/tendermint/tendermint/abci/types"
-	tmLog "github.com/tendermint/tendermint/libs/log"
-	"github.com/lightstreams-network/lightchain/core/transaction"
+	abciTypes "github.com/lightstreams-network/lightchain/abci/types"
+	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
+	tmtLog "github.com/tendermint/tendermint/libs/log"
+	"github.com/lightstreams-network/lightchain/abci/transaction"
 )
 
 // format of query data
@@ -35,8 +34,8 @@ var bigZero = big.NewInt(0)
 const maxTransactionSize = 32768
 
 type LightchainApplicationInterface interface {
-	abciTypes.Application
-	SetLogger(log tmLog.Logger)
+	tmtAbciTypes.Application
+	SetLogger(log tmtLog.Logger)
 }
 
 // LightchainApplication implements an ABCI application
@@ -54,9 +53,9 @@ type LightchainApplication struct {
 	rpcClient *rpc.Client
 
 	// strategy for validator compensation
-	strategy *emtTypes.Strategy
+	strategy *utils.Strategy
 
-	logger tmLog.Logger
+	logger tmtLog.Logger
 
 	// Handles all application logic related to transactions
 	txHandler transaction.TxHandler
@@ -67,7 +66,7 @@ var _ LightchainApplicationInterface = (*LightchainApplication)(nil) // Verify t
 // @TODO (ggarri): Compare with "cosmos-sdk/baseapp/baseapp.go"
 // Creates a fully initialised instance of LightchainApplication
 func CreateLightchainApplication(ethBackend *ethereum.Backend,
-	client *rpc.Client, strategy *emtTypes.Strategy, txHandler transaction.TxHandler) (*LightchainApplication, error) {
+	client *rpc.Client, strategy *utils.Strategy, txHandler transaction.TxHandler) (*LightchainApplication, error) {
 
 	txState, err := ethBackend.Ethereum().BlockChain().State()
 	if err != nil {
@@ -91,12 +90,12 @@ func CreateLightchainApplication(ethBackend *ethereum.Backend,
 }
 
 // SetLogger sets the logger for the lightchain application
-func (app *LightchainApplication) SetLogger(log tmLog.Logger) {
+func (app *LightchainApplication) SetLogger(log tmtLog.Logger) {
 	app.logger = log
 }
 
 // Info returns information about the last height and app_hash to the tendermint engine
-func (app *LightchainApplication) Info(req abciTypes.RequestInfo) abciTypes.ResponseInfo {
+func (app *LightchainApplication) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.ResponseInfo {
 	app.logger.Info("LightchainApplication::Info()", "data", req)
 	blockchain := app.ethBackend.Ethereum().BlockChain()
 	currentBlock := blockchain.CurrentBlock()
@@ -109,14 +108,14 @@ func (app *LightchainApplication) Info(req abciTypes.RequestInfo) abciTypes.Resp
 	// If it is the first time, then we have to respond with an empty hash, since
 	// that is what tendermint expects.
 	if height.Cmp(bigZero) == 0 {
-		return abciTypes.ResponseInfo{
+		return tmtAbciTypes.ResponseInfo{
 			Data:             "ABCIEthereum",
 			LastBlockHeight:  height.Int64(),
 			LastBlockAppHash: []byte{},
 		}
 	}
 
-	return abciTypes.ResponseInfo{
+	return tmtAbciTypes.ResponseInfo{
 		Data:             "ABCIEthereum",
 		LastBlockHeight:  height.Int64(),
 		LastBlockAppHash: hash[:],
@@ -124,25 +123,25 @@ func (app *LightchainApplication) Info(req abciTypes.RequestInfo) abciTypes.Resp
 }
 
 // SetOption sets a configuration option
-func (app *LightchainApplication) SetOption(req abciTypes.RequestSetOption) abciTypes.ResponseSetOption {
+func (app *LightchainApplication) SetOption(req tmtAbciTypes.RequestSetOption) tmtAbciTypes.ResponseSetOption {
 	app.logger.Info("LightchainApplication::SetOption()")
-	return abciTypes.ResponseSetOption{Code: abciTypes.CodeTypeOK, Log: ""}
+	return tmtAbciTypes.ResponseSetOption{Code: tmtAbciTypes.CodeTypeOK, Log: ""}
 }
 
 // InitChain initializes the validator set
-func (app *LightchainApplication) InitChain(req abciTypes.RequestInitChain) abciTypes.ResponseInitChain {
+func (app *LightchainApplication) InitChain(req tmtAbciTypes.RequestInitChain) tmtAbciTypes.ResponseInitChain {
 	app.logger.Info("LightchainApplication::InitChain()")
-	return abciTypes.ResponseInitChain{}
+	return tmtAbciTypes.ResponseInitChain{}
 }
 
 // CheckTx checks a transaction is valid but does not mutate the state
-func (app *LightchainApplication) CheckTx(txBytes []byte) abciTypes.ResponseCheckTx {
+func (app *LightchainApplication) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx {
 	app.logger.Info("LightchainApplication::CheckTx()")
 	tx, err := decodeRLP(txBytes)
 	if err != nil {
 		// nolint: errcheck
 		app.logger.Error("Received invalid transaction", "tx", tx.Hash().String())
-		return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrEncodingError.Code), Log: err.Error()}
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrEncodingError.Code), Log: err.Error()}
 	}
 
 	app.logger.Info("Received valid transaction", "tx", tx.Hash().String()) // nolint: errcheck
@@ -150,13 +149,13 @@ func (app *LightchainApplication) CheckTx(txBytes []byte) abciTypes.ResponseChec
 }
 
 // DeliverTx executes a transaction against the latest state
-func (app *LightchainApplication) DeliverTx(txBytes []byte) abciTypes.ResponseDeliverTx {
+func (app *LightchainApplication) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDeliverTx {
 	app.logger.Info("LightchainApplication::DeliverTx()")
 	tx, err := decodeRLP(txBytes)
 	if err != nil {
 		// nolint: errcheck
 		app.logger.Info("DelivexTx: Received invalid transaction", "tx", tx, "err", err)
-		return abciTypes.ResponseDeliverTx{Code: uint32(abciTypesLegacy.ErrEncodingError.Code), Log: err.Error()}
+		return tmtAbciTypes.ResponseDeliverTx{Code: uint32(abciTypes.ErrEncodingError.Code), Log: err.Error()}
 	}
 	app.logger.Info("DeliverTx: Received valid transaction", "tx", tx.Hash().String()) // nolint: errcheck
 
@@ -169,28 +168,28 @@ func (app *LightchainApplication) DeliverTx(txBytes []byte) abciTypes.ResponseDe
 	}
 
 	app.CollectTx(tx)
-	return abciTypes.ResponseDeliverTx{Code: abciTypes.CodeTypeOK}
+	return tmtAbciTypes.ResponseDeliverTx{Code: tmtAbciTypes.CodeTypeOK}
 }
 
 // BeginBlock starts a new Ethereum block
-func (app *LightchainApplication) BeginBlock(req abciTypes.RequestBeginBlock) abciTypes.ResponseBeginBlock {
+func (app *LightchainApplication) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAbciTypes.ResponseBeginBlock {
 	app.logger.Info("LightchainApplication::BeginBlock()")
 	app.logger.Debug("BeginBlock") // nolint: errcheck
 
 	// update the eth header with the tendermint header
 	app.ethBackend.UpdateHeaderWithTimeInfo(&req.Header)
-	return abciTypes.ResponseBeginBlock{}
+	return tmtAbciTypes.ResponseBeginBlock{}
 }
 
 // EndBlock accumulates rewards for the validators and updates them
-func (app *LightchainApplication) EndBlock(req abciTypes.RequestEndBlock) abciTypes.ResponseEndBlock {
+func (app *LightchainApplication) EndBlock(req tmtAbciTypes.RequestEndBlock) tmtAbciTypes.ResponseEndBlock {
 	app.logger.Info("LightchainApplication::EndBlock()")
 	//app.ethBackend.AccumulateRewards(app.strategy)
-	return abciTypes.ResponseEndBlock{}
+	return tmtAbciTypes.ResponseEndBlock{}
 }
 
 // Commits the block and returns a hash of the current state
-func (app *LightchainApplication) Commit() abciTypes.ResponseCommit {
+func (app *LightchainApplication) Commit() tmtAbciTypes.ResponseCommit {
 	blockHash, err := app.ethBackend.Commit(app.Receiver())
 	if err != nil {
 		// nolint: errcheck
@@ -207,40 +206,40 @@ func (app *LightchainApplication) Commit() abciTypes.ResponseCommit {
 	// The app should respond to the Commit request with a byte array, which is the deterministic state root of the 
 	// application. It is included in the header of the next block. It can be used to provide easily verified 
 	// Merkle-proofs of the state of the application.
-	return abciTypes.ResponseCommit{Data: blockHash.Bytes()}
+	return tmtAbciTypes.ResponseCommit{Data: blockHash.Bytes()}
 }
 
 // Query queries the state of the LightchainApplication
-func (app *LightchainApplication) Query(query abciTypes.RequestQuery) abciTypes.ResponseQuery {
+func (app *LightchainApplication) Query(query tmtAbciTypes.RequestQuery) tmtAbciTypes.ResponseQuery {
 	app.logger.Info("LightchainApplication::Query()", "data", query)
 	app.logger.Debug("Query") // nolint: errcheck
 	var in jsonRequest
 	if err := json.Unmarshal(query.Data, &in); err != nil {
-		return abciTypes.ResponseQuery{Code: uint32(abciTypesLegacy.ErrEncodingError.Code),
+		return tmtAbciTypes.ResponseQuery{Code: uint32(abciTypes.ErrEncodingError.Code),
 			Log: err.Error()}
 	}
 	var result interface{}
 	if err := app.rpcClient.Call(&result, in.Method, in.Params...); err != nil {
-		return abciTypes.ResponseQuery{Code: uint32(abciTypesLegacy.ErrInternalError.Code),
+		return tmtAbciTypes.ResponseQuery{Code: uint32(abciTypes.ErrInternalError.Code),
 			Log: err.Error()}
 	}
 	resultBytes, err := json.Marshal(result)
 	if err != nil {
-		return abciTypes.ResponseQuery{Code: uint32(abciTypesLegacy.ErrInternalError.Code),
+		return tmtAbciTypes.ResponseQuery{Code: uint32(abciTypes.ErrInternalError.Code),
 			Log: err.Error()}
 	}
-	return abciTypes.ResponseQuery{Code: abciTypes.CodeTypeOK, Value: resultBytes}
+	return tmtAbciTypes.ResponseQuery{Code: tmtAbciTypes.CodeTypeOK, Value: resultBytes}
 }
 
 //-------------------------------------------------------
 
 // validateTx checks the validity of a tx against the blockchain's current state.
 // it duplicates the logic in ethereum's tx_pool
-func (app *LightchainApplication) validateTx(tx *ethTypes.Transaction) abciTypes.ResponseCheckTx {
+func (app *LightchainApplication) validateTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseCheckTx {
 	app.logger.Info("LightchainApplication::validateTx()", "data", tx.Hash().String())
 	// Heuristic limit, reject transactions over 32KB to prevent DOS attacks
 	if tx.Size() > maxTransactionSize {
-		return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrInternalError.Code),
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInternalError.Code),
 			Log: core.ErrOversizedData.Error()}
 	}
 
@@ -252,14 +251,14 @@ func (app *LightchainApplication) validateTx(tx *ethTypes.Transaction) abciTypes
 	// Make sure the transaction is signed properly
 	from, err := ethTypes.Sender(signer, tx)
 	if err != nil {
-		return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrBaseInvalidSignature.Code),
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBaseInvalidSignature.Code),
 			Log: core.ErrInvalidSender.Error()}
 	}
 
 	// Transactions can't be negative. This may never happen using RLP decoded
 	// transactions but may occur if you create a transaction using the RPC.
 	if tx.Value().Sign() < 0 {
-		return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrBaseInvalidInput.Code),
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBaseInvalidInput.Code),
 			Log: core.ErrNegativeValue.Error()}
 	}
 
@@ -267,21 +266,21 @@ func (app *LightchainApplication) validateTx(tx *ethTypes.Transaction) abciTypes
 
 	// Make sure the account exist - cant send from non-existing account.
 	if !currentState.Exist(from) {
-		return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrBaseUnknownAddress.Code),
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBaseUnknownAddress.Code),
 			Log: core.ErrInvalidSender.Error()}
 	}
 
 	// Check the transaction doesn't exceed the current block limit gas.
 	gasLimit := app.ethBackend.GasLimit()
 	if gasLimit < 0 {
-		return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrInternalError.Code),
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInternalError.Code),
 			Log: core.ErrGasLimitReached.Error()}
 	}
 
 	// Check if nonce is not strictly increasing
 	nonce := currentState.GetNonce(from)
 	if nonce != tx.Nonce() {
-		return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrBadNonce.Code),
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBadNonce.Code),
 			Log: fmt.Sprintf("Nonce not strictly increasing. Expected %d Got %d",
 				nonce, tx.Nonce())}
 	}
@@ -290,31 +289,31 @@ func (app *LightchainApplication) validateTx(tx *ethTypes.Transaction) abciTypes
 	// cost == V + GP * GL
 	currentBalance := currentState.GetBalance(from)
 	if currentBalance.Cmp(tx.Cost()) < 0 {
-		return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrInsufficientFunds.Code),
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInsufficientFunds.Code),
 			Log: fmt.Sprintf("Current balance: %s, tx cost: %s",
 				currentBalance, tx.Cost())}
 	}
 
 	intrGas, err := core.IntrinsicGas(tx.Data(), tx.To() == nil, true) // homestead == true
 	if intrGas < 0 {
-		return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrBaseInsufficientFees.Code),
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBaseInsufficientFees.Code),
 			Log: core.ErrIntrinsicGas.Error()}
 	}
 	if err != nil {
-		return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrInternalError.Code),
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInternalError.Code),
 			Log: err.Error()}
 	}
 	
 	// TODO: Evaluate usage of whitelist validation
 	//isValid, err := app.txHandler.IsValid(*tx)
 	//if err != nil {
-	//	return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrInternalError.Code),
+	//	return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInternalError.Code),
 	//		Log: err.Error()}
 	//}
 	//if !isValid {
 	//	msg := fmt.Sprintf("account %v not authorized to perform transaction %v", from.String(), tx.Hash().String())
 	//	app.logger.Info(msg)
-	//	return abciTypes.ResponseCheckTx{Code: uint32(abciTypesLegacy.ErrInternalError.Code),
+	//	return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInternalError.Code),
 	//		Log: err.Error()}
 	//}
 
@@ -328,7 +327,7 @@ func (app *LightchainApplication) validateTx(tx *ethTypes.Transaction) abciTypes
 	}
 	currentState.SetNonce(from, tx.Nonce()+1)
 
-	return abciTypes.ResponseCheckTx{Code: abciTypes.CodeTypeOK}
+	return tmtAbciTypes.ResponseCheckTx{Code: tmtAbciTypes.CodeTypeOK}
 }
 
 //-------------------------------------------------------
@@ -358,8 +357,8 @@ func (app *LightchainApplication) CollectTx(tx *ethTypes.Transaction) {
 }
 
 // @TODO (ggarri): Refactor next ugly parsing and name and review
-//func convertValidatorsToPointers(validators []abciTypes.Validator) []*abciTypes.Validator {
-//	validatorPointers := []*abciTypes.Validator{}
+//func convertValidatorsToPointers(validators []tmtAbciTypes.Validator) []*tmtAbciTypes.Validator {
+//	validatorPointers := []*tmtAbciTypes.Validator{}
 //	for _, element := range validators {
 //		validatorPointers = append(validatorPointers, &element)
 //	}

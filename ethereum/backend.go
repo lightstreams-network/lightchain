@@ -10,12 +10,11 @@ import (
 	"github.com/ethereum/go-ethereum/node"
 	"github.com/ethereum/go-ethereum/p2p"
 	"github.com/ethereum/go-ethereum/rpc"
-	abciTypes "github.com/tendermint/tendermint/abci/types"
-
-	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
+	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
+	tmtRpcClient "github.com/tendermint/tendermint/rpc/lib/client"
 
 	"github.com/ethereum/go-ethereum/log"
-	emtTypes "github.com/lightstreams-network/lightchain/types"
+	coreUtils "github.com/lightstreams-network/lightchain/utils"
 )
 
 //----------------------------------------------------------------------
@@ -36,11 +35,11 @@ type Backend struct {
 	ethState *EthState
 
 	// client for forwarding txs to Tendermint
-	client rpcClient.HTTPClient
+	client tmtRpcClient.HTTPClient
 }
 
 // NewBackend creates a new Backend
-func NewBackend(ctx *node.ServiceContext, ethConfig *eth.Config, client rpcClient.HTTPClient) (*Backend, error) {
+func NewBackend(ctx *node.ServiceContext, ethConfig *eth.Config, client tmtRpcClient.HTTPClient) (*Backend, error) {
 
 	// Create working ethereum state.
 	ethState := NewEthState()
@@ -88,13 +87,13 @@ func (b *Backend) Config() *eth.Config {
 // Handle block processing
 
 // DeliverTx appends a transaction to the current block
-func (b *Backend) DeliverTx(tx *ethTypes.Transaction) abciTypes.ResponseDeliverTx {
+func (b *Backend) DeliverTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
 	log.Info("Lightchain.Backend::DeliverTx", "tx", tx.Hash().String())
 	return b.ethState.DeliverTx(tx)
 }
 
 // AccumulateRewards accumulates the rewards based on the given strategy
-func (b *Backend) AccumulateRewards(strategy *emtTypes.Strategy) {
+func (b *Backend) AccumulateRewards(strategy *coreUtils.Strategy) {
 	b.ethState.AccumulateRewards(strategy)
 }
 
@@ -111,7 +110,7 @@ func (b *Backend) InitEthState(receiver common.Address) error {
 }
 
 // UpdateHeaderWithTimeInfo uses the tendermint header to update the ethereum header
-func (b *Backend) UpdateHeaderWithTimeInfo(tmHeader *abciTypes.Header) {
+func (b *Backend) UpdateHeaderWithTimeInfo(tmHeader *tmtAbciTypes.Header) {
 	b.ethState.UpdateHeaderWithTimeInfo(b.ethereum.APIBackend.ChainConfig(),
 		uint64(tmHeader.Time.Unix()), uint64(tmHeader.GetNumTxs()))
 }
