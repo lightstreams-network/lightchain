@@ -18,7 +18,8 @@ import (
 	"github.com/lightstreams-network/lightchain/ethereum"
 	"github.com/lightstreams-network/lightchain/version"
 	"github.com/lightstreams-network/lightchain/abci/transaction"
-	abciApp "github.com/lightstreams-network/lightchain/abci"
+	"github.com/lightstreams-network/lightchain/abci"
+	"github.com/lightstreams-network/lightchain/tendermint"
 )
 
 var (
@@ -27,7 +28,7 @@ var (
 )
 
 func BeforeCmd(ctx *cli.Context) error {
-	logLvl := ctx.GlobalInt(VerbosityFlag.Name)
+	logLvl := ctx.GlobalInt(utils.VerbosityFlag.Name)
 	if err := utils.SetupLogger(logLvl); err != nil {
 		return err
 	}
@@ -39,11 +40,8 @@ func AfterCmd(ctx *cli.Context) error {
 }
 
 func LightchainNodeCmd(ctx *cli.Context) {
-	fmt.Println("Start Node")
-	// Step 1: Setup the go-ethereum node and start it
-	tendermintLAddr := ctx.GlobalString(TendermintAddrFlag.Name)
-	abciNode := abciApp.CreateNode(tendermintLAddr, ctx)
-	abciApp.StartNode(ctx, abciNode)
+	abciNode := abci.CreateNode(ctx)
+	abci.StartNode(ctx, abciNode)
 
 	// Fetch the registered service of this type
 	var ethBackend *ethereum.Backend
@@ -51,41 +49,50 @@ func LightchainNodeCmd(ctx *cli.Context) {
 		ethUtils.Fatalf("ethereum ethBackend service not running: %v", err)
 	}
 
-	// In-proc RPC connection so ABCI.Query can be forwarded over the ethereum rpc
+	// In-proc RPC connection so ABCI Query can be forwarded over the ethereum rpc
 	rpcClient, err := abciNode.Attach()
 	if err != nil {
 		ethUtils.Fatalf("Failed to attach to the inproc geth: %v", err)
 	}
 
-	txManager, err := transaction.NewManager(buildLsConfigPath(ctx))
+	txManager, err := transaction.NewManager(config.ConfigPath(ctx))
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	// Create the ABCI app
-	// Create the application - in memory or persisted to disk
-	ethApp, err := abciApp.CreateLightchainApplication(ethBackend, rpcClient, nil, txManager)
+	// Create the ABCI application - in memory or persisted to disk
+	ethApp, err := abci.CreateLightchainApplication(ethBackend, rpcClient, nil, txManager)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
 	ethApp.SetLogger(utils.LightchainLogger().With("module", "lightchain"))
 
 	// Start the app on the ABCI server listener
-	abciAddr := ctx.GlobalString(ABCIAddrFlag.Name)
-	abciProtocol := ctx.GlobalString(ABCIProtocolFlag.Name)
+	//abciAddr := ctx.GlobalString(utils.ABCIAddrFlag.Name)
+	abciAddr := fmt.Sprintf("tcp://0.0.0.0:%d", ctx.GlobalInt(utils.ProxyListenPortFlag.Name))
+	abciProtocol := ctx.GlobalString(utils.ABCIProtocolFlag.Name)
 	abciSrv, err := tmtServer.NewServer(abciAddr, abciProtocol, ethApp)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	logger := tmtLog.NewTMLogger(tmtLog.NewSyncWriter(os.Stdout))
-	abciSrv.SetLogger(logger.With("module", "abci-server"))
+	abciLogger := tmtLog.NewTMLogger(tmtLog.NewSyncWriter(os.Stdout))
+	abciSrv.SetLogger(abciLogger.With("module", "abci-server"))
 
 	if err := abciSrv.Start(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	
+	tmtLogger := tmtLog.NewTMLogger(tmtLog.NewSyncWriter(os.Stdout))
+	tmtSrv, err := tendermint.CreateNewNode(ctx,  tmtLogger.With("module", "tendermint"))
+	if err != nil {
+		fmt.Errorf("Failed to create node: %v", err)
+	}
+	if err := tendermint.StartNode(ctx, tmtSrv); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -95,7 +102,10 @@ func LightchainNodeCmd(ctx *cli.Context) {
 			fmt.Errorf("Error stopping Geth Node", err)
 		}
 		if err := abciSrv.Stop(); err != nil {
-			fmt.Errorf("Error stopping Application service", err)
+			fmt.Errorf("Error stopping ABCI service", err)
+		}
+		if err := tmtSrv.Stop(); err != nil {
+			fmt.Errorf("Error stopping Tendermint service", err)
 		}
 	})
 }
@@ -106,7 +116,15 @@ func VersionCmd(ctx *cli.Context) error {
 }
 
 func InitCmd(ctx *cli.Context) error {
-	if err := abciApp.InitNode(ctx); err != nil {
+	if err := abci.InitNode(ctx); err != nil {
+		return err
+	}
+	
+	if err := ethereum.InitNode(ctx); err != nil {
+		return err
+	}
+
+	if err := tendermint.InitNode(ctx); err != nil {
 		return err
 	}
 	
@@ -114,7 +132,7 @@ func InitCmd(ctx *cli.Context) error {
 }
 
 func ResetCmd(ctx *cli.Context) error {
-	dbDir := filepath.Join(config.MakeDataDir(ctx), "lightchain")
+	dbDir := filepath.Join(config.MakeHomeDir(ctx), "lightchain")
 	if err := os.RemoveAll(dbDir); err != nil {
 		ethLog.Debug("Could not reset lightchain. Failed to remove %+v", dbDir)
 		return err
@@ -153,13 +171,10 @@ func init() {
 			Usage:  "Running Lightchain app",
 		},
 	}
+
 	app.Flags = append(app.Flags, NodeFlags...)
 	app.Flags = append(app.Flags, RpcFlags...)
 	app.Flags = append(app.Flags, LightchainFlags...)
-}
-
-func buildLsConfigPath(ctx *cli.Context) string {
-	return filepath.Join(ctx.GlobalString(ethUtils.DataDirFlag.Name), config.ConfigFolderName, config.ConfigFilename)
 }
 
 func main() {

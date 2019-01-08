@@ -5,7 +5,6 @@ import (
 	"gopkg.in/urfave/cli.v1"
 	"strings"
 	"path/filepath"
-	"os"
 	"io/ioutil"
 	
 	"github.com/ethereum/go-ethereum/accounts"
@@ -13,97 +12,31 @@ import (
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
 	ethLog "github.com/ethereum/go-ethereum/log"
 	
-	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/console"
 	"github.com/ethereum/go-ethereum/eth"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/node"
-	"github.com/ethereum/go-ethereum/core"
 	
 	rpcTypes "github.com/tendermint/tendermint/rpc/core/types"
 	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
 	
 	"github.com/lightstreams-network/lightchain/ethereum"
 	"github.com/lightstreams-network/lightchain/config"
-	"github.com/lightstreams-network/lightchain/utils"
 )
 
 func InitNode(ctx *cli.Context) error {
-	// Step 1: Init chain within --datadir by read genesis
-	homeDir := config.MakeDataDir(ctx)
+	homeDir := config.MakeHomeDir(ctx)
 	ethLog.Info("Initializing HomeDir", "dir", homeDir)
-	dataDir := filepath.Join(homeDir, config.ConfigFolderName)
-	
-	chainDb, err := ethdb.NewLDBDatabase(filepath.Join(dataDir, "chaindata"), 0, 0)
-	if err != nil {
-		ethUtils.Fatalf("could not open database: %v", err)
-	}
-
-	keystoreDir := filepath.Join(homeDir, "keystore")
-	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
-		ethUtils.Fatalf("mkdirAll keyStoreDir: %v", err)
-	}
-
-	keystoreCfg, err := config.ReadDefaultKeystore()
-	if err != nil {
-		ethUtils.Fatalf("could not open read keystore: %v", err)
-	}
-
-	for filename, content := range keystoreCfg {
-		storeFileName := filepath.Join(keystoreDir, filename)
-		f, err := os.Create(storeFileName)
-		if err != nil {
-			ethLog.Error("Cannot create file", storeFileName, err)
-			continue
-		}
-		if _, err := f.Write(content); err != nil {
-			ethLog.Error("write content %q err: %v", storeFileName, err)
-		}
-		if err := f.Close(); err != nil {
-			return err
-		}
-
-		ethLog.Info("Successfully wrote keystore files", "keystore", storeFileName)
-	}
-
-	genesisPath := config.MakeGenesisPath(ctx)
-	ethLog.Info("Trying to reading genesis", "dir", genesisPath)
-	genesisBlob, err := config.ReadGenesisPath(genesisPath)
-	if err != nil {
-		ethLog.Warn("Error reading genesisPath", err)
-		genesisBlob, err = config.ReadDefaultGenesis()
-		if err != nil {
-			ethUtils.Fatalf("genesis read error: %v", err)
-		}
-	}
-	genesis, err := utils.ParseBlobGenesis(genesisBlob)
-	if err != nil {
-		ethUtils.Fatalf("genesisJSON err: %v", err)
-	}
-
-	genesisFileName := filepath.Join(homeDir, "genesis.json")
-	f, err := os.Create(genesisFileName)
-	if _, err := f.Write(genesisBlob); err != nil {
-		ethLog.Error("write content %q err: %v", genesisFileName, err)
-	}
-
-	ethLog.Info("Using genesis block", "block", genesis)
-
-	_, hash, err := core.SetupGenesisBlock(chainDb, genesis)
-	if err != nil {
-		ethUtils.Fatalf("failed to write genesis block: %v", err)
-	}
-
-	ethLog.Info("Successfully wrote genesis block and/or chain rule set", "hash", hash)
+	dataDir := config.MakeDataDir(ctx)
 
 	// Lightstreams configs
-	lsCfgPath := filepath.Join(homeDir, config.ConfigFolderName, config.ConfigFilename)
-	err = ioutil.WriteFile(lsCfgPath, config.ReadDefaultLsConfigBlob(), 0666)
+	lsCfgPath := filepath.Join(dataDir, config.ConfigFilename)
+	err := ioutil.WriteFile(lsCfgPath, config.ReadDefaultConfig(), 0666)
 	if err != nil {
 		ethUtils.Fatalf("Config err: %v", err)
 	} else {
-		ethLog.Info(fmt.Sprintf("successfully copied LS config into: %s", lsCfgPath))
+		ethLog.Info(fmt.Sprintf("successfully copied config into: %s", lsCfgPath))
 	}
 
 	return nil
@@ -172,7 +105,11 @@ func StartNode(ctx *cli.Context, stack *ethereum.Node) {
 }
 
 // makeFullNode creates a full go-ethereum node
-func CreateNode(tendermintLAddr string, ctx *cli.Context) *ethereum.Node {
+func CreateNode(ctx *cli.Context) *ethereum.Node {
+	tmtCfg := config.MakeTendermintConfig(ctx)
+	
+	// Step 1: Setup the go-ethereum node and start it
+	tendermintLAddr := fmt.Sprintf("tcp://%s:%d", "127.0.0.1", tmtCfg.RpcListenPort)
 	stack, cfg := makeConfigNode(ctx)
 
 	// Register New ABCI Application Service

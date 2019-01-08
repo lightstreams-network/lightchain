@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/common"
+	"io/ioutil"
 )
 
 var blankGenesis = new(core.Genesis)
@@ -40,4 +41,13 @@ func ExtractSender(tx *types.Transaction) (common.Address, error) {
 	}
  	// Make sure the transaction is signed properly
 	return types.Sender(signer, tx)
+}
+
+func ReadFileContent(genesisPath string) ([]byte, error) {
+	genesisBlob, err := ioutil.ReadFile(genesisPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return genesisBlob, nil
 }

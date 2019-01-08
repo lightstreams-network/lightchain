@@ -177,6 +177,14 @@
   revision = "2a09253e352a56f419bd88effab0483f52da4c7d"
 
 [[projects]]
+  digest = "1:7fc160b460a6fc506b37fcca68332464c3f2cd57b6e3f111f26c5bbfd2d5518e"
+  name = "github.com/fsnotify/fsnotify"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
+  version = "v1.4.7"
+
+[[projects]]
   digest = "1:0b9c3ad6c948d57a379da9c4e1cdd989b1c73ddc5ec8673f52a9539ce60a109b"
   name = "github.com/go-kit/kit"
   packages = [
@@ -285,6 +293,25 @@
   version = "v0.5.0"
 
 [[projects]]
+  digest = "1:071bcbf82c289fba4d3f63c876bf4f0ba7eda625cd60795e0a03ccbf949e517a"
+  name = "github.com/hashicorp/hcl"
+  packages = [
+    ".",
+    "hcl/ast",
+    "hcl/parser",
+    "hcl/printer",
+    "hcl/scanner",
+    "hcl/strconv",
+    "hcl/token",
+    "json/parser",
+    "json/scanner",
+    "json/token",
+  ]
+  pruneopts = "T"
+  revision = "8cb6e5b959231cc1119e43259c4a608f9c51a241"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:a33cc2e4fb12c58430d2aae5834ff6e84cb609da97692e1fe2aa0cd5ebc92623"
   name = "github.com/huin/goupnp"
   packages = [
@@ -356,6 +383,14 @@
   revision = "b84e30acd515aadc4b783ad4ff83aff3299bdfe0"
 
 [[projects]]
+  digest = "1:53e8c5c79716437e601696140e8b1801aae4204f4ec54a504333702a49572c4f"
+  name = "github.com/magiconair/properties"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "c2353362d570a7bfa228149c62842019201cfb71"
+  version = "v1.8.0"
+
+[[projects]]
   digest = "1:b168836ecd85a2d138391dbc464d2442ea9400c29cc0636f2c6056b996692e29"
   name = "github.com/mattn/go-colorable"
   packages = ["."]
@@ -388,6 +423,14 @@
   version = "v1.0.1"
 
 [[projects]]
+  digest = "1:53bc4cd4914cd7cd52139990d5170d6dc99067ae31c56530621b18b35fc30318"
+  name = "github.com/mitchellh/mapstructure"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "3536a929edddb9a5b34bd6861dc4a9647cb459fe"
+  version = "v1.1.2"
+
+[[projects]]
   branch = "master"
   digest = "1:84bd7f8a2e0bcd53ddc33c3b47c34c1fe340c8632cbe928f7f8ae10ec6ecdd62"
   name = "github.com/mohae/deepcopy"
@@ -402,6 +445,14 @@
   pruneopts = "T"
   revision = "adf5a7427709b9deb95d29d3fa8a2bf9cfd388f1"
   version = "v1.2"
+
+[[projects]]
+  digest = "1:ccf9949c9c53e85dcb7e2905fc620571422567040925381e6baa62f0b7b850fe"
+  name = "github.com/pelletier/go-toml"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "c01d1270ff3e442a8a57cddc1c92dc1138598194"
+  version = "v1.2.0"
 
 [[projects]]
   digest = "1:f3e53e82160441459d6b3755357a3809ccd361db218c15aca2fc397966f92ccb"
@@ -425,6 +476,7 @@
   packages = [
     "prometheus",
     "prometheus/internal",
+    "prometheus/promhttp",
   ]
   pruneopts = "T"
   revision = "505eaef017263e299324067d40ca2c48f6a2cf50"
@@ -511,6 +563,49 @@
   version = "v1.6.0"
 
 [[projects]]
+  digest = "1:2b9e473441ec584565880b55467ba1797417f42a60d92af4a761f8485a57e4d0"
+  name = "github.com/spf13/afero"
+  packages = [
+    ".",
+    "mem",
+  ]
+  pruneopts = "T"
+  revision = "a5d6946387efe7d64d09dcba68cdd523dc1273a3"
+  version = "v1.2.0"
+
+[[projects]]
+  digest = "1:08d65904057412fc0270fc4812a1c90c594186819243160dc779a402d4b6d0bc"
+  name = "github.com/spf13/cast"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "8c9545af88b134710ab1cd196795e7f2388358d7"
+  version = "v1.3.0"
+
+[[projects]]
+  digest = "1:68ea4e23713989dc20b1bded5d9da2c5f9be14ff9885beef481848edd18c26cb"
+  name = "github.com/spf13/jwalterweatherman"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "4a4406e478ca629068e7768fc33f3f044173c0a6"
+  version = "v1.0.0"
+
+[[projects]]
+  digest = "1:0f775ea7a72e30d5574267692aaa9ff265aafd15214a7ae7db26bc77f2ca04dc"
+  name = "github.com/spf13/pflag"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "298182f68c66c05229eb03ac171abe6e309ee79a"
+  version = "v1.0.3"
+
+[[projects]]
+  digest = "1:fefab651e5663d271bda04e3fac63e52d642b454ef88dc1b78deca05f267e94e"
+  name = "github.com/spf13/viper"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "6d33b5a963d922d182c91e8a1c88d81fd150cfd4"
+  version = "v1.3.1"
+
+[[projects]]
   branch = "master"
   digest = "1:7b17050757aaa2f52fcc582125d7abaf5fc2ff273bf023da0c4f98e6f2ebed5f"
   name = "github.com/syndtr/goleveldb"
@@ -555,7 +650,10 @@
     "abci/example/kvstore",
     "abci/server",
     "abci/types",
+    "blockchain",
     "config",
+    "consensus",
+    "consensus/types",
     "crypto",
     "crypto/ed25519",
     "crypto/encoding/amino",
@@ -564,23 +662,34 @@
     "crypto/multisig/bitarray",
     "crypto/secp256k1",
     "crypto/tmhash",
+    "evidence",
     "libs/autofile",
     "libs/clist",
     "libs/common",
     "libs/db",
+    "libs/events",
     "libs/fail",
     "libs/flowrate",
     "libs/log",
     "libs/pubsub",
     "libs/pubsub/query",
     "mempool",
+    "node",
     "p2p",
     "p2p/conn",
+    "p2p/pex",
+    "privval",
     "proxy",
+    "rpc/core",
     "rpc/core/types",
+    "rpc/grpc",
     "rpc/lib/client",
+    "rpc/lib/server",
     "rpc/lib/types",
     "state",
+    "state/txindex",
+    "state/txindex/kv",
+    "state/txindex/null",
     "types",
     "types/time",
     "version",
@@ -635,6 +744,7 @@
     "http2/hpack",
     "idna",
     "internal/timeseries",
+    "netutil",
     "trace",
     "websocket",
   ]
@@ -778,6 +888,14 @@
   revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
   version = "v1.20.0"
 
+[[projects]]
+  digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
+  name = "gopkg.in/yaml.v2"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
+  version = "v2.2.2"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
@@ -805,13 +923,21 @@
     "github.com/ethereum/go-ethereum/rpc",
     "github.com/golang/protobuf/proto",
     "github.com/mattn/go-colorable",
+    "github.com/spf13/viper",
     "github.com/tendermint/tendermint/abci/example/code",
     "github.com/tendermint/tendermint/abci/server",
     "github.com/tendermint/tendermint/abci/types",
+    "github.com/tendermint/tendermint/config",
+    "github.com/tendermint/tendermint/libs/common",
     "github.com/tendermint/tendermint/libs/log",
+    "github.com/tendermint/tendermint/node",
+    "github.com/tendermint/tendermint/p2p",
+    "github.com/tendermint/tendermint/privval",
+    "github.com/tendermint/tendermint/proxy",
     "github.com/tendermint/tendermint/rpc/core/types",
     "github.com/tendermint/tendermint/rpc/lib/client",
     "github.com/tendermint/tmlibs/common",
+    "github.com/tendermint/tmlibs/log",
     "gopkg.in/urfave/cli.v1",
   ]
   solver-name = "gps-cdcl"
