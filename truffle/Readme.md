@@ -10,7 +10,7 @@ cp .env.sample .env
 Recommended values:
 ```
 ROOT_ACCOUNT="0x4f5adedca6d869e9f5f7dcf4b7a9dfa8231a095f"
-PWD="ggarri86"
+PASSPHRASE="ggarri86"
 ```
 
 That account corresponds to one of the ones defined
