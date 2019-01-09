@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 	
-	tmtCfg "github.com/tendermint/tendermint/config"
+	tmtConfig "github.com/tendermint/tendermint/config"
 	
 	"github.com/lightstreams-network/lightchain/utils"
 )
@@ -22,7 +22,7 @@ type TendermintConfig struct{
 func MakeTendermintDir(ctx *cli.Context) string {
 	homeDir := MakeHomeDir(ctx)
 	dataDir := filepath.Join(homeDir, "tendermint")
-	tmtCfg.EnsureRoot(dataDir)
+	tmtConfig.EnsureRoot(dataDir)
 	return dataDir
 }
 
@@ -30,12 +30,12 @@ func MakeTendermintConfig(ctx *cli.Context) TendermintConfig {
 	return TendermintConfig {
 		uint16(ctx.GlobalInt(utils.TendermintRpcListenPortFlag.Name)),
 		uint16(ctx.GlobalInt(utils.TendermintP2PListenPortFlag.Name)),
-		uint16(ctx.GlobalInt(utils.ProxyListenPortFlag.Name)),
+		uint16(ctx.GlobalInt(utils.TendermintProxyListenPortFlag.Name)),
 	}
 }
 
-func ParseTendermintConfig(ctx *cli.Context) (*tmtCfg.Config, error) {
-	cfg := tmtCfg.DefaultConfig()
+func ParseTendermintConfig(ctx *cli.Context) (*tmtConfig.Config, error) {
+	cfg := tmtConfig.DefaultConfig()
 	dataDir := MakeTendermintDir(ctx);
 	cfg.SetRoot(dataDir)
 	initViper(path.Join(dataDir, "config"))

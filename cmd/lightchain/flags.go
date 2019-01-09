@@ -10,7 +10,7 @@ import (
 var (
 	// flags that configure the go-ethereum node
 	NodeFlags = []cli.Flag{
-		ethUtils.DataDirFlag,
+		//ethUtils.DataDirFlag,
 		ethUtils.KeyStoreDirFlag,
 		ethUtils.NoUSBFlag,
 		ethUtils.NetworkIdFlag,
@@ -48,14 +48,15 @@ var (
 
 	// flags that configure the ABCI app
 	LightchainFlags = []cli.Flag{
+		utils.HomeDirFlag,
 		utils.TendermintRpcListenPortFlag,
 		utils.TendermintP2PListenPortFlag,
-		utils.ProxyListenPortFlag,
+		utils.TendermintProxyListenPortFlag,
 		
 		utils.TargetGasLimitFlag,
-		utils.TendermintAddrFlag,
+		//utils.TendermintAddrFlag,
 		//utils.ABCIAddrFlag,
-		//utils.ABCIProtocolFlag,
+		utils.ABCIProtocolFlag,
 		utils.VerbosityFlag,
 		utils.ConfigFileFlag,
 		//utils.WithTendermintFlag,

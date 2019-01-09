@@ -1,14 +1,14 @@
 package tendermint
 
 import (
-	"os"
 	"path/filepath"
 	"gopkg.in/urfave/cli.v1"
 	
-	tmtCfg "github.com/tendermint/tendermint/config"
+	tmtConfig "github.com/tendermint/tendermint/config"
 	tmtCommon "github.com/tendermint/tendermint/libs/common"
 	tmtNode "github.com/tendermint/tendermint/node"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
+	tmtFlags "github.com/tendermint/tendermint/libs/cli/flags"
 	
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/privval"
@@ -16,13 +16,11 @@ import (
 	"github.com/lightstreams-network/lightchain/config"
 	"github.com/lightstreams-network/lightchain/utils"
 	"fmt"
-	"os/signal"
-	"syscall"
 	"github.com/tendermint/tendermint/proxy"
 )
 
 func InitNode(ctx *cli.Context) error {
-	cfg := tmtCfg.DefaultConfig()
+	cfg := tmtConfig.DefaultConfig()
 	logger := utils.LightchainLogger()
 	
 	// Step 1: Init chain within --datadir by read genesis
@@ -85,33 +83,28 @@ func StartNode(ctx *cli.Context, n *tmtNode.Node) error {
 	logger := utils.LightchainLogger()
 	
 	// Stop upon receiving SIGTERM or CTRL-C
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		for sig := range c {
-			logger.Error(fmt.Sprintf("captured %v, exiting...", sig))
-			if n.IsRunning() {
-				n.Stop()
-			}
-			os.Exit(1)
-		}
-	}()
+	//c := make(chan os.Signal, 1)
+	//signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	//go func() {
+	//	for sig := range c {
+	//		logger.Error(fmt.Sprintf("captured %v, exiting...", sig))
+	//		if n.IsRunning() {
+	//			n.Stop()
+	//		}
+	//		os.Exit(1)
+	//	}
+	//}()
 
 	if err := n.Start(); err != nil {
 		return fmt.Errorf("Failed to start node: %v", err)
 	}
 	logger.Info("Started node", "nodeInfo", n.Switch().NodeInfo())
 
-	// Run forever
-	select {}
-
 	return nil
 }
 
-
-
 func CreateNewNode(ctx *cli.Context, logger tmtLog.Logger) (*tmtNode.Node, error) {
-	tmtConfig := config.MakeTendermintConfig(ctx)
+	ctxTmtCfg := config.MakeTendermintConfig(ctx)
 	cfg, err := config.ParseTendermintConfig(ctx)
 	if err != nil {
 		return nil, err
@@ -123,13 +116,14 @@ func CreateNewNode(ctx *cli.Context, logger tmtLog.Logger) (*tmtNode.Node, error
 		return nil, err
 	}
 	
-	defaultRPCfg := tmtCfg.DefaultRPCConfig()
-	defaultRPCfg.ListenAddress = fmt.Sprintf("tcp://0.0.0.0:%d", tmtConfig.RpcListenPort)
-	cfg.RPC = defaultRPCfg
+	cfg.RPC.ListenAddress = fmt.Sprintf("tcp://0.0.0.0:%d", ctxTmtCfg.RpcListenPort)
+	cfg.P2P.ListenAddress = fmt.Sprintf("tcp://0.0.0.0:%d", ctxTmtCfg.P2pListenPort)
+	cfg.ProxyApp = fmt.Sprintf("tcp://127.0.0.1:%d", ctxTmtCfg.ProxyListenPort)
 	
-	defaultP2P := tmtCfg.DefaultP2PConfig()
-	defaultP2P.ListenAddress = fmt.Sprintf("tcp://0.0.0.0:%d", tmtConfig.P2pListenPort)
-	cfg.P2P = defaultP2P
+	logger, err = tmtFlags.ParseLogLevel(cfg.LogLevel, logger, tmtConfig.DefaultLogLevel())
+	if err != nil {
+		return nil, err
+	}
 	
 	return tmtNode.NewNode(cfg,
 		privval.LoadOrGenFilePV(cfg.PrivValidatorFile()),

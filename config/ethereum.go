@@ -45,23 +45,22 @@ func DefaultNodeConfig() node.Config {
 	cfg.HTTPModules = append(cfg.HTTPModules, "eth")
 	cfg.WSModules = append(cfg.WSModules, "eth")
 	cfg.IPCPath = "geth.ipc"
-
-	emHome := os.Getenv(emHome)
-	if emHome != "" {
-		cfg.DataDir = emHome
-	}
+	cfg.DataDir = utils.DefaultHomeDir()
 
 	return cfg
 }
 
-// SetLightchainNodeDefaultConfig takes a node configuration and applies lightchain specific configuration
-func SetLightchainNodeDefaultConfig(cfg *node.Config) {
+// SetNodeConfig takes a node configuration and applies lightchain specific configuration
+func SetNodeConfig(ctx *cli.Context, cfg *node.Config) {
 	cfg.P2P.MaxPeers = 0
 	cfg.P2P.NoDiscovery = true
+	if ctx.GlobalIsSet(utils.HomeDirFlag.Name) {
+		cfg.DataDir = ctx.GlobalString(utils.HomeDirFlag.Name)
+	}
 }
 
-// SetLightchainEthDefaultConfig takes a ethereum configuration and applies lightchain specific configuration
-func SetLightchainEthDefaultConfig(cfg *eth.Config) {
+// SetEthConfig takes a ethereum configuration and applies lightchain specific configuration
+func SetEthConfig(cfg *eth.Config) {
 	// PoW is being replaced by PoA with the usage of Tendermint
 	cfg.Ethash.PowMode = ethash.ModeFake
 	
@@ -75,14 +74,11 @@ func SetLightchainEthDefaultConfig(cfg *eth.Config) {
 }
 
 func MakeGenesisPath(ctx *cli.Context) string {
-	genesisPath := ctx.Args().First()
-	if genesisPath != "" {
-		return genesisPath
-	} else if ctx.GlobalIsSet(GenesisPathFlag.Name) {
+	homeDir := MakeHomeDir(ctx)
+	genesisPath := path.Join(homeDir, "genesis.json")
+
+	if ctx.GlobalIsSet(GenesisPathFlag.Name) {
 		genesisPath = ctx.GlobalString(GenesisPathFlag.Name)
-	} else {
-		lightchainDataDir := MakeHomeDir(ctx)
-		genesisPath = path.Join(lightchainDataDir, "genesis.json")
 	}
 
 	return genesisPath

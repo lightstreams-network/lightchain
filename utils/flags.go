@@ -3,6 +3,7 @@ package utils
 
 import (
 	"gopkg.in/urfave/cli.v1"
+	"github.com/ethereum/go-ethereum/cmd/utils"
 )
 
 // @TODO Move to consts remaining default values
@@ -18,43 +19,31 @@ var (
 	// ----------------------------
 	// New Ones
 	TendermintRpcListenPortFlag = cli.UintFlag{
-		Name:  "rpc_listen_port",
+		Name:  "tmt_rpc_port",
 		Value: TendermintRpcListenPort,
 		Usage: "This is the port that lightchain will use to connect to the tendermint.",
 	}
-	ProxyListenPortFlag = cli.UintFlag{
-		Name:  "proxy_listen_port",
+	TendermintProxyListenPortFlag = cli.UintFlag{
+		Name:  "tmt_proxy_port",
 		Value: ProxyListenPort,
-		Usage: "This is the port that lightchain will use to connect to the tendermint.",
+		Usage: "This is the port that tendermint will use to connect to the lightchain.",
 	}
 	TendermintP2PListenPortFlag = cli.UintFlag{
-		Name:  "p2p_listen_port",
+		Name:  "tmt_p2p_port",
 		Value: TendermintP2PListenPort,
-		Usage: "This is the port that lightchain will use to connect to the tendermint.",
+		Usage: "This is the port that tendermint nodes will use to connect achieve consensus.",
+	}
+	HomeDirFlag = utils.DirectoryFlag{
+		Name:  "homedir",
+		Usage: "Data directory for the databases and keystore",
+		Value: utils.DirectoryString{DefaultHomeDir()},
 	}
 	
 	
 	// ----------------------------
 	// ABCI Flags
 
-	// TendermintAddrFlag is the address that lightchain will use to connect to the tendermint core node
-	// #stable - 0.4.0
-	TendermintAddrFlag = cli.StringFlag{
-		Name:  "tendermint_addr",
-		Value: "tcp://127.0.0.1:26657",
-		Usage: "This is the address that lightchain will use to connect to the tendermint core node. Please provide a port.",
-	}
-
-	// ABCIAddrFlag is the address that lightchain will use to listen to incoming ABCI connections
-	// #stable - 0.4.0
-	ABCIAddrFlag = cli.StringFlag{
-		Name:  "abci_laddr",
-		Value: "tcp://0.0.0.0:26658",
-		Usage: "This is the address that the ABCI server will use to listen to incoming connection from tendermint core.",
-	}
-
 	// ABCIProtocolFlag defines whether GRPC or SOCKET should be used for the ABCI connections
-	// #stable - 0.4.0
 	ABCIProtocolFlag = cli.StringFlag{
 		Name:  "abci_protocol",
 		Value: "socket",
@@ -82,14 +71,5 @@ var (
 		Name:  "targetgaslimit",
 		Usage: "Target gas limit sets the artificial target gas floor for the blocks to mine",
 		Value: GenesisTargetGasLimit,
-	}
-
-	// WithTendermintFlag asks to start Tendermint
-	// `tendermint init` and `tendermint node` when `lightchain init`
-	// and `lightchain` are invoked respectively.
-	WithTendermintFlag = cli.BoolFlag{
-		Name: "with-tendermint",
-		Usage: "If set, it will invoke `tendermint init` and `tendermint node` " +
-			"when `lightchain init` and `lightchain` are invoked respectively",
 	}
 )

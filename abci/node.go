@@ -130,15 +130,15 @@ func makeConfigNode(ctx *cli.Context) (*ethereum.Node, config.GethConfig) {
 		Node: config.DefaultNodeConfig(),
 	}
 
-	config.SetLightchainNodeDefaultConfig(&cfg.Node)
 	ethUtils.SetNodeConfig(ctx, &cfg.Node)
-	stack, err := ethereum.New(&cfg.Node)
+	config.SetNodeConfig(ctx, &cfg.Node)
+ 	stack, err := ethereum.New(&cfg.Node)
 	if err != nil {
 		ethUtils.Fatalf("Failed to create the protocol stack: %v", err)
 	}
 
-	config.SetLightchainEthDefaultConfig(&cfg.Eth)
 	ethUtils.SetEthConfig(ctx, &stack.Node, &cfg.Eth)
+	config.SetEthConfig(&cfg.Eth)
 
 	return stack, cfg
 }

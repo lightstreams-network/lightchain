@@ -10,7 +10,6 @@ import (
 	ethLog "github.com/ethereum/go-ethereum/log"
 	
 	tmtServer "github.com/tendermint/tendermint/abci/server"
-	tmtLog "github.com/tendermint/tendermint/libs/log"
 	tmtCommon "github.com/tendermint/tmlibs/common"
 
 	"github.com/lightstreams-network/lightchain/utils"
@@ -67,11 +66,11 @@ func LightchainNodeCmd(ctx *cli.Context) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	ethApp.SetLogger(utils.LightchainLogger().With("module", "lightchain"))
+	ethLogger := utils.LightchainLogger()
+	ethApp.SetLogger(ethLogger.With("module", "lightchain"))
 
 	// Start the app on the ABCI server listener
-	//abciAddr := ctx.GlobalString(utils.ABCIAddrFlag.Name)
-	abciAddr := fmt.Sprintf("tcp://0.0.0.0:%d", ctx.GlobalInt(utils.ProxyListenPortFlag.Name))
+	abciAddr := fmt.Sprintf("tcp://0.0.0.0:%d", ctx.GlobalInt(utils.TendermintProxyListenPortFlag.Name))
 	abciProtocol := ctx.GlobalString(utils.ABCIProtocolFlag.Name)
 	abciSrv, err := tmtServer.NewServer(abciAddr, abciProtocol, ethApp)
 	if err != nil {
@@ -79,7 +78,7 @@ func LightchainNodeCmd(ctx *cli.Context) {
 		os.Exit(1)
 	}
 
-	abciLogger := tmtLog.NewTMLogger(tmtLog.NewSyncWriter(os.Stdout))
+	abciLogger := utils.LightchainLogger()
 	abciSrv.SetLogger(abciLogger.With("module", "abci-server"))
 
 	if err := abciSrv.Start(); err != nil {
@@ -87,26 +86,27 @@ func LightchainNodeCmd(ctx *cli.Context) {
 		os.Exit(1)
 	}
 	
-	tmtLogger := tmtLog.NewTMLogger(tmtLog.NewSyncWriter(os.Stdout))
-	tmtSrv, err := tendermint.CreateNewNode(ctx,  tmtLogger.With("module", "tendermint"))
+	tmtLogger := utils.LightchainLogger()
+	tmtNode, err := tendermint.CreateNewNode(ctx,  tmtLogger.With("module", "tendermint"))
 	if err != nil {
 		fmt.Errorf("Failed to create node: %v", err)
 	}
-	if err := tendermint.StartNode(ctx, tmtSrv); err != nil {
+	if err := tendermint.StartNode(ctx, tmtNode); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
 	tmtCommon.TrapSignal(func() {
+		if err := tmtNode.Stop(); err != nil {
+			fmt.Errorf("Error stopping Tendermint service", err)
+		}
 		if err := abciNode.Stop(); err != nil {
 			fmt.Errorf("Error stopping Geth Node", err)
 		}
 		if err := abciSrv.Stop(); err != nil {
 			fmt.Errorf("Error stopping ABCI service", err)
 		}
-		if err := tmtSrv.Stop(); err != nil {
-			fmt.Errorf("Error stopping Tendermint service", err)
-		}
+		os.Exit(1)
 	})
 }
 

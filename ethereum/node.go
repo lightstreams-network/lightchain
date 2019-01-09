@@ -20,15 +20,13 @@ type Node struct {
 
 func InitNode(ctx *cli.Context) error {
 	// Step 1: Init chain within --datadir by read genesis
-	homeDir := config.MakeHomeDir(ctx)
-	dataDir := filepath.Join(homeDir, config.DataFolderName)
-	
-	chainDb, err := ethdb.NewLDBDatabase(filepath.Join(dataDir, "chaindata"), 0, 0)
+	chainDataDir := config.MakeChainDataDir(ctx)
+	chainDb, err := ethdb.NewLDBDatabase(chainDataDir, 0, 0)
 	if err != nil {
 		ethUtils.Fatalf("could not open database: %v", err)
 	}
 
-	keystoreDir := filepath.Join(homeDir, "keystore")
+	keystoreDir := config.MakeKeystoreDir(ctx)
 	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
 		ethUtils.Fatalf("mkdirAll keyStoreDir: %v", err)
 	}
@@ -65,7 +63,7 @@ func InitNode(ctx *cli.Context) error {
 		ethLog.Warn("marshaling content err: %v", err)
 	}
 	
-	genesisFileName := filepath.Join(homeDir, "genesis.json")
+	genesisFileName := config.MakeGenesisPath(ctx)
 	f, err := os.Create(genesisFileName)
 	if _, err := f.Write(genesisBlob); err != nil {
 		ethLog.Warn("write content %q err: %v", genesisFileName, err)

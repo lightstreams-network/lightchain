@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
-	"github.com/ethereum/go-ethereum/node"
+	"github.com/lightstreams-network/lightchain/utils"
 )
 
 const (
@@ -20,8 +20,9 @@ const (
 )
 
 
-// The config folder name inside the lightchain's node --datadir ~/.lightchain
 const DataFolderName = "lightchain"
+const KeystoreFolderName = "keystore"
+const ChainDataFolderName = "chaindata"
 
 // The config filename inside the DataFolderName
 const ConfigFilename = "config.json"
@@ -57,19 +58,15 @@ func ReadDefaultConfig() ([]byte) {
 
 
 func MakeHomeDir(ctx *cli.Context) string {
-	dPath := node.DefaultDataDir()
-
-	emHome := os.Getenv(emHome)
-	if emHome != "" {
-		dPath = emHome
-	}
-
-	if ctx.GlobalIsSet(ethUtils.DataDirFlag.Name) {
-		dPath = ctx.GlobalString(ethUtils.DataDirFlag.Name)
+	
+	dPath := utils.DefaultHomeDir()
+	
+	if ctx.GlobalIsSet(utils.HomeDirFlag.Name) {
+		dPath = ctx.GlobalString(utils.HomeDirFlag.Name)
 	}
 
 	if dPath == "" {
-		ethUtils.Fatalf("Cannot determine default data directory, please set manually (--datadir)")
+		ethUtils.Fatalf("Cannot determine default data directory, please set manually (--homedir)")
 	}
 	
 	if err := os.MkdirAll(dPath, os.ModePerm); err != nil {
@@ -88,6 +85,25 @@ func MakeDataDir(ctx *cli.Context) string {
 	return dataDir
 }
 
+func MakeKeystoreDir(ctx *cli.Context) string {
+	homeDir := MakeHomeDir(ctx)
+	keystoreDir := filepath.Join(homeDir, KeystoreFolderName)
+	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
+		ethUtils.Fatalf("Keystore folder err: %v", err)
+	}
+	return keystoreDir
+}
+
+func MakeChainDataDir(ctx *cli.Context) string {
+	dataDir := MakeDataDir(ctx)
+	chainDataDir := filepath.Join(dataDir, ChainDataFolderName)
+	if err := os.MkdirAll(chainDataDir, os.ModePerm); err != nil {
+		ethUtils.Fatalf("ChainData folder err: %v", err)
+	}
+	return chainDataDir
+}
+
 func ConfigPath(ctx *cli.Context) string {
-	return filepath.Join(ctx.GlobalString(ethUtils.DataDirFlag.Name), DataFolderName, ConfigFilename)
+	dataDir := MakeDataDir(ctx)
+	return filepath.Join(dataDir, ConfigFilename)
 }
