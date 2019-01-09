@@ -1,4 +1,4 @@
-package ethereum
+package database
 
 import (
 	"fmt"
@@ -13,6 +13,8 @@ import (
 type NetRPCService struct {
 	networkVersion uint64
 }
+
+//var _ ethapi.PublicNetAPI = NetRPCService{}
 
 // NewNetRPCService creates a new net API instance.
 // #unstable

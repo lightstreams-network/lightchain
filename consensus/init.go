@@ -1,0 +1,72 @@
+package consensus
+
+import (
+	"github.com/tendermint/tendermint/privval"
+	"github.com/tendermint/tendermint/p2p"
+	"path/filepath"
+	"gopkg.in/urfave/cli.v1"
+	
+	tmtConfig "github.com/tendermint/tendermint/config"
+	tmtCommon "github.com/tendermint/tendermint/libs/common"
+	"github.com/lightstreams-network/lightchain/log"
+)
+
+func InitNode(ctx *cli.Context) error {
+	cfg := tmtConfig.DefaultConfig()
+	logger := log.NewLogger()
+	
+	// Step 1: Init chain within --datadir by read genesis
+	dataDir := MakeTendermintDir(ctx)
+	cfg.SetRoot(dataDir)
+
+	privValFile := cfg.PrivValidatorFile()
+	var pv *privval.FilePV
+	if tmtCommon.FileExists(privValFile) {
+		pv = privval.LoadFilePV(privValFile)
+		logger.Info("Found private validator", "path", privValFile)
+	} else {
+		pv = privval.GenFilePV(privValFile)
+		pv.Save()
+		logger.Info("Generated private validator", "path", privValFile)
+	}
+
+	nodeKeyFile := cfg.NodeKeyFile()
+	if tmtCommon.FileExists(nodeKeyFile) {
+		logger.Info("Found node key", "path", nodeKeyFile)
+	} else {
+		if _, err := p2p.LoadOrGenNodeKey(nodeKeyFile); err != nil {
+			return err
+		}
+		logger.Info("Generated node key", "path", nodeKeyFile)
+	}
+
+	// genesis file
+	genFile := cfg.GenesisFile()
+	if tmtCommon.FileExists(genFile) {
+		logger.Info("Found genesis file", "path", genFile)
+	} else {
+		genDoc, err := ReadTendermintDefaultGenesis()
+		if err != nil {
+			return err
+		}
+		if err := tmtCommon.WriteFile(genFile, genDoc, 0644); err != nil {
+			return err
+		}
+		logger.Info("Generated genesis file", "path", genFile)
+	}
+	
+	// Config file
+	cfgDir := filepath.Join(dataDir, "config")
+	cfgFile := filepath.Join(cfgDir, "config.toml")
+	cfgDoc, err := ReadTendermintDefaultConfig()
+	if err != nil {
+		return err
+	}
+	if err := tmtCommon.WriteFile(cfgFile, cfgDoc, 0644); err != nil {
+		return err
+	}
+	logger.Info("Generated config file", "path", cfgFile)
+	
+	return nil
+}
+

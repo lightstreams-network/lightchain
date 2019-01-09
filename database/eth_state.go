@@ -1,4 +1,4 @@
-package ethereum
+package database
 
 import (
 	"math/big"

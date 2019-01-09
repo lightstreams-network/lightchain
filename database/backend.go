@@ -1,4 +1,4 @@
-package ethereum
+package database
 
 import (
 	"github.com/ethereum/go-ethereum/common"

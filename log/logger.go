@@ -1,4 +1,4 @@
-package utils
+package log
 
 import (
 	"io"
@@ -29,47 +29,47 @@ func SetupLogger(lvl int) error {
 }
 
 // Interface assertions
-var _ tmtLog.Logger = (*lightchainLogger)(nil)
+var _ tmtLog.Logger = (*logger)(nil)
 
 // ---------------------------
-// LightchainLogger - wraps the logger in tmlibs
+// Logger - wraps the logger in tmlibs
 
-type lightchainLogger struct {
+type logger struct {
 	keyvals []interface{}
 }
 
-// LightchainLogger returns a new instance of an lightchain logger. With() should
+// Logger returns a new instance of an lightchain logger. With() should
 // be called upon the returned instance to set default keys
 // #unstable
-func LightchainLogger() tmtLog.Logger {
-	logger := lightchainLogger{keyvals: make([]interface{}, 0)}
+func NewLogger() tmtLog.Logger {
+	logger := logger{keyvals: make([]interface{}, 0)}
 	return logger
 }
 
 // Debug proxies everything to the go-ethereum logging facilities
 // #unstable
-func (l lightchainLogger) Debug(msg string, ctx ...interface{}) {
+func (l logger) Debug(msg string, ctx ...interface{}) {
 	ctx = append(l.keyvals, ctx...)
 	log.Debug(msg, ctx...)
 }
 
 // Info proxies everything to the go-ethereum logging facilities
 // #unstable
-func (l lightchainLogger) Info(msg string, ctx ...interface{}) {
+func (l logger) Info(msg string, ctx ...interface{}) {
 	ctx = append(l.keyvals, ctx...)
 	log.Info(msg, ctx...)
 }
 
 // Error proxies everything to the go-ethereum logging facilities
 // #unstable
-func (l lightchainLogger) Error(msg string, ctx ...interface{}) {
+func (l logger) Error(msg string, ctx ...interface{}) {
 	ctx = append(l.keyvals, ctx...)
 	log.Error(msg, ctx...)
 }
 
 // With proxies everything to the go-ethereum logging facilities
 // #unstable
-func (l lightchainLogger) With(ctx ...interface{}) tmtLog.Logger {
+func (l logger) With(ctx ...interface{}) tmtLog.Logger {
 	l.keyvals = append(l.keyvals, ctx...)
 	return l
 }

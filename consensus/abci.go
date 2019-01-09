@@ -1,4 +1,4 @@
-package abci
+package consensus
 
 import (
 	"encoding/json"
@@ -10,15 +10,14 @@ import (
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
 
-	"github.com/lightstreams-network/lightchain/ethereum"
+	"github.com/lightstreams-network/lightchain/database"
 	"github.com/lightstreams-network/lightchain/utils"
 	"bytes"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
-	abciTypes "github.com/lightstreams-network/lightchain/abci/types"
+	abciTypes "github.com/lightstreams-network/lightchain/consensus/types"
 	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
-	"github.com/lightstreams-network/lightchain/abci/transaction"
 )
 
 // format of query data
@@ -40,33 +39,30 @@ type LightchainApplicationInterface interface {
 
 // LightchainApplication implements an ABCI application
 type LightchainApplication struct {
-	// ethBackend handles the ethereum state machine
-	// and wrangles other services started by an ethereum node (eg. tx pool)
-	ethBackend *ethereum.Backend // ethBackend ethereum struct
+	// ethBackend handles the database state machine
+	// and wrangles other services started by an database node (eg. tx pool)
+	ethBackend *database.Backend // ethBackend database struct
 
-	// a closure to return the latest current state from the ethereum blockchain
+	// a closure to return the latest current state from the database blockchain
 	getCurrentState func() (*state.StateDB, error)
 
 	checkTxState *state.StateDB
 
-	// an ethereum rpc client we can forward queries to
+	// an database rpc client we can forward queries to
 	rpcClient *rpc.Client
 
 	// strategy for validator compensation
 	strategy *utils.Strategy
 
 	logger tmtLog.Logger
-
-	// Handles all application logic related to transactions
-	txHandler transaction.TxHandler
 }
 
 var _ LightchainApplicationInterface = (*LightchainApplication)(nil) // Verify that T implements I.
 
 // @TODO (ggarri): Compare with "cosmos-sdk/baseapp/baseapp.go"
 // Creates a fully initialised instance of LightchainApplication
-func CreateLightchainApplication(ethBackend *ethereum.Backend,
-	client *rpc.Client, strategy *utils.Strategy, txHandler transaction.TxHandler) (*LightchainApplication, error) {
+func CreateLightchainApplication(ethBackend *database.Backend,
+	client *rpc.Client, strategy *utils.Strategy) (*LightchainApplication, error) {
 
 	txState, err := ethBackend.Ethereum().BlockChain().State()
 	if err != nil {
@@ -79,7 +75,6 @@ func CreateLightchainApplication(ethBackend *ethereum.Backend,
 		getCurrentState: ethBackend.Ethereum().BlockChain().State,
 		checkTxState:    txState.Copy(),
 		strategy:        strategy,
-		txHandler:       txHandler,
 	}
 
 	if err := app.ethBackend.InitEthState(app.Receiver()); err != nil {
@@ -162,7 +157,7 @@ func (app *LightchainApplication) DeliverTx(txBytes []byte) tmtAbciTypes.Respons
 	res := app.ethBackend.DeliverTx(tx)
 	if res.IsErr() {
 		// nolint: errcheck
-		app.logger.Error("DeliverTx: Error delivering tx to ethereum ethBackend", "tx", tx.Hash().String(),
+		app.logger.Error("DeliverTx: Error delivering tx to database ethBackend", "tx", tx.Hash().String(),
 			"err", err)
 		return res
 	}
@@ -193,7 +188,7 @@ func (app *LightchainApplication) Commit() tmtAbciTypes.ResponseCommit {
 	blockHash, err := app.ethBackend.Commit(app.Receiver())
 	if err != nil {
 		// nolint: errcheck
-		app.logger.Error("Error getting latest ethereum state", "err", err)
+		app.logger.Error("Error getting latest database state", "err", err)
 	}
 
 	ethState, err := app.getCurrentState()
@@ -234,7 +229,7 @@ func (app *LightchainApplication) Query(query tmtAbciTypes.RequestQuery) tmtAbci
 //-------------------------------------------------------
 
 // validateTx checks the validity of a tx against the blockchain's current state.
-// it duplicates the logic in ethereum's tx_pool
+// it duplicates the logic in database's tx_pool
 func (app *LightchainApplication) validateTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseCheckTx {
 	app.logger.Info("LightchainApplication::validateTx()", "data", tx.Hash().String())
 	// Heuristic limit, reject transactions over 32KB to prevent DOS attacks
@@ -366,7 +361,7 @@ func (app *LightchainApplication) CollectTx(tx *ethTypes.Transaction) {
 //	return validatorPointers
 //}
 
-// RLP decode ethereum transaction using go-ethereum impl https://github.com/ethereum/go-ethereum/tree/v1.8.11/rlp
+// RLP decode database transaction using go-database impl https://github.com/ethereum/go-ethereum/tree/v1.8.11/rlp
 // TODO (ggarri): Align implementation with https://drive.google.com/file/d/11xB9ilEysXTar3samVE5Zki-QfPqejYj/view
 func decodeRLP(txBytes []byte) (*ethTypes.Transaction, error) {
 	tx := new(ethTypes.Transaction)

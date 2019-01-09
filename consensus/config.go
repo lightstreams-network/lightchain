@@ -1,4 +1,4 @@
-package config
+package consensus
 
 import (
 	"path/filepath"
@@ -19,8 +19,22 @@ type TendermintConfig struct{
 	ProxyListenPort uint16 	// Default: 26658
 }
 
+// The config filename inside the DataFolderName
+const ConfigFilename = "config.json"
+
+type Config struct {
+	DeploymentWhitelist []string `json:"deploymentWhitelist"`
+}
+
+func ReadDefaultConfig() ([]byte) {
+	return []byte(`
+{
+    "deploymentWhitelist": [""]
+}`)
+}
+
 func MakeTendermintDir(ctx *cli.Context) string {
-	homeDir := MakeHomeDir(ctx)
+	homeDir := utils.MakeHomeDir(ctx)
 	dataDir := filepath.Join(homeDir, "tendermint")
 	tmtConfig.EnsureRoot(dataDir)
 	return dataDir
@@ -54,7 +68,7 @@ func ParseTendermintConfig(ctx *cli.Context) (*tmtConfig.Config, error) {
 
 //@TODO Migrate into constant
 func ReadTendermintDefaultGenesis() ([]byte, error) {
-	fPath, err := filepath.Abs(filepath.Join(projectRootPath, "setup/tendermint/genesis.json"))
+	fPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/tendermint/genesis.json"))
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +77,7 @@ func ReadTendermintDefaultGenesis() ([]byte, error) {
 
 //@TODO Migrate into constant
 func ReadTendermintDefaultConfig() ([]byte, error) {
-	fPath, err := filepath.Abs(filepath.Join(projectRootPath, "setup/tendermint/config.toml"))
+	fPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/tendermint/config.toml"))
 	if err != nil {
 		return nil, err
 	}

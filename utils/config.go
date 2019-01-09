@@ -1,22 +1,16 @@
-package config
+package utils
 
 import (
 	"gopkg.in/urfave/cli.v1"
-	"io/ioutil"
 	"os"
 	"path/filepath"
-	"fmt"
-	"encoding/json"
 	
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
-	"github.com/lightstreams-network/lightchain/utils"
 )
 
 const (
 	// Client identifier to advertise over the network
-	clientIdentifier = "lightchain"
-	// Environment variable for home dir
-	emHome = "EMHOME"
+	ClientIdentifier = "lightchain"
 )
 
 
@@ -24,45 +18,30 @@ const DataFolderName = "lightchain"
 const KeystoreFolderName = "keystore"
 const ChainDataFolderName = "chaindata"
 
-// The config filename inside the DataFolderName
-const ConfigFilename = "config.json"
-
-type Config struct {
-	DeploymentWhitelist []string `json:"deploymentWhitelist"`
-}
-
-var projectRootPath = filepath.Join(os.Getenv("GOPATH"), "src/github.com/lightstreams-network", "lightchain")
+var ProjectRootPath = filepath.Join(os.Getenv("GOPATH"), "src/github.com/lightstreams-network", "lightchain")
 
 
-func NewLightchainConfig(path string) (Config, error) {
-	buffer, err := ioutil.ReadFile(path)
-	if err != nil {
-		return Config{}, fmt.Errorf("unable to open LS's configuration file %s", path)
-	}
-
-	cfg := new(Config)
-	err = json.Unmarshal(buffer, cfg)
-	if err != nil {
-		return Config{}, err
-	}
-
-	return *cfg, nil
-}
-
-func ReadDefaultConfig() ([]byte) {
-	return []byte(`
-{
-    "deploymentWhitelist": [""]
-}`)
-}
-
+//func NewLightchainConfig(path string) (consensus.Config, error) {
+//	buffer, err := ioutil.ReadFile(path)
+//	if err != nil {
+//		return consensus.Config{}, fmt.Errorf("unable to open LS's configuration file %s", path)
+//	}
+//
+//	cfg := new(consensus.Config)
+//	err = json.Unmarshal(buffer, cfg)
+//	if err != nil {
+//		return consensus.Config{}, err
+//	}
+//
+//	return *cfg, nil
+//}
 
 func MakeHomeDir(ctx *cli.Context) string {
 	
-	dPath := utils.DefaultHomeDir()
+	dPath := DefaultHomeDir()
 	
-	if ctx.GlobalIsSet(utils.HomeDirFlag.Name) {
-		dPath = ctx.GlobalString(utils.HomeDirFlag.Name)
+	if ctx.GlobalIsSet(HomeDirFlag.Name) {
+		dPath = ctx.GlobalString(HomeDirFlag.Name)
 	}
 
 	if dPath == "" {
@@ -103,7 +82,7 @@ func MakeChainDataDir(ctx *cli.Context) string {
 	return chainDataDir
 }
 
-func ConfigPath(ctx *cli.Context) string {
-	dataDir := MakeDataDir(ctx)
-	return filepath.Join(dataDir, ConfigFilename)
-}
+//func ConfigPath(ctx *cli.Context) string {
+//	dataDir := MakeDataDir(ctx)
+//	return filepath.Join(dataDir, consensus.ConfigFilename)
+//}

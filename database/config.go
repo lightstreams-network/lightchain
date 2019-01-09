@@ -1,4 +1,4 @@
-package config
+package database
 
 import (
 	"path"
@@ -7,17 +7,23 @@ import (
 	"time"
 	"path/filepath"
 	"io/ioutil"
-	
+	"errors"
+	"reflect"
+
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
 	ethCore "github.com/ethereum/go-ethereum/core"
 	ethLog "github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/eth"
-	"github.com/ethereum/go-ethereum/node"
+	ethNode "github.com/ethereum/go-ethereum/node"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
 	
 	"github.com/lightstreams-network/lightchain/utils"
+	"encoding/json"
 )
+
+var blankGenesis = new(ethCore.Genesis)
+var errBlankGenesis = errors.New("could not parse a valid/non-blank Genesis")
 
 // General settings
 var GenesisPathFlag = ethUtils.DirectoryFlag{
@@ -32,15 +38,15 @@ type ethstatsConfig struct {
 
 type GethConfig struct {
 	Eth      eth.Config
-	Node     node.Config
+	Node     ethNode.Config
 	Ethstats ethstatsConfig
 }
 
 
-// DefaultNodeConfig returns the default configuration for a go-ethereum node
-func DefaultNodeConfig() node.Config {
-	cfg := node.DefaultConfig
-	cfg.Name = clientIdentifier
+// DefaultNodeConfig returns the default configuration for a go-ethereum ethNode
+func DefaultNodeConfig() ethNode.Config {
+	cfg := ethNode.DefaultConfig
+	cfg.Name = utils.ClientIdentifier
 	cfg.Version = params.Version
 	cfg.HTTPModules = append(cfg.HTTPModules, "eth")
 	cfg.WSModules = append(cfg.WSModules, "eth")
@@ -50,8 +56,8 @@ func DefaultNodeConfig() node.Config {
 	return cfg
 }
 
-// SetNodeConfig takes a node configuration and applies lightchain specific configuration
-func SetNodeConfig(ctx *cli.Context, cfg *node.Config) {
+// SetNodeConfig takes a ethNode configuration and applies lightchain specific configuration
+func SetNodeConfig(ctx *cli.Context, cfg *ethNode.Config) {
 	cfg.P2P.MaxPeers = 0
 	cfg.P2P.NoDiscovery = true
 	if ctx.GlobalIsSet(utils.HomeDirFlag.Name) {
@@ -74,7 +80,7 @@ func SetEthConfig(cfg *eth.Config) {
 }
 
 func MakeGenesisPath(ctx *cli.Context) string {
-	homeDir := MakeHomeDir(ctx)
+	homeDir := utils.MakeHomeDir(ctx)
 	genesisPath := path.Join(homeDir, "genesis.json")
 
 	if ctx.GlobalIsSet(GenesisPathFlag.Name) {
@@ -96,7 +102,7 @@ func ReadGenesisFile(ctx *cli.Context) (*ethCore.Genesis, error) {
 		}
 	}
 	
-	genesis, err := utils.ParseBlobGenesis(genesisBlob)
+	genesis, err := parseBlobGenesis(genesisBlob)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +112,7 @@ func ReadGenesisFile(ctx *cli.Context) (*ethCore.Genesis, error) {
 
 
 func readDefaultGenesis() ([]byte, error) {
-	fPath, err := filepath.Abs(filepath.Join(projectRootPath, "setup/genesis.json"))
+	fPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/genesis.json"))
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +120,7 @@ func readDefaultGenesis() ([]byte, error) {
 }
 
 func ReadDefaultKeystore() (map[string][]byte, error) {
-	dPath, err := filepath.Abs(filepath.Join(projectRootPath, "setup/keystore"))
+	dPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/keystore"))
 	if err != nil {
 		return nil, err
 	}
@@ -141,4 +147,22 @@ func ReadDefaultKeystore() (map[string][]byte, error) {
 	}
 
 	return files, nil
+}
+
+// parseGenesisOrDefault tries to read the content from provided
+// genesisPath. If the path is empty or doesn't exist, it will
+// use defaultGenesisBytes as the fallback genesis source. Otherwise,
+// it will open that path and if it encounters an error that doesn't
+// satisfy os.IsNotExist, it returns that error.
+func parseBlobGenesis(genesisBlob []byte) (*ethCore.Genesis, error) {
+	genesis := new(ethCore.Genesis)
+	if err := json.Unmarshal(genesisBlob, genesis); err != nil {
+		return nil, err
+	}
+
+	if reflect.DeepEqual(blankGenesis, genesis) {
+		return nil, errBlankGenesis
+	}
+
+	return genesis, nil
 }

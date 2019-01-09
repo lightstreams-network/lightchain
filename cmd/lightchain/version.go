@@ -1,6 +1,12 @@
-package version
+package main
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+	"gopkg.in/urfave/cli.v1"
+)
+
+
 
 // Major version component of the current release
 const Major = "0"
@@ -15,3 +21,8 @@ var (
 	// Version is the full version string
 	Version = strings.Join([]string{Major, Minor, Fix}, ".");
 )
+
+func VersionCmd(ctx *cli.Context) error {
+	fmt.Println("Version: ", Version)
+	return nil
+}
