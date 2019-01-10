@@ -1,4 +1,12 @@
 [[constraint]]
+  name = "github.com/spf13/cobra"
+  version = "0.0.3"
+
+[[constraint]]
+  name = "github.com/spf13/viper"
+  version = "^1.0.0"
+
+[[constraint]]
   name = "github.com/ethereum/go-ethereum"
   version = "1.8.18"
 
@@ -25,10 +33,6 @@
 [[override]]
   name = "gopkg.in/fatih/set.v0"
   version = "^0.1.0"
-
-[[constraint]]
-  name = "github.com/spf13/viper"
-  version = "^1.0.0"
 
 [prune]
   go-tests = true

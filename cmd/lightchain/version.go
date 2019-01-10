@@ -2,27 +2,13 @@ package main
 
 import (
 	"fmt"
-	"strings"
-	"gopkg.in/urfave/cli.v1"
+	"github.com/spf13/cobra"
 )
 
-
-
-// Major version component of the current release
-const Major = "0"
-
-// Minor version component of the current release
-const Minor = "9"
-
-// Fix version component of the current release
-const Fix = "0"
-
-var (
-	// Version is the full version string
-	Version = strings.Join([]string{Major, Minor, Fix}, ".");
-)
-
-func VersionCmd(ctx *cli.Context) error {
-	fmt.Println("Version: ", Version)
-	return nil
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Describes version.",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("Version: 0.0.1-alpha The Base")
+	},
 }

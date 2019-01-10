@@ -3,68 +3,47 @@ package main
 import (
 	"fmt"
 	"os"
-	"gopkg.in/urfave/cli.v1"
-	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
-	
-	"github.com/lightstreams-network/lightchain/utils"
+
 	"github.com/lightstreams-network/lightchain/log"
+	ethLog "github.com/ethereum/go-ethereum/log"
+	"github.com/spf13/cobra"
 )
 
-var (
-	// The app that holds all commands and flags.
-	app = ethUtils.NewApp(Version, "the lightchain command line interface")
-)
+const flagDataDir = "datadir"
 
-func BeforeCmd(ctx *cli.Context) error {
-	logLvl := ctx.GlobalInt(utils.VerbosityFlag.Name)
-	if err := log.SetupLogger(logLvl); err != nil {
-		return err
-	}
-	return nil
-}
-
-func AfterCmd(ctx *cli.Context) error {
-	return nil
-}
-
-func init() {
-	app.Action = RunCmd // Fallback command
-	app.HideVersion = true
-	app.Before = BeforeCmd
-	app.After = AfterCmd
-	app.Commands = []cli.Command{
-		{
-			Name:    "version",
-			Aliases: []string{"v"},
-			Usage:   "Print lightchain and go-ethereum version in usage",
-			Action:  VersionCmd,
-		},
-		{
-			Action:      InitCmd,
-			Name:        "init",
-			Usage:       "init genesis.json",
-			Description: "Initialize the files",
-		},
-		{
-			Action: ResetCmd,
-			Name:   "unsafe_reset_all",
-			Usage:  "(unsafe) Remove lightchain database",
-		},
-		{
-			Action: RunCmd,
-			Name:   "node",
-			Usage:  "Running Lightchain app",
-		},
-	}
-
-	app.Flags = append(app.Flags, NodeFlags...)
-	app.Flags = append(app.Flags, RpcFlags...)
-	app.Flags = append(app.Flags, LightchainFlags...)
-}
+var logger = log.NewLogger()
 
 func main() {
-	if err := app.Run(os.Args); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+	log.SetupLogger(ethLog.LvlDebug)
+	lightchainCmd := LightchainCmd()
+
+	if err := lightchainCmd.Execute(); err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+// LightchainCmd is the main Lightstreams PoA blockchain node.
+func LightchainCmd() *cobra.Command {
+	var lightchainCmd = &cobra.Command{
+		Use:   "lightchain",
+		Short: "Lightstreams PoA blockchain node.",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+		},
+	}
+
+	lightchainCmd.AddCommand(versionCmd)
+	lightchainCmd.AddCommand(docsCmd())
+	lightchainCmd.AddCommand(initCmd())
+	lightchainCmd.AddCommand(runCmd())
+
+	return lightchainCmd
+}
+
+func addDefaultFlags(cmd *cobra.Command) {
+	cmd.Flags().String(flagDataDir, "", "The main directory where all blockchain node data will be stored.")
+	cmd.MarkFlagRequired(flagDataDir)
 }

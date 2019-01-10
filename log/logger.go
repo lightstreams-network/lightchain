@@ -1,31 +1,17 @@
 package log
 
 import (
-	"io"
-	"os"
-
-	"github.com/mattn/go-colorable"
 	"github.com/ethereum/go-ethereum/log"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
+	"github.com/mattn/go-colorable"
 )
 
-var glogger *log.GlogHandler
-
-func init() {
-	//usecolor := term.IsTty(os.Stderr.Fd()) && os.Getenv("TERM") != "dumb"
-	usecolor := true
-	output := io.Writer(os.Stderr)
-	if usecolor {
-		output = colorable.NewColorableStderr()
-	}
-	glogger = log.NewGlogHandler(log.StreamHandler(output, log.TerminalFormat(usecolor)))
-}
-
 // Setup sets up the logging infrastructure
-func SetupLogger(lvl int) error {
-	glogger.Verbosity(log.Lvl(lvl))
+func SetupLogger(level log.Lvl) {
+	glogger := log.NewGlogHandler(log.StreamHandler(colorable.NewColorableStderr(), log.TerminalFormat(true)))
+	glogger.Verbosity(level)
+
 	log.Root().SetHandler(glogger)
-	return nil
 }
 
 // Interface assertions
@@ -43,6 +29,7 @@ type logger struct {
 // #unstable
 func NewLogger() tmtLog.Logger {
 	logger := logger{keyvals: make([]interface{}, 0)}
+
 	return logger
 }
 
