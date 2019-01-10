@@ -3,34 +3,69 @@ package database
 import (
 	"path/filepath"
 	"os"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/ethdb"
-	"gopkg.in/urfave/cli.v1"
+	ethCore "github.com/ethereum/go-ethereum/core"
 	
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
 	ethLog "github.com/ethereum/go-ethereum/log"
-	"github.com/lightstreams-network/lightchain/utils"
+	"github.com/ethereum/go-ethereum/ethdb"
 )
 
-func Init(ctx *cli.Context) error {
-	// Step 1: Init chain within --datadir by read genesis
-	chainDataDir := utils.MakeChainDataDir(ctx)
-	chainDb, err := ethdb.NewLDBDatabase(chainDataDir, 0, 0)
-	if err != nil {
-		ethUtils.Fatalf("could not open database: %v", err)
-	}
-
-	keystoreDir := utils.MakeKeystoreDir(ctx)
+func Init(cfg Config) error {
+	keystoreDir := cfg.KeystoreDir()
 	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
 		ethUtils.Fatalf("mkdirAll keyStoreDir: %v", err)
 	}
 
-	keystoreCfg, err := ReadDefaultKeystore()
+	keystoreFiles, err := readDefaultKeystore()
 	if err != nil {
 		ethUtils.Fatalf("could not open read keystore: %v", err)
+		return err
+	}
+	if err = writeKeystoreFiles(keystoreDir, keystoreFiles); err != nil {
+		ethUtils.Fatalf("could not open write keystore: %v", err)
+		return err
+	}
+	
+	genesisPath := cfg.GenesisPath()
+	genesis, err := readGenesisFile(genesisPath)
+	if err != nil {
+		ethLog.Warn("reading genesis err: %v", err)
+	}
+	if err = writeGenesisFile(genesisPath, genesis); err != nil {
+		ethUtils.Fatalf("could not write genesis file: %v", err)
+		return err
 	}
 
-	for filename, content := range keystoreCfg {
+	chainDataDir := cfg.ChainDbDir()
+	chainDb, err := ethdb.NewLDBDatabase(chainDataDir, 0, 0)
+	_, hash, err := ethCore.SetupGenesisBlock(chainDb, genesis)
+	if err != nil {
+		ethUtils.Fatalf("failed to write genesis block: %v", err)
+		return err
+	}
+
+	ethLog.Info("Successfully wrote genesis block and/or chain rule set", "hash", hash)
+	return nil
+}
+
+func writeGenesisFile(genesisPath string, genesis *ethCore.Genesis) error {
+	genesisBlob, err := genesis.MarshalJSON()
+	if err != nil {
+		ethLog.Warn("marshaling content err: %v", err)
+	}
+	
+	f, err := os.Create(genesisPath)
+	if _, err := f.Write(genesisBlob); err != nil {
+		ethLog.Warn("write content %q err: %v", genesisPath, err)
+	} else {
+		ethLog.Info("Using genesis block", "block", genesis)
+	}
+	
+	return nil
+}
+
+func writeKeystoreFiles(keystoreDir string, keystoreFiles map[string][]byte) error {
+	for filename, content := range keystoreFiles {
 		storeFileName := filepath.Join(keystoreDir, filename)
 		f, err := os.Create(storeFileName)
 		if err != nil {
@@ -47,30 +82,5 @@ func Init(ctx *cli.Context) error {
 		ethLog.Info("Successfully wrote keystore files", "keystore", storeFileName)
 	}
 
-	genesis, err := ReadGenesisFile(ctx)
-	if err != nil {
-		ethLog.Warn("reading genesis err: %v", err)
-	}
-
-	genesisBlob, err := genesis.MarshalJSON()
-	if err != nil {
-		ethLog.Warn("marshaling content err: %v", err)
-	}
-	
-	genesisFileName := MakeGenesisPath(ctx)
-	f, err := os.Create(genesisFileName)
-	if _, err := f.Write(genesisBlob); err != nil {
-		ethLog.Warn("write content %q err: %v", genesisFileName, err)
-	} else {
-		ethLog.Info("Using genesis block", "block", genesis)
-	}
-	
-	_, hash, err := core.SetupGenesisBlock(chainDb, genesis)
-	if err != nil {
-		ethUtils.Fatalf("failed to write genesis block: %v", err)
-		return err
-	}
-
-	ethLog.Info("Successfully wrote genesis block and/or chain rule set", "hash", hash)
 	return nil
 }

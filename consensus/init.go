@@ -3,23 +3,18 @@ package consensus
 import (
 	"github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/p2p"
-	"path/filepath"
-	"gopkg.in/urfave/cli.v1"
 	
-	tmtConfig "github.com/tendermint/tendermint/config"
 	tmtCommon "github.com/tendermint/tendermint/libs/common"
 	"github.com/lightstreams-network/lightchain/log"
 )
 
-func InitNode(ctx *cli.Context) error {
-	cfg := tmtConfig.DefaultConfig()
+func InitNode(cfg Config) error {
 	logger := log.NewLogger()
-	
-	// Step 1: Init chain within --datadir by read genesis
-	dataDir := MakeTendermintDir(ctx)
-	cfg.SetRoot(dataDir)
+	if err := ensureTendermintDataDir(cfg); err != nil {
+		return nil
+	}
 
-	privValFile := cfg.PrivValidatorFile()
+	privValFile := cfg.tmtCfg.PrivValidatorFile()
 	var pv *privval.FilePV
 	if tmtCommon.FileExists(privValFile) {
 		pv = privval.LoadFilePV(privValFile)
@@ -30,7 +25,7 @@ func InitNode(ctx *cli.Context) error {
 		logger.Info("Generated private validator", "path", privValFile)
 	}
 
-	nodeKeyFile := cfg.NodeKeyFile()
+	nodeKeyFile := cfg.tmtCfg.NodeKeyFile()
 	if tmtCommon.FileExists(nodeKeyFile) {
 		logger.Info("Found node key", "path", nodeKeyFile)
 	} else {
@@ -41,24 +36,23 @@ func InitNode(ctx *cli.Context) error {
 	}
 
 	// genesis file
-	genFile := cfg.GenesisFile()
+	genFile := cfg.tmtCfg.GenesisFile()
 	if tmtCommon.FileExists(genFile) {
 		logger.Info("Found genesis file", "path", genFile)
 	} else {
-		genDoc, err := ReadTendermintDefaultGenesis()
+		genContent, err := readTendermintDefaultGenesis()
 		if err != nil {
 			return err
 		}
-		if err := tmtCommon.WriteFile(genFile, genDoc, 0644); err != nil {
+		if err := tmtCommon.WriteFile(genFile, genContent, 0644); err != nil {
 			return err
 		}
 		logger.Info("Generated genesis file", "path", genFile)
 	}
 	
 	// Config file
-	cfgDir := filepath.Join(dataDir, "config")
-	cfgFile := filepath.Join(cfgDir, "config.toml")
-	cfgDoc, err := ReadTendermintDefaultConfig()
+	cfgFile := cfg.TendermintConfigPath()
+	cfgDoc, err := readTendermintDefaultConfig()
 	if err != nil {
 		return err
 	}

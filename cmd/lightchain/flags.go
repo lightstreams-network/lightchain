@@ -48,7 +48,7 @@ var (
 
 	// flags that configure the ABCI app
 	LightchainFlags = []cli.Flag{
-		utils.HomeDirFlag,
+		utils.DataDirFlag,
 		utils.TendermintRpcListenPortFlag,
 		utils.TendermintP2PListenPortFlag,
 		utils.TendermintProxyListenPortFlag,

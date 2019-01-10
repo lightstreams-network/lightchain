@@ -44,7 +44,7 @@ func NewBackend(ctx *node.ServiceContext, ethConfig *eth.Config, client tmtRpcCl
 	// Create working ethereum state.
 	ethState := NewEthState()
 
-	// eth.New takes a ServiceContext for the EventMux, the AccountManager,
+	// eth.NewNode takes a ServiceContext for the EventMux, the AccountManager,
 	// and some basic functions around the DataDir.
 	ethereum, err := eth.New(ctx, ethConfig)
 	if err != nil {

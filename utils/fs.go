@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"os"
 	"os/user"
+	"errors"
+	"fmt"
 )
 
 func ReadFileContent(genesisPath string) ([]byte, error) {
@@ -17,7 +19,14 @@ func ReadFileContent(genesisPath string) ([]byte, error) {
 	return genesisBlob, nil
 }
 
-func DefaultHomeDir() string {
+func CreatePathIfNotExists(path string) error {
+	if err := os.MkdirAll(path, os.ModePerm); err != nil {
+		errors.New(fmt.Sprintf("Data folder err: %v", err))
+	}
+	return nil
+}
+
+func DefaultDataDir() string {
 	// Try to place the data folder in the user's home dir
 	home := homeDir()
 	if home != "" {

@@ -11,6 +11,12 @@ import (
 	tmtConfig "github.com/tendermint/tendermint/config"
 	
 	"github.com/lightstreams-network/lightchain/utils"
+	"io/ioutil"
+)
+
+
+var (
+	DataDirPath = "consensus"
 )
 
 type TendermintConfig struct{
@@ -19,23 +25,39 @@ type TendermintConfig struct{
 	ProxyListenPort uint16 	// Default: 26658
 }
 
-// The config filename inside the DataFolderName
-const ConfigFilename = "config.json"
-
 type Config struct {
-	DeploymentWhitelist []string `json:"deploymentWhitelist"`
+	DataDir         string
+	RpcListenPort   uint16 // Default: 26657
+	P2pListenPort   uint16 // Default: 26656
+	ProxyListenPort uint16 // Default: 26658
+	tmtCfg          *tmtConfig.Config
 }
 
-func ReadDefaultConfig() ([]byte) {
-	return []byte(`
-{
-    "deploymentWhitelist": [""]
-}`)
+func NewConfig(dataDir string, rpcListenPort uint16, p2pListenPort uint16, proxyListenPort uint16) Config {
+	defaultCfg := tmtConfig.DefaultConfig()
+	defaultCfg.SetRoot(dataDir)
+	return Config {
+		dataDir,
+		rpcListenPort,
+		p2pListenPort,
+		proxyListenPort,
+		defaultCfg,
+	}
 }
+
+func (c Config) TendermintConfigPath () string {
+	return filepath.Join(c.DataDir,"config")
+}
+
+func ensureTendermintDataDir(c Config) error {
+	tmtConfig.EnsureRoot(c.DataDir)
+	return nil
+}
+
 
 func MakeTendermintDir(ctx *cli.Context) string {
 	homeDir := utils.MakeHomeDir(ctx)
-	dataDir := filepath.Join(homeDir, "tendermint")
+	dataDir := filepath.Join(homeDir, "tmtCfg")
 	tmtConfig.EnsureRoot(dataDir)
 	return dataDir
 }
@@ -67,21 +89,23 @@ func ParseTendermintConfig(ctx *cli.Context) (*tmtConfig.Config, error) {
 
 
 //@TODO Migrate into constant
-func ReadTendermintDefaultGenesis() ([]byte, error) {
-	fPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/tendermint/genesis.json"))
+func readTendermintDefaultGenesis() ([]byte, error) {
+	fPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/tmtCfg/genesis.json"))
 	if err != nil {
 		return nil, err
 	}
-	return utils.ReadFileContent(fPath)
+	
+	return ioutil.ReadFile(fPath)
 }
 
 //@TODO Migrate into constant
-func ReadTendermintDefaultConfig() ([]byte, error) {
-	fPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/tendermint/config.toml"))
+func readTendermintDefaultConfig() ([]byte, error) {
+	fPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/tmtCfg/config.toml"))
 	if err != nil {
 		return nil, err
 	}
-	return utils.ReadFileContent(fPath)
+
+	return ioutil.ReadFile(fPath)
 }
 
 func initViper(cfgPath string) error {

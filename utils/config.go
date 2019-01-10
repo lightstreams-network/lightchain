@@ -38,10 +38,10 @@ var ProjectRootPath = filepath.Join(os.Getenv("GOPATH"), "src/github.com/lightst
 
 func MakeHomeDir(ctx *cli.Context) string {
 	
-	dPath := DefaultHomeDir()
+	dPath := DefaultDataDir()
 	
-	if ctx.GlobalIsSet(HomeDirFlag.Name) {
-		dPath = ctx.GlobalString(HomeDirFlag.Name)
+	if ctx.GlobalIsSet(DataDirFlag.Name) {
+		dPath = ctx.GlobalString(DataDirFlag.Name)
 	}
 
 	if dPath == "" {
@@ -62,24 +62,6 @@ func MakeDataDir(ctx *cli.Context) string {
 		ethUtils.Fatalf("Data folder err: %v", err)
 	}
 	return dataDir
-}
-
-func MakeKeystoreDir(ctx *cli.Context) string {
-	homeDir := MakeHomeDir(ctx)
-	keystoreDir := filepath.Join(homeDir, KeystoreFolderName)
-	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
-		ethUtils.Fatalf("Keystore folder err: %v", err)
-	}
-	return keystoreDir
-}
-
-func MakeChainDataDir(ctx *cli.Context) string {
-	dataDir := MakeDataDir(ctx)
-	chainDataDir := filepath.Join(dataDir, ChainDataFolderName)
-	if err := os.MkdirAll(chainDataDir, os.ModePerm); err != nil {
-		ethUtils.Fatalf("ChainData folder err: %v", err)
-	}
-	return chainDataDir
 }
 
 //func ConfigPath(ctx *cli.Context) string {

@@ -10,7 +10,6 @@ import (
 	"errors"
 	"reflect"
 
-	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
 	ethCore "github.com/ethereum/go-ethereum/core"
 	ethLog "github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/eth"
@@ -22,15 +21,19 @@ import (
 	"encoding/json"
 )
 
-var blankGenesis = new(ethCore.Genesis)
-var errBlankGenesis = errors.New("could not parse a valid/non-blank Genesis")
+var (
+	DataDirPath = "database"
+	KeystorePath = "keystore"
+	ChainDbPath = "chaindb"
+	GenesisPath = "genesis.json"
+	blankGenesis = new(ethCore.Genesis)
+	errBlankGenesis = errors.New("could not parse a valid/non-blank Genesis")
+)
 
-// General settings
-var GenesisPathFlag = ethUtils.DirectoryFlag{
-	Name:  "genesis",
-	Usage: "Genesis path",
+type Config struct {
+	DataDir string
+	GethConfig GethConfig
 }
-
 
 type ethstatsConfig struct {
 	URL string `toml:",omitempty"`
@@ -42,31 +45,40 @@ type GethConfig struct {
 	Ethstats ethstatsConfig
 }
 
+func NewConfig(dataDir string, ethCfg eth.Config, nodeCfg ethNode.Config, ethUrl string) (Config) {
+	gethCfg := GethConfig {
+		ethCfg, nodeCfg, ethstatsConfig { ethUrl },
+	}
 
-// DefaultNodeConfig returns the default configuration for a go-ethereum ethNode
-func DefaultNodeConfig() ethNode.Config {
+	return Config{
+		dataDir,
+		gethCfg,
+	}
+}
+
+
+// DefaultEthNodeConfig returns the default configuration for a go-ethereum ethNode
+func DefaultEthNodeConfig() ethNode.Config {
 	cfg := ethNode.DefaultConfig
 	cfg.Name = utils.ClientIdentifier
 	cfg.Version = params.Version
 	cfg.HTTPModules = append(cfg.HTTPModules, "eth")
 	cfg.WSModules = append(cfg.WSModules, "eth")
 	cfg.IPCPath = "geth.ipc"
-	cfg.DataDir = utils.DefaultHomeDir()
+	cfg.DataDir = utils.DefaultDataDir()
 
 	return cfg
 }
 
 // SetNodeConfig takes a ethNode configuration and applies lightchain specific configuration
-func SetNodeConfig(ctx *cli.Context, cfg *ethNode.Config) {
+func SetNodeDefaultConfig(cfg *ethNode.Config, dataDir string) {
 	cfg.P2P.MaxPeers = 0
 	cfg.P2P.NoDiscovery = true
-	if ctx.GlobalIsSet(utils.HomeDirFlag.Name) {
-		cfg.DataDir = ctx.GlobalString(utils.HomeDirFlag.Name)
-	}
+	cfg.DataDir = dataDir
 }
 
 // SetEthConfig takes a ethereum configuration and applies lightchain specific configuration
-func SetEthConfig(cfg *eth.Config) {
+func SetEthDefaultConfig(cfg *eth.Config) {
 	// PoW is being replaced by PoA with the usage of Tendermint
 	cfg.Ethash.PowMode = ethash.ModeFake
 	
@@ -83,15 +95,27 @@ func MakeGenesisPath(ctx *cli.Context) string {
 	homeDir := utils.MakeHomeDir(ctx)
 	genesisPath := path.Join(homeDir, "genesis.json")
 
-	if ctx.GlobalIsSet(GenesisPathFlag.Name) {
-		genesisPath = ctx.GlobalString(GenesisPathFlag.Name)
+	if ctx.GlobalIsSet(utils.GenesisPathFlag.Name) {
+		genesisPath = ctx.GlobalString(utils.GenesisPathFlag.Name)
 	}
 
 	return genesisPath
 }
 
-func ReadGenesisFile(ctx *cli.Context) (*ethCore.Genesis, error) {
-	genesisPath := MakeGenesisPath(ctx)
+
+func (c Config) KeystoreDir() string {
+	return filepath.Join(c.DataDir, KeystorePath)
+}
+
+func (c Config) ChainDbDir() string {
+	return filepath.Join(c.DataDir, ChainDbPath)
+}
+
+func (c Config) GenesisPath() string {
+	return filepath.Join(c.DataDir, GenesisPath)
+}
+
+func readGenesisFile(genesisPath string) (*ethCore.Genesis, error) {
 	ethLog.Info("Trying to reading genesis", "dir", genesisPath)
 	genesisBlob, err := utils.ReadFileContent(genesisPath)
 	if err != nil {
@@ -119,7 +143,7 @@ func readDefaultGenesis() ([]byte, error) {
 	return utils.ReadFileContent(fPath)
 }
 
-func ReadDefaultKeystore() (map[string][]byte, error) {
+func readDefaultKeystore() (map[string][]byte, error) {
 	dPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/keystore"))
 	if err != nil {
 		return nil, err

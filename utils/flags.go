@@ -33,10 +33,14 @@ var (
 		Value: TendermintP2PListenPort,
 		Usage: "This is the port that tendermint nodes will use to connect achieve consensus.",
 	}
-	HomeDirFlag = utils.DirectoryFlag{
-		Name:  "homedir",
+	DataDirFlag = utils.DirectoryFlag{
+		Name:  "datadir",
 		Usage: "Data directory for the databases and keystore",
-		Value: utils.DirectoryString{DefaultHomeDir()},
+		Value: utils.DirectoryString{DefaultDataDir()},
+	}
+	GenesisPathFlag = utils.DirectoryFlag{
+		Name:  "genesis",
+		Usage: "Genesis path",
 	}
 	
 	

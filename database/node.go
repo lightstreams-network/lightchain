@@ -10,8 +10,8 @@ type Node struct {
 	node.Node
 }
 
-// New creates a new node.
-func New(conf *node.Config) (*Node, error) {
+// NewNode creates a new node.
+func NewNode(conf *node.Config) (*Node, error) {
 	stack, err := node.New(conf)
 	if err != nil {
 		return nil, err

@@ -34,7 +34,7 @@ INIT_ARGS=""
 
 NODE_ARGS=""
 #NODE_ARGS="--homedir ${DATA_DIR}"
-NODE_ARGS="${NODE_ARGS} --tmt_rpc_port 25557 --tmt_proxy_port=25558 tmt_p2p_port=25556"
+NODE_ARGS="${NODE_ARGS} --tmt_rpc_port=25557 --tmt_proxy_port=25558 --tmt_p2p_port=25556"
 NODE_ARGS="${NODE_ARGS} --rpc --rpcaddr=0.0.0.0 --rpcport=8545"
 NODE_ARGS="${NODE_ARGS} --rpcapi eth,net,web3,personal,admin"
 #NODE_ARGS="${NODE_ARGS} --ws --wsaddr=0.0.0.0 --wsport=8546 --wsorigins='*'"

@@ -89,7 +89,7 @@ func (app *LightchainApplication) SetLogger(log tmtLog.Logger) {
 	app.logger = log
 }
 
-// Info returns information about the last height and app_hash to the tendermint engine
+// Info returns information about the last height and app_hash to the tmtCfg engine
 func (app *LightchainApplication) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.ResponseInfo {
 	app.logger.Info("LightchainApplication::Info()", "data", req)
 	blockchain := app.ethBackend.Ethereum().BlockChain()
@@ -101,7 +101,7 @@ func (app *LightchainApplication) Info(req tmtAbciTypes.RequestInfo) tmtAbciType
 
 	// This check determines whether it is the first time lightchain gets started.
 	// If it is the first time, then we have to respond with an empty hash, since
-	// that is what tendermint expects.
+	// that is what tmtCfg expects.
 	if height.Cmp(bigZero) == 0 {
 		return tmtAbciTypes.ResponseInfo{
 			Data:             "ABCIEthereum",
@@ -171,7 +171,7 @@ func (app *LightchainApplication) BeginBlock(req tmtAbciTypes.RequestBeginBlock)
 	app.logger.Info("LightchainApplication::BeginBlock()")
 	app.logger.Debug("BeginBlock") // nolint: errcheck
 
-	// update the eth header with the tendermint header
+	// update the eth header with the tmtCfg header
 	app.ethBackend.UpdateHeaderWithTimeInfo(&req.Header)
 	return tmtAbciTypes.ResponseBeginBlock{}
 }
