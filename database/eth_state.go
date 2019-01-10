@@ -17,8 +17,6 @@ import (
 	
 	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
 	tmtCode "github.com/tendermint/tendermint/abci/example/code"
-
-	coreUtils "github.com/lightstreams-network/lightchain/utils"
 )
 
 //----------------------------------------------------------------------
@@ -67,14 +65,14 @@ func (es *EthState) DeliverTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDel
 	return es.work.deliverTx(bc, es.ethConfig, chainCfg, blockHash, tx)
 }
 
-// Accumulate validator rewards.
-func (es *EthState) AccumulateRewards(strategy *coreUtils.Strategy) {
-	es.mtx.Lock()
-	defer es.mtx.Unlock()
-	// @TODO (ggarri): Pending to define reward strategy
-	//ethState.ethereum.Engine().Finalize(ethState.work.state, ethState.work.header, []*ethTypes.Header{})
-	es.work.accumulateRewards(strategy)
-}
+//// Accumulate validator rewards.
+//func (es *EthState) AccumulateRewards(strategy *coreUtils.Strategy) {
+//	es.mtx.Lock()
+//	defer es.mtx.Unlock()
+//	// @TODO (ggarri): Pending to define reward strategy
+//	//ethState.ethereum.Engine().Finalize(ethState.work.state, ethState.work.header, []*ethTypes.Header{})
+//	es.work.accumulateRewards(strategy)
+//}
 
 // Commit and reset the work.
 func (es *EthState) Commit(receiver common.Address) (common.Hash, error) {
@@ -172,10 +170,10 @@ type workState struct {
 	gp           *core.GasPool
 }
 
-// nolint: unparam
-func (ws *workState) accumulateRewards(strategy *coreUtils.Strategy) {
-	// @Deprecated: Chain Engine is responsible of the rewards
-}
+//// nolint: unparam
+//func (ws *workState) accumulateRewards(strategy *coreUtils.Strategy) {
+//	// @Deprecated: Chain Engine is responsible of the rewards
+//}
 
 // Runs ApplyTransaction against the ethereum blockchain, fetches any logs,
 // and appends the tx, receipt, and logs.

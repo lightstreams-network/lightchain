@@ -45,18 +45,26 @@ func runCmd() *cobra.Command {
 			}
 
 			// Create the ABCI application - in memory or persisted to disk
-			ethApp, err := consensus.CreateLightchainApplication(ethBackend, rpcClient, nil)
+			tendermintABCI, err := consensus.NewTendermintABCI(ethBackend, rpcClient)
 			if err != nil {
 				logger.Error(err.Error())
 				os.Exit(1)
 			}
+
 			ethLogger := log.NewLogger()
-			ethApp.SetLogger(ethLogger.With("module", "lightchain"))
+			tendermintABCI.SetLogger(ethLogger.With("module", "lightchain"))
+
+			// Init the ETH state
+			err = tendermintABCI.InitEthState()
+			if err != nil {
+				logger.Error(err.Error())
+				os.Exit(1)
+			}
 
 			// Start the app on the ABCI server listener
 			abciAddr := fmt.Sprintf("tcp://0.0.0.0:%d", ctx.GlobalInt(utils.TendermintProxyListenPortFlag.Name))
 			abciProtocol := ctx.GlobalString(utils.ABCIProtocolFlag.Name)
-			abciSrv, err := tmtServer.NewServer(abciAddr, abciProtocol, ethApp)
+			abciSrv, err := tmtServer.NewServer(abciAddr, abciProtocol, tendermintABCI)
 			if err != nil {
 				logger.Error(err.Error())
 				os.Exit(1)

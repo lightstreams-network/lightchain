@@ -14,7 +14,6 @@ import (
 	tmtRpcClient "github.com/tendermint/tendermint/rpc/lib/client"
 
 	"github.com/ethereum/go-ethereum/log"
-	coreUtils "github.com/lightstreams-network/lightchain/utils"
 )
 
 //----------------------------------------------------------------------
@@ -92,10 +91,10 @@ func (b *Backend) DeliverTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliv
 	return b.ethState.DeliverTx(tx)
 }
 
-// AccumulateRewards accumulates the rewards based on the given strategy
-func (b *Backend) AccumulateRewards(strategy *coreUtils.Strategy) {
-	b.ethState.AccumulateRewards(strategy)
-}
+//// AccumulateRewards accumulates the rewards based on the given strategy
+//func (b *Backend) AccumulateRewards(strategy *coreUtils.Strategy) {
+//	b.ethState.AccumulateRewards(strategy)
+//}
 
 // Commit finalises the current block
 func (b *Backend) Commit(receiver common.Address) (common.Hash, error) {
