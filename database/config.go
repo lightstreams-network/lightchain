@@ -1,8 +1,6 @@
 package database
 
 import (
-	"path"
-	"gopkg.in/urfave/cli.v1"
 	"os"
 	"time"
 	"path/filepath"
@@ -90,18 +88,6 @@ func SetEthDefaultConfig(cfg *eth.Config) {
 	cfg.TrieDirtyCache = 0  // MB
 	cfg.TrieTimeout = 5 * time.Minute
 }
-
-func MakeGenesisPath(ctx *cli.Context) string {
-	homeDir := utils.MakeHomeDir(ctx)
-	genesisPath := path.Join(homeDir, "genesis.json")
-
-	if ctx.GlobalIsSet(utils.GenesisPathFlag.Name) {
-		genesisPath = ctx.GlobalString(utils.GenesisPathFlag.Name)
-	}
-
-	return genesisPath
-}
-
 
 func (c Config) KeystoreDir() string {
 	return filepath.Join(c.DataDir, KeystorePath)

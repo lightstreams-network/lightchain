@@ -8,7 +8,7 @@ import (
 	"github.com/lightstreams-network/lightchain/utils"
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/database"
-
+	
 	tmtServer "github.com/tendermint/tendermint/abci/server"
 	tmtCommon "github.com/tendermint/tmlibs/common"
 	"github.com/lightstreams-network/lightchain/log"
@@ -108,6 +108,25 @@ func runCmd() *cobra.Command {
 	}
 
 	addDefaultFlags(runCmd)
+	addNodeFlags(runCmd)
 
 	return runCmd
+}
+
+func addNodeFlags(cmd *cobra.Command) {
+	// RPC Flags
+	cmd.Flags().Bool(RPCEnabledFlag.GetName(), false, RPCEnabledFlag.Usage)
+	cmd.Flags().String(RPCListenAddrFlag.GetName(), RPCListenAddrFlag.Value, RPCListenAddrFlag.Usage)
+	cmd.Flags().Int(RPCPortFlag.GetName(), RPCPortFlag.Value, RPCListenAddrFlag.Usage)
+	cmd.Flags().String(RPCApiFlag.GetName(), RPCApiFlag.Value, RPCApiFlag.Usage)
+	
+	// WS Flags
+	cmd.Flags().Bool(WSEnabledFlag.GetName(), false, WSEnabledFlag.Usage)
+	cmd.Flags().String(WSListenAddrFlag.GetName(), WSListenAddrFlag.Value, WSListenAddrFlag.Usage)
+	cmd.Flags().Int(WSPortFlag.GetName(), WSPortFlag.Value, WSPortFlag.Usage)
+	
+	// Consensus Flags
+	cmd.Flags().Uint(ConsensusRpcListenPortFlag.GetName(), ConsensusRpcListenPortFlag.Value, ConsensusRpcListenPortFlag.Usage)
+	cmd.Flags().Uint(ConsensusP2PListenPortFlag.GetName(), ConsensusP2PListenPortFlag.Value, ConsensusP2PListenPortFlag.Usage)
+	cmd.Flags().Uint(ConsensusProxyListenPortFlag.GetName(), ConsensusProxyListenPortFlag.Value, ConsensusProxyListenPortFlag.Usage)
 }

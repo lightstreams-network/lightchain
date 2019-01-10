@@ -29,7 +29,7 @@ func initCmd() *cobra.Command {
 }
 
 func initCmdRun(cmd *cobra.Command, args []string) {
-	dataDir, _ := cmd.Flags().GetString(flagDataDir)
+	dataDir, _ := cmd.Flags().GetString(DataDirFlag.Name)
 
 	consensusCfg := consensus.NewConfig(filepath.Join(dataDir, consensus.DataDirPath),
 		uint16(utils.TendermintRpcListenPort),

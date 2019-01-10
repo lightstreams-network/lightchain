@@ -9,8 +9,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const flagDataDir = "datadir"
-
 var logger = log.NewLogger()
 
 func main() {
@@ -44,6 +42,6 @@ func LightchainCmd() *cobra.Command {
 }
 
 func addDefaultFlags(cmd *cobra.Command) {
-	cmd.Flags().String(flagDataDir, "", "The main directory where all blockchain node data will be stored.")
-	cmd.MarkFlagRequired(flagDataDir)
+	cmd.Flags().String(DataDirFlag.Name, DataDirFlag.Value.Value, DataDirFlag.Usage)
+	cmd.MarkFlagRequired(DataDirFlag.Name)	
 }

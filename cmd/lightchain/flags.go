@@ -6,6 +6,23 @@ import (
 	"github.com/lightstreams-network/lightchain/utils"
 )
 
+var (
+	DataDirFlag = utils.DataDirFlag
+	
+	// Geth NODE
+	RPCEnabledFlag = ethUtils.RPCEnabledFlag
+	RPCListenAddrFlag = ethUtils.RPCListenAddrFlag
+	RPCPortFlag = ethUtils.RPCPortFlag
+	RPCApiFlag = ethUtils.RPCApiFlag
+	WSEnabledFlag = ethUtils.WSEnabledFlag
+	WSListenAddrFlag = ethUtils.WSListenAddrFlag
+	WSPortFlag = ethUtils.WSPortFlag
+	
+	// Lightchain Node
+	ConsensusRpcListenPortFlag = utils.TendermintRpcListenPortFlag
+	ConsensusP2PListenPortFlag = utils.TendermintP2PListenPortFlag
+	ConsensusProxyListenPortFlag = utils.TendermintProxyListenPortFlag
+)
 
 var (
 	// flags that configure the go-ethereum node

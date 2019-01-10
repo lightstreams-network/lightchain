@@ -21,17 +21,17 @@ var (
 	TendermintRpcListenPortFlag = cli.UintFlag{
 		Name:  "tmt_rpc_port",
 		Value: TendermintRpcListenPort,
-		Usage: "This is the port that lightchain will use to connect to the tendermint.",
+		Usage: "Tendermint RPC port used to receive incoming messages from Lightchain",
 	}
 	TendermintProxyListenPortFlag = cli.UintFlag{
 		Name:  "tmt_proxy_port",
 		Value: ProxyListenPort,
-		Usage: "This is the port that tendermint will use to connect to the lightchain.",
+		Usage: "Lightchain RPC port used to receive incoming messages from Tendermint",
 	}
 	TendermintP2PListenPortFlag = cli.UintFlag{
 		Name:  "tmt_p2p_port",
 		Value: TendermintP2PListenPort,
-		Usage: "This is the port that tendermint nodes will use to connect achieve consensus.",
+		Usage: "Tendermint port used to achieve exchange messages across nodes",
 	}
 	DataDirFlag = utils.DirectoryFlag{
 		Name:  "datadir",
