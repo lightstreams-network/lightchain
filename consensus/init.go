@@ -54,7 +54,7 @@ func InitNode(cfg Config) error {
 	}
 	
 	// Config file
-	cfgFile := cfg.TendermintConfigPath()
+	cfgFile := cfg.TendermintConfigFilePath()
 	cfgDoc, err := readTendermintDefaultConfig()
 	if err != nil {
 		return err

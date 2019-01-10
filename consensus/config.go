@@ -46,7 +46,11 @@ func NewConfig(dataDir string, rpcListenPort uint16, p2pListenPort uint16, proxy
 }
 
 func (c Config) TendermintConfigPath () string {
-	return filepath.Join(c.DataDir,"config")
+	return filepath.Join(c.DataDir, "config")
+}
+
+func (c Config) TendermintConfigFilePath () string {
+	return filepath.Join(c.TendermintConfigPath(), "config.toml")
 }
 
 func ensureTendermintDataDir(c Config) error {
