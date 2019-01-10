@@ -90,7 +90,7 @@ func ParseTendermintConfig(ctx *cli.Context) (*tmtConfig.Config, error) {
 
 //@TODO Migrate into constant
 func readTendermintDefaultGenesis() ([]byte, error) {
-	fPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/tmtCfg/genesis.json"))
+	fPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/tendermint/genesis.json"))
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func readTendermintDefaultGenesis() ([]byte, error) {
 
 //@TODO Migrate into constant
 func readTendermintDefaultConfig() ([]byte, error) {
-	fPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/tmtCfg/config.toml"))
+	fPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/tendermint/config.toml"))
 	if err != nil {
 		return nil, err
 	}

@@ -29,7 +29,6 @@ type logger struct {
 // #unstable
 func NewLogger() tmtLog.Logger {
 	logger := logger{keyvals: make([]interface{}, 0)}
-
 	return logger
 }
 

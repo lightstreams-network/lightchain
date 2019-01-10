@@ -8,12 +8,14 @@ import (
 	"github.com/lightstreams-network/lightchain/log"
 )
 
+var logger = log.NewLogger()
+
 func InitNode(cfg Config) error {
-	logger := log.NewLogger()
 	if err := ensureTendermintDataDir(cfg); err != nil {
 		return nil
 	}
 
+	// Generate Private File
 	privValFile := cfg.tmtCfg.PrivValidatorFile()
 	var pv *privval.FilePV
 	if tmtCommon.FileExists(privValFile) {
@@ -25,6 +27,7 @@ func InitNode(cfg Config) error {
 		logger.Info("Generated private validator", "path", privValFile)
 	}
 
+	// Generate NodeKey File
 	nodeKeyFile := cfg.tmtCfg.NodeKeyFile()
 	if tmtCommon.FileExists(nodeKeyFile) {
 		logger.Info("Found node key", "path", nodeKeyFile)
@@ -35,7 +38,7 @@ func InitNode(cfg Config) error {
 		logger.Info("Generated node key", "path", nodeKeyFile)
 	}
 
-	// genesis file
+	// Genesis file
 	genFile := cfg.tmtCfg.GenesisFile()
 	if tmtCommon.FileExists(genFile) {
 		logger.Info("Found genesis file", "path", genFile)
