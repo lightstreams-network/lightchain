@@ -21,12 +21,12 @@ import (
 
 //----------------------------------------------------------------------
 // EthState manages concurrent access to the intermediate workState object
-// The ethereum tx pool fires TxPreEvent in a go-routine,
+// The eth tx pool fires TxPreEvent in a go-routine,
 // and the miner subscribes to this in another go-routine and processes the tx onto
-// an intermediate state. We used to use `unsafe` to overwrite the miner, but this
+// an intermediate ethState. We used to use `unsafe` to overwrite the miner, but this
 // didn't work because it didn't affect the already launched go-routines.
-// So instead we introduce the Pending API in a small commit in go-ethereum
-// so we don't even start the miner there, and instead manage the intermediate state from here.
+// So instead we introduce the Pending API in a small commit in go-eth
+// so we don't even start the miner there, and instead manage the intermediate ethState from here.
 // In the same commit we also fire the TxPreEvent synchronously so the order is preserved,
 // instead of using a go-routine.
 
@@ -35,7 +35,7 @@ type EthState struct {
 	ethConfig *eth.Config
 
 	mtx  sync.Mutex
-	work workState // latest working state
+	work workState // latest working ethState
 }
 
 // After NewEthState, call SetEthereum and SetEthConfig.
@@ -70,7 +70,7 @@ func (es *EthState) DeliverTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDel
 //	es.mtx.Lock()
 //	defer es.mtx.Unlock()
 //	// @TODO (ggarri): Pending to define reward strategy
-//	//ethState.ethereum.Engine().Finalize(ethState.work.state, ethState.work.header, []*ethTypes.Header{})
+//	//ethState.eth.Engine().Finalize(ethState.work.ethState, ethState.work.header, []*ethTypes.Header{})
 //	es.work.accumulateRewards(strategy)
 //}
 
@@ -135,9 +135,9 @@ func (es *EthState) GasLimit() *core.GasPool {
 }
 
 //----------------------------------------------------------------------
-// Implements: miner.Pending API (our custom patch to go-ethereum)
+// Implements: miner.Pending API (our custom patch to go-eth)
 
-// Return a new block and a copy of the state from the latest work.
+// Return a new block and a copy of the ethState from the latest work.
 // #unstable
 func (es *EthState) Pending() (*ethTypes.Block, *state.StateDB) {
 	es.mtx.Lock()
@@ -175,7 +175,7 @@ type workState struct {
 //	// @Deprecated: Chain Engine is responsible of the rewards
 //}
 
-// Runs ApplyTransaction against the ethereum blockchain, fetches any logs,
+// Runs ApplyTransaction against the eth blockchain, fetches any logs,
 // and appends the tx, receipt, and logs.
 func (ws *workState) deliverTx(bc *core.BlockChain,
 	config *eth.Config,
@@ -213,12 +213,12 @@ func (ws *workState) deliverTx(bc *core.BlockChain,
 	return tmtAbciTypes.ResponseDeliverTx{Code: tmtAbciTypes.CodeTypeOK}
 }
 
-// Commit the ethereum state, update the header, make a new block and add it to
-// the ethereum blockchain. The application root hash is the hash of the
-// ethereum block.
+// Commit the eth ethState, update the header, make a new block and add it to
+// the eth blockchain. The application root hash is the hash of the
+// eth block.
 func (ws *workState) commit(bc *core.BlockChain, db ethdb.Database) (common.Hash, error) {
 
-	// Commit ethereum state and update the header.
+	// Commit eth ethState and update the header.
 	hashArray, err := ws.state.Commit(false)
 	if err != nil {
 		return common.Hash{}, err
@@ -229,7 +229,7 @@ func (ws *workState) commit(bc *core.BlockChain, db ethdb.Database) (common.Hash
 		log.BlockHash = hashArray
 	}
 
-	// Create block object and compute final commit hash (hash of the ethereum
+	// Create block object and compute final commit hash (hash of the eth
 	// block).
 	block := ethTypes.NewBlock(ws.header, ws.transactions, nil, ws.receipts)
 	blockHash := block.Hash()
@@ -238,7 +238,7 @@ func (ws *workState) commit(bc *core.BlockChain, db ethdb.Database) (common.Hash
 	// log.Info("Committing block", "stateHash", hashArray, "blockHash", blockHash)
 	_, err = bc.InsertChain([]*ethTypes.Block{block})
 	if err != nil {
-		// log.Info("Error inserting ethereum block in chain", "err", err)
+		// log.Info("Error inserting eth block in chain", "err", err)
 		return common.Hash{}, err
 	}
 	return blockHash, err

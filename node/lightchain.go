@@ -85,7 +85,7 @@ func CreateNode(ctx *cli.Context) *database.Node {
 	if err := stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
 		client := rpcClient.NewURIClient(tendermintLAddr) // tendermint RPC client
 		rpcTypes.RegisterAmino(client.Codec())
-		return database.NewBackend(ctx, &cfg.Eth, client)
+		return database.New(ctx, &cfg.Eth, client)
 	}); err != nil {
 		ethUtils.Fatalf("Failed to register the ABCI application service: %v", err)
 	}

@@ -19,19 +19,19 @@ const (
 // Transactions sent via the go-ethereum rpc need to be routed to tendermint
 
 // Listening to txs and forward to tendermint
-func (b *Backend) txBroadcastLoop() {
-	b.txsCh = make(chan core.NewTxsEvent, txChanSize)
-	b.txSub = b.ethereum.TxPool().SubscribeNewTxsEvent(b.txsCh)
+func (db *Database) txBroadcastLoop() {
+	db.ethTxsCh = make(chan core.NewTxsEvent, txChanSize)
+	db.ethTxSub = db.eth.TxPool().SubscribeNewTxsEvent(db.ethTxsCh)
 
-	waitForTendermint(b.client)
+	waitForTendermint(db.tmtRPCClient)
 
 	log.Info("Block for tendermint endpoint to start", "info", "Success")
 
-	for obj := range b.txsCh {
+	for obj := range db.ethTxsCh {
 		log.Info("Captured NewTxsEvent from pool")
 		for _, tx := range obj.Txs {
 			log.Info("New Trx", "data", tx.Hash().String())
-			if err := b.BroadcastTx(tx); err != nil {
+			if err := db.BroadcastTx(tx); err != nil {
 				log.Error("Broadcast error", "err", err)
 			}
 		}
@@ -39,7 +39,7 @@ func (b *Backend) txBroadcastLoop() {
 }
 
 // BroadcastTx broadcasts a transaction to tendermint core
-func (b *Backend) BroadcastTx(tx *ethTypes.Transaction) error {
+func (db *Database) BroadcastTx(tx *ethTypes.Transaction) error {
 	result := new(rpcTypes.SyncInfo)
 	log.Info("Broadcasts a transaction to Tendermint core")
 	buf := new(bytes.Buffer)
@@ -55,7 +55,7 @@ func (b *Backend) BroadcastTx(tx *ethTypes.Transaction) error {
 	// Broadcast_tx_sync will return with the result of running the transaction through CheckTx
 	// alternatively we could use `broadcast_tx_async` which will return right away without waiting to hear if the 
 	// transaction is even valid 
-	_, err := b.client.Call("broadcast_tx_sync", params, result)
+	_, err := db.tmtRPCClient.Call("broadcast_tx_sync", params, result)
 	return err
 }
 

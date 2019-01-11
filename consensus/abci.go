@@ -32,42 +32,35 @@ var bigZero = big.NewInt(0)
 const maxTransactionSize = 32768
 
 type TendermintABCI struct {
-	// ethBackend handles the database state machine
-	// and wrangles other services started by an database node (eg. tx pool)
-	ethBackend *database.Backend // ethBackend database struct
-
-	// a closure to return the latest current state from the database blockchain
-	getCurrentState func() (*state.StateDB, error)
-
+	db           *database.Database
 	checkTxState *state.StateDB
+	rpcClient    *rpc.Client
+	logger       tmtLog.Logger
 
-	// an database rpc client we can forward queries to
-	rpcClient *rpc.Client
-
-	logger tmtLog.Logger
+	getCurrentDBState func() (*state.StateDB, error)
 }
 
 // Todo: assert this somehow
 //var _ tmtAbciTypes.Application = TendermintABCI{}
 
-func NewTendermintABCI(db *database.Backend, client *rpc.Client) (*TendermintABCI, error) {
+func NewTendermintABCI(db *database.Database, client *rpc.Client) (*TendermintABCI, error) {
 	txState, err := db.Ethereum().BlockChain().State()
 	if err != nil {
 		return nil, err
 	}
 
 	abci := &TendermintABCI{
-		ethBackend:      db,
-		rpcClient:       client,
-		getCurrentState: db.Ethereum().BlockChain().State,
-		checkTxState:    txState.Copy(),
+		db:                db,
+		rpcClient:         client,
+		getCurrentDBState: db.Ethereum().BlockChain().State,
+		checkTxState:      txState.Copy(),
 	}
 	
 	return abci, nil
 }
 
 func (abci *TendermintABCI) InitEthState() error {
-	return abci.ethBackend.InitEthState(abci.Receiver())
+	return abci.db.InitEthState(abci.Receiver())
 }
 
 // SetLogger sets the logger for the lightchain application
@@ -78,7 +71,7 @@ func (abci *TendermintABCI) SetLogger(log tmtLog.Logger) {
 // Info returns information about the last height and app_hash to the tmtCfg engine
 func (abci *TendermintABCI) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.ResponseInfo {
 	abci.logger.Info("TendermintABCI::Info()", "data", req)
-	blockchain := abci.ethBackend.Ethereum().BlockChain()
+	blockchain := abci.db.Ethereum().BlockChain()
 	currentBlock := blockchain.CurrentBlock()
 	height := currentBlock.Number()
 	hash := currentBlock.Hash()
@@ -140,10 +133,10 @@ func (abci *TendermintABCI) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDeliv
 	}
 	abci.logger.Info("DeliverTx: Received valid transaction", "tx", tx.Hash().String()) // nolint: errcheck
 
-	res := abci.ethBackend.DeliverTx(tx)
+	res := abci.db.DeliverTx(tx)
 	if res.IsErr() {
 		// nolint: errcheck
-		abci.logger.Error("DeliverTx: Error delivering tx to database ethBackend", "tx", tx.Hash().String(),
+		abci.logger.Error("DeliverTx: Error delivering tx to database db", "tx", tx.Hash().String(),
 			"err", err)
 		return res
 	}
@@ -158,26 +151,26 @@ func (abci *TendermintABCI) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAb
 	abci.logger.Debug("BeginBlock") // nolint: errcheck
 
 	// update the eth header with the tmtCfg header
-	abci.ethBackend.UpdateHeaderWithTimeInfo(&req.Header)
+	abci.db.UpdateHeaderWithTimeInfo(&req.Header)
 	return tmtAbciTypes.ResponseBeginBlock{}
 }
 
 // EndBlock accumulates rewards for the validators and updates them
 func (abci *TendermintABCI) EndBlock(req tmtAbciTypes.RequestEndBlock) tmtAbciTypes.ResponseEndBlock {
 	abci.logger.Info("TendermintABCI::EndBlock()")
-	//abci.ethBackend.AccumulateRewards(abci.strategy)
+	//abci.db.AccumulateRewards(abci.strategy)
 	return tmtAbciTypes.ResponseEndBlock{}
 }
 
 // Commits the block and returns a hash of the current state
 func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
-	blockHash, err := abci.ethBackend.Commit(abci.Receiver())
+	blockHash, err := abci.db.Commit(abci.Receiver())
 	if err != nil {
 		// nolint: errcheck
 		abci.logger.Error("Error getting latest database state", "err", err)
 	}
 
-	ethState, err := abci.getCurrentState()
+	ethState, err := abci.getCurrentDBState()
 	if err != nil {
 		abci.logger.Error("Error getting latest state", "err", err) // nolint: errcheck
 	}
@@ -252,7 +245,7 @@ func (abci *TendermintABCI) validateTx(tx *ethTypes.Transaction) tmtAbciTypes.Re
 	}
 
 	// Check the transaction doesn't exceed the current block limit gas.
-	gasLimit := abci.ethBackend.GasLimit()
+	gasLimit := abci.db.GasLimit()
 	if gasLimit < 0 {
 		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInternalError.Code),
 			Log: core.ErrGasLimitReached.Error()}

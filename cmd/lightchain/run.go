@@ -31,7 +31,7 @@ func runCmd() *cobra.Command {
 			node.StartNode(ctx, abciNode)
 
 			// Fetch the registered service of this type
-			var ethBackend *database.Backend
+			var ethBackend *database.Database
 			if err := abciNode.Service(&ethBackend); err != nil {
 				logger.Error(fmt.Errorf("database ethBackend service not running: %v", err).Error())
 				os.Exit(1)
