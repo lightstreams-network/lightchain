@@ -11,7 +11,7 @@ import (
 )
 
 func Init(cfg Config) error {
-	keystoreDir := cfg.KeystoreDir()
+	keystoreDir := cfg.keystoreDir()
 	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
 		ethUtils.Fatalf("mkdirAll keyStoreDir: %v", err)
 	}
@@ -26,7 +26,7 @@ func Init(cfg Config) error {
 		return err
 	}
 	
-	genesisPath := cfg.GenesisPath()
+	genesisPath := cfg.genesisPath()
 	genesis, err := readGenesisFile(genesisPath)
 	if err != nil {
 		ethLog.Warn("reading genesis err: %v", err)
@@ -36,7 +36,7 @@ func Init(cfg Config) error {
 		return err
 	}
 
-	chainDataDir := cfg.ChainDbDir()
+	chainDataDir := cfg.chainDbDir()
 	chainDb, err := ethdb.NewLDBDatabase(chainDataDir, 0, 0)
 	_, hash, err := ethCore.SetupGenesisBlock(chainDb, genesis)
 	if err != nil {

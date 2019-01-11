@@ -53,7 +53,6 @@ func NewConfig(dataDir string, ethCfg eth.Config, nodeCfg ethNode.Config, ethUrl
 	return Config{
 		dataDir,
 		gethCfg,
-		"",
 	}
 }
 
@@ -64,20 +63,23 @@ func NewConfigNode(dataDir string, ctx *cli.Context) (Config, error) {
 	}
 
 	ethUtils.SetNodeConfig(ctx, &gethCfg.Node)
-	SetNodeDefaultConfig(&gethCfg.Node, dataDir)
- 	dbNode, err := NewNode(&gethCfg.Node)
+	setNodeDefaultConfig(&gethCfg.Node, dataDir)
+	
+	cfg := Config{
+		dataDir,
+		gethCfg,
+	}
+
+ 	dbNode, err := NewNode(&cfg)
 	if err != nil {
 		return Config{}, err
 	}
 
-	ethUtils.SetEthConfig(ctx, dbNode.ethereum, &gethCfg.Eth)
-	SetEthDefaultConfig(&gethCfg.Eth)
+	ethUtils.SetEthConfig(ctx, dbNode.ethereum, &cfg.GethConfig.Eth)
+	setEthDefaultConfig(&cfg.GethConfig.Eth)
 
  	// @TODO Review the need of including `stack` as part of the method output
-	return Config{
-		dataDir,
-		gethCfg,
-	}, nil
+	return cfg, nil
 }
 
 
@@ -96,14 +98,14 @@ func DefaultEthNodeConfig() ethNode.Config {
 }
 
 // SetNodeConfig takes a ethereum configuration and applies lightchain specific configuration
-func SetNodeDefaultConfig(cfg *ethNode.Config, dataDir string) {
+func setNodeDefaultConfig(cfg *ethNode.Config, dataDir string) {
 	cfg.P2P.MaxPeers = 0
 	cfg.P2P.NoDiscovery = true
 	cfg.DataDir = dataDir
 }
 
 // SetEthConfig takes a ethereum configuration and applies lightchain specific configuration
-func SetEthDefaultConfig(cfg *eth.Config) {
+func setEthDefaultConfig(cfg *eth.Config) {
 	// PoW is being replaced by PoA with the usage of Tendermint
 	cfg.Ethash.PowMode = ethash.ModeFake
 	
@@ -116,15 +118,15 @@ func SetEthDefaultConfig(cfg *eth.Config) {
 	cfg.TrieTimeout = 5 * time.Minute
 }
 
-func (c Config) KeystoreDir() string {
+func (c Config) keystoreDir() string {
 	return filepath.Join(c.DataDir, KeystorePath)
 }
 
-func (c Config) ChainDbDir() string {
+func (c Config) chainDbDir() string {
 	return filepath.Join(c.DataDir, ChainDbPath)
 }
 
-func (c Config) GenesisPath() string {
+func (c Config) genesisPath() string {
 	return filepath.Join(c.DataDir, GenesisPath)
 }
 

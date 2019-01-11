@@ -31,8 +31,8 @@ type Database struct {
 	tmtRPCClient tmtRpcClient.HTTPClient
 }
 
-// New creates a new database
-func New(ctx *node.ServiceContext, ethCfg *eth.Config, tmtRPCClient tmtRpcClient.HTTPClient) (*Database, error) {
+// NewDatabase creates a new database
+func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, tmtRPCClient tmtRpcClient.HTTPClient) (*Database, error) {
 	state := NewEthState()
 
 	// eth.NewNode takes a ServiceContext for the EventMux, the AccountManager,

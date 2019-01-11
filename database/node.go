@@ -16,6 +16,7 @@ import (
 // Node is the main object.
 type Node struct {
 	ethereum *ethNode.Node
+	database *Database
 	rpcClient *ethRpc.Client
 	cfg      *Config
 	logger	log.Logger
@@ -33,6 +34,7 @@ func NewNode(cfg *Config) (*Node, error) {
 	return &Node{
 		stack,
 		nil,
+		nil,
 		cfg,
 		dbLogger,
 	}, nil // nolint: vet
@@ -41,20 +43,24 @@ func NewNode(cfg *Config) (*Node, error) {
 // Start starts base node and stop p2p server
 func (n *Node) Start(uriClient *rpcClient.URIClient) error {
 	// start p2p server
-	n.logger.Info("Starting ethereum node")
+	n.logger.Debug("Starting ethereum node")
 	err := n.ethereum.Start()
 	if err != nil {
 		return err
 	}
 
 	// Stop it Eth.p2p server
-	n.logger.Info("Stopping p2p communication of ethereum node")
+	n.logger.Debug("Stopping p2p communication of ethereum node")
 	n.ethereum.Server().Stop()
 	
 	// Register NewNode ABCI Application Service
 	if err := n.ethereum.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {
 		n.logger.Info(fmt.Sprintf("registering ABCI application service"))
-		return New(ctx, &n.cfg.GethConfig.Eth, uriClient)
+		n.database, err = NewDatabase(ctx, &n.cfg.GethConfig.Eth, uriClient)
+		if err != nil {
+			return nil, err
+		}
+		return n.database, nil
 	}); err != nil {
 		return err
 	}
@@ -77,8 +83,11 @@ func (n *Node) Start(uriClient *rpcClient.URIClient) error {
 
 
 func (n *Node) Stop() error {
-	err := n.ethereum.Stop()
-	if err != nil {
+	if err := n.ethereum.Stop(); err != nil {
+		return err
+	}
+	
+	if err := n.database.Stop(); err != nil {
 		return err
 	}
 
@@ -87,4 +96,8 @@ func (n *Node) Stop() error {
 
 func (n *Node) RpcClient() *ethRpc.Client {
 	return n.rpcClient
+}
+
+func (n *Node) Database() *Database {
+	return n.database
 }
