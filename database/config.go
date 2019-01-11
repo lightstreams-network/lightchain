@@ -7,7 +7,9 @@ import (
 	"io/ioutil"
 	"errors"
 	"reflect"
+	"gopkg.in/urfave/cli.v1"
 
+	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
 	ethCore "github.com/ethereum/go-ethereum/core"
 	ethLog "github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/eth"
@@ -53,6 +55,30 @@ func NewConfig(dataDir string, ethCfg eth.Config, nodeCfg ethNode.Config, ethUrl
 		gethCfg,
 	}
 }
+
+func NewConfigNode(dataDir string, ctx *cli.Context) (Config, error) {
+	gethCfg := GethConfig{
+		Eth:  eth.DefaultConfig,
+		Node: DefaultEthNodeConfig(),
+	}
+
+	ethUtils.SetNodeConfig(ctx, &gethCfg.Node)
+	SetNodeDefaultConfig(&gethCfg.Node, dataDir)
+ 	stack, err := NewNode(&gethCfg.Node)
+	if err != nil {
+		return Config{}, err
+	}
+
+	ethUtils.SetEthConfig(ctx, &stack.Node, &gethCfg.Eth)
+	SetEthDefaultConfig(&gethCfg.Eth)
+
+ 	// @TODO Review the need of including `stack` as part of the method output
+	return Config{
+		dataDir,
+		gethCfg,
+	}, nil
+}
+
 
 
 // DefaultEthNodeConfig returns the default configuration for a go-ethereum ethNode

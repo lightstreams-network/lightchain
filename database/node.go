@@ -11,8 +11,8 @@ type Node struct {
 }
 
 // NewNode creates a new node.
-func NewNode(conf *node.Config) (*Node, error) {
-	stack, err := node.New(conf)
+func NewNode(cfg *Config) (*Node, error) {
+	stack, err := node.New(&cfg.GethConfig.Node)
 	if err != nil {
 		return nil, err
 	}

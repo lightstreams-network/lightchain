@@ -13,6 +13,7 @@ import (
 	tmtCommon "github.com/tendermint/tmlibs/common"
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/spf13/cobra"
+	"path/filepath"
 )
 
 func runCmd() *cobra.Command {
@@ -24,11 +25,40 @@ func runCmd() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			logger.Info("Launching the lightchain node...")
-
+			dataDir, _ := cmd.Flags().GetString(DataDirFlag.GetName())
+			
+			
+			rpcListenPort, _ := cmd.Flags().GetUint16(ConsensusRpcListenPortFlag.GetName())
+			p2pListenPort, _ := cmd.Flags().GetUint16(ConsensusP2PListenPortFlag.GetName())
+			proxyListenPort, _ := cmd.Flags().GetUint16(ConsensusProxyListenPortFlag.GetName())
+			consensusCfg := consensus.NewConfig(
+				filepath.Join(dataDir, consensus.DataDirPath),
+				rpcListenPort,
+				p2pListenPort,
+				proxyListenPort,
+			)
+			
+			// Fake cli.context required by Ethereum node 
 			ctx := cli.NewContext(nil, nil, nil)
-
-			abciNode := node.CreateNode(ctx)
-			node.StartNode(ctx, abciNode)
+			dbCfg, err := database.NewConfigNode(
+				filepath.Join(dataDir, database.DataDirPath),
+				ctx,
+			)
+			if err != nil {
+				logger.Error(fmt.Errorf("database node config could not be created: %v", err).Error())
+				os.Exit(1)
+			}
+			
+			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg)
+			abciNode, err := node.CreateNode(&nodeCfg)
+			if err != nil {
+				logger.Error(fmt.Errorf("lightchain node could not be created: %v", err).Error())
+				os.Exit(1)
+			}
+			node.StartNode()
+			
+			
+			// @TODO REFACTOR FROM HERE
 
 			// Fetch the registered service of this type
 			var ethBackend *database.Database

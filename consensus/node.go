@@ -17,6 +17,24 @@ import (
 )
 
 
+type Node struct {
+	tmtNode *tmtNode.Node
+} 
+
+func NewNode(cfg Config) (*Node, error) {
+	return &Node{ nil }, nil
+}
+
+func (n *Node) Start() error {
+	return nil
+}
+
+func (n *Node) Stop() error {
+	return nil
+}
+
+/// NEXT TO REFACTOR
+
 func StartNode(ctx *cli.Context, n *tmtNode.Node) error {
 	logger := log.NewLogger()
 

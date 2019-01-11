@@ -38,7 +38,12 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 		uint16(utils.TendermintP2PListenPort),
 	)
 	
-	dbCfg := database.NewConfig(dataDir, eth.DefaultConfig, database.DefaultEthNodeConfig(), "")
+	dbCfg := database.NewConfig(
+		filepath.Join(dataDir, database.DataDirPath),
+		eth.DefaultConfig,
+		database.DefaultEthNodeConfig(),
+		"",
+	)
 
 	nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg)
 	if err := node.InitNode(nodeCfg); err != nil {
@@ -49,21 +54,3 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 	logger.Info(fmt.Sprintf("Lightchain node successfully initialized into '%s'!", dataDir))
 	os.Exit(0)
 }
-
-
-//func createDatabaseConfig(dataDir string) (database.Config, error) {
-//	ethCfg := eth.DefaultConfig
-//	nodeCfg := database.DefaultEthNodeConfig()
-//	
-//	ethUtils.SetNodeConfig(ctx, &nodeCfg)
-//	database.SetNodeDefaultConfig(&nodeCfg, dataDir)
-// 	_, err := database.NewNode(&nodeCfg)
-// 	if err != nil {
-//		return database.Config{}, err
-//	}
-// 	ethUtils.SetEthConfig(ctx, &stack.Node, &ethCfg)
-//	database.SetEthDefaultConfig(&ethCfg)
-// 	
-//	return database.NewConfig(dataDir, ethCfg, nodeCfg, ""), nil
-//}
-

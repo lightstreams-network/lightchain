@@ -1,28 +1,20 @@
 package node
 
 import (
-	"fmt"
-	"gopkg.in/urfave/cli.v1"
 	
 	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/eth"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/node"
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
 	
-	rpcTypes "github.com/tendermint/tendermint/rpc/core/types"
-	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
 	
 	"github.com/lightstreams-network/lightchain/database"
 	"github.com/lightstreams-network/lightchain/consensus"
-	"path/filepath"
-	"github.com/lightstreams-network/lightchain/utils"
 )
 
 
 // startNode copies the logic from go-database (go-database/cmd/geth/main.go)
-func StartNode(ctx *cli.Context, stack *database.Node) {
+func StartNode(stack *database.Node) {
 	if err := stack.Start(); err != nil {
 		ethUtils.Fatalf("Error starting protocol stack: %v", err)
 	}
@@ -73,42 +65,40 @@ func StartNode(ctx *cli.Context, stack *database.Node) {
 	}()
 }
 
+
 // makeFullNode creates a full go-database node
-func CreateNode(ctx *cli.Context) *database.Node {
-	tmtCfg := consensus.MakeTendermintConfig(ctx)
+func CreateNode(cfg *Config) (*Node, error) {
 	
-	// Step 1: Setup the go-database node and start it
-	tendermintLAddr := fmt.Sprintf("tcp://%s:%d", "127.0.0.1", tmtCfg.RpcListenPort)
-	stack, cfg := makeConfigNode(ctx)
-
-	// Register NewNode ABCI Application Service
-	if err := stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
-		client := rpcClient.NewURIClient(tendermintLAddr) // tendermint RPC client
-		rpcTypes.RegisterAmino(client.Codec())
-		return database.New(ctx, &cfg.Eth, client)
-	}); err != nil {
-		ethUtils.Fatalf("Failed to register the ABCI application service: %v", err)
-	}
-
-	return stack
-}
-
-func makeConfigNode(ctx *cli.Context) (*database.Node, database.GethConfig) {
-	dataDir := filepath.Join(ctx.GlobalString(utils.DataDirFlag.Name), database.DataDirPath)
-	cfg := database.GethConfig{
-		Eth:  eth.DefaultConfig,
-		Node: database.DefaultEthNodeConfig(),
-	}
-
-	ethUtils.SetNodeConfig(ctx, &cfg.Node)
-	database.SetNodeDefaultConfig(&cfg.Node, dataDir)
- 	stack, err := database.NewNode(&cfg.Node)
+	dbNode, err := database.NewNode(&cfg.dbCfg)
 	if err != nil {
-		ethUtils.Fatalf("Failed to create the protocol stack: %v", err)
+		return nil, err
 	}
+	
+	consensusNode, err := consensus.NewNode(cfg.consensusCfg)
+	if err != nil {
+		return nil, err
+	}
+	
+	
+	return &Node {
+		dbNode,
+		consensusNode,
+	}, nil
 
-	ethUtils.SetEthConfig(ctx, &stack.Node, &cfg.Eth)
-	database.SetEthDefaultConfig(&cfg.Eth)
-
-	return stack, cfg
+	//tmtCfg := consensus.MakeTendermintConfig(ctx)
+	//
+	//// Step 1: Setup the go-database node and start it
+	//tendermintLAddr := fmt.Sprintf("tcp://%s:%d", "127.0.0.1", tmtCfg.RpcListenPort)
+	//stack, cfg := makeConfigNode(ctx)
+	//
+	//// Register NewNode ABCI Application Service
+	//if err := stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
+	//	client := rpcClient.NewURIClient(tendermintLAddr) // tendermint RPC client
+	//	rpcTypes.RegisterAmino(client.Codec())
+	//	return database.NewBackend(ctx, &cfg.Eth, client)
+	//}); err != nil {
+	//	ethUtils.Fatalf("Failed to register the ABCI application service: %v", err)
+	//}
+	//
+	//return stack
 }
