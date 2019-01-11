@@ -31,10 +31,12 @@ func initCmd() *cobra.Command {
 func initCmdRun(cmd *cobra.Command, args []string) {
 	dataDir, _ := cmd.Flags().GetString(DataDirFlag.Name)
 
-	consensusCfg := consensus.NewConfig(filepath.Join(dataDir, consensus.DataDirPath),
+	consensusCfg := consensus.NewConfig(
+		filepath.Join(dataDir, consensus.DataDirPath),
 		uint16(utils.TendermintRpcListenPort),
 		uint16(utils.ProxyListenPort), 
-		uint16(utils.TendermintP2PListenPort))
+		uint16(utils.TendermintP2PListenPort),
+	)
 	
 	dbCfg := database.NewConfig(dataDir, eth.DefaultConfig, database.DefaultEthNodeConfig(), "")
 
