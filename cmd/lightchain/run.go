@@ -50,13 +50,25 @@ func runCmd() *cobra.Command {
 			}
 			
 			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg)
-			abciNode, err := node.NewNode(&nodeCfg)
+			lightChainNode, err := node.NewNode(&nodeCfg) // Former abciNode
 			if err != nil {
 				logger.Error(fmt.Errorf("lightchain node could not be created: %v", err).Error())
 				os.Exit(1)
 			}
-			node.StartNode()
 			
+			if err := lightChainNode.Start(); err != nil {
+				logger.Error(fmt.Errorf("lightchain node could not be created: %v", err).Error())
+				os.Exit(1)
+			}
+			
+			tmtCommon.TrapSignal(func() {
+				if err := lightChainNode.Stop(); err != nil {
+					logger.Error(fmt.Errorf("error stopping Tendermint service. %v", err).Error())
+				}
+				os.Exit(1)
+			})
+
+			os.Exit(0)
 			
 			// @TODO REFACTOR FROM HERE
 
@@ -107,21 +119,6 @@ func runCmd() *cobra.Command {
 				logger.Error(err.Error())
 				os.Exit(1)
 			}
-
-			tmtCommon.TrapSignal(func() {
-				if err := tmtNode.Stop(); err != nil {
-					logger.Error(fmt.Errorf("error stopping Tendermint service. %v", err).Error())
-				}
-				if err := abciNode.Stop(); err != nil {
-					logger.Error(fmt.Errorf("error stopping Geth node. %v", err).Error())
-				}
-				if err := abciSrv.Stop(); err != nil {
-					logger.Error(fmt.Errorf("error stopping ABCI service. %v", err).Error())
-				}
-				os.Exit(1)
-			})
-
-			os.Exit(0)
 		},
 	}
 

@@ -3,11 +3,13 @@ package node
 import (
 	"github.com/lightstreams-network/lightchain/database"
 	"github.com/lightstreams-network/lightchain/consensus"
+	"github.com/lightstreams-network/lightchain/log"
 )
 
 type Node struct {
 	dbNode *database.Node
-	consensusNode consensus.Node
+	consensusNode *consensus.Node
+	logger log.Logger
 }
 
 // makeFullNode creates a full go-database node
@@ -18,15 +20,17 @@ func NewNode(cfg *Config) (*Node, error) {
 		return nil, err
 	}
 	
-	consensusNode, err := consensus.NewNode(cfg.consensusCfg)
+	consensusNode, err := consensus.NewNode(&cfg.consensusCfg)
 	if err != nil {
 		return nil, err
 	}
 	
-	
+	nodeLogger := log.NewLogger()
+	nodeLogger.With("module", "node")
 	return &Node {
 		dbNode,
 		consensusNode,
+		nodeLogger,
 	}, nil
 }
 
@@ -41,12 +45,20 @@ func (n *Node) Start() error {
 	}
 
 	n.consensusNode.Start()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 
 func (n *Node) Stop() error {
 	err := n.dbNode.Stop()
+	if err != nil {
+		return err
+	}
+	
+	n.consensusNode.Stop()
 	if err != nil {
 		return err
 	}

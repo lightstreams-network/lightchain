@@ -22,12 +22,17 @@ import (
 type Node struct {
 	tendermint *tmtNode.Node
 	cfg        *Config
+	logger log.Logger
 } 
 
 func NewNode(cfg *Config) (*Node, error) {
+	consensusLogger := log.NewLogger()
+	consensusLogger.With("module", "consensus")
+		
 	return &Node{
 		nil,
 		cfg,
+		consensusLogger,
 	}, nil
 }
 
@@ -48,7 +53,8 @@ func (n *Node) Stop() error {
 }
 
 func (n *Node) NewURIClient() *rpcClient.URIClient {
-	client := rpcClient.NewURIClient(n.cfg) // tendermint RPC client
+	lAddr := fmt.Sprintf("tcp://%s:%d", "127.0.0.1", n.cfg.RpcListenPort)
+	client := rpcClient.NewURIClient(lAddr)
 	rpcTypes.RegisterAmino(client.Codec())
 	return client
 }
