@@ -74,15 +74,15 @@ func runCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
+			ethLogger := log.NewLogger()
+			ethLogger.With("module", "lightchain")
+
 			// Create the ABCI application - in memory or persisted to disk
-			tendermintABCI, err := consensus.NewTendermintABCI(ethBackend, rpcClient)
+			tendermintABCI, err := consensus.NewTendermintABCI(ethBackend, rpcClient, ethLogger)
 			if err != nil {
 				logger.Error(err.Error())
 				os.Exit(1)
 			}
-
-			ethLogger := log.NewLogger()
-			tendermintABCI.SetLogger(ethLogger.With("module", "lightchain"))
 
 			// Init the ETH state
 			err = tendermintABCI.InitEthState()

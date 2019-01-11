@@ -43,7 +43,7 @@ type TendermintABCI struct {
 // Todo: assert this somehow
 //var _ tmtAbciTypes.Application = TendermintABCI{}
 
-func NewTendermintABCI(db *database.Database, client *rpc.Client) (*TendermintABCI, error) {
+func NewTendermintABCI(db *database.Database, client *rpc.Client, logger tmtLog.Logger) (*TendermintABCI, error) {
 	txState, err := db.Ethereum().BlockChain().State()
 	if err != nil {
 		return nil, err
@@ -54,6 +54,7 @@ func NewTendermintABCI(db *database.Database, client *rpc.Client) (*TendermintAB
 		rpcClient:         client,
 		getCurrentDBState: db.Ethereum().BlockChain().State,
 		checkTxState:      txState.Copy(),
+		logger:			   logger,
 	}
 	
 	return abci, nil
@@ -61,11 +62,6 @@ func NewTendermintABCI(db *database.Database, client *rpc.Client) (*TendermintAB
 
 func (abci *TendermintABCI) InitEthState() error {
 	return abci.db.InitEthState(abci.Receiver())
-}
-
-// SetLogger sets the logger for the lightchain application
-func (abci *TendermintABCI) SetLogger(log tmtLog.Logger) {
-	abci.logger = log
 }
 
 // Info returns information about the last height and app_hash to the tmtCfg engine
