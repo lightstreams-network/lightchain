@@ -3,12 +3,12 @@ package database
 import (
 	"os"
 	"fmt"
-	
+
 	ethNode "github.com/ethereum/go-ethereum/node"
 	ethRpc "github.com/ethereum/go-ethereum/rpc"
-	
+
 	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
-	
+
 	"github.com/lightstreams-network/lightchain/log"
 	"google.golang.org/genproto/googleapis/spanner/admin/database/v1"
 	"github.com/ethereum/go-ethereum/accounts"
@@ -17,11 +17,11 @@ import (
 
 // Node is the main object.
 type Node struct {
-	ethereum *ethNode.Node
-	database *Database
+	ethereum  *ethNode.Node
+	database  *Database
 	rpcClient *ethRpc.Client
-	cfg      *Config
-	logger	log.Logger
+	cfg       *Config
+	logger    log.Logger
 }
 
 // NewNode creates a new node.
@@ -51,14 +51,15 @@ func (n *Node) Start(uriClient *rpcClient.URIClient) error {
 		return err
 	}
 	
-	n.logger.Debug("Register wallet event handlers to open and auto-derive wallets")
-	go registerEventHandlers(n)
-
 	// Stop it Eth.p2p server
 	n.logger.Debug("Stopping p2p communication of ethereum node")
 	n.ethereum.Server().Stop()
-	
+
+	n.logger.Debug("Register wallet event handlers to open and auto-derive wallets")
+	go registerEventHandlers(n)
+
 	// Register NewNode ABCI Application Service
+	n.logger.Debug("Binding ethereum events to rpc client...")
 	if err := n.ethereum.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {
 		n.logger.Info(fmt.Sprintf("registering ABCI application service"))
 		n.database, err = NewDatabase(ctx, &n.cfg.GethConfig.Eth, uriClient)
@@ -69,32 +70,31 @@ func (n *Node) Start(uriClient *rpcClient.URIClient) error {
 	}); err != nil {
 		return err
 	}
-	
-	
-	
+
 	// Fetch the registered service of this type
 	var ethDb *database.Database
+	n.logger.Debug("Starting ethereum service...")
 	if err := n.ethereum.Service(&ethDb); err != nil {
 		n.logger.Error(fmt.Errorf("database service not running: %v", err).Error())
 		return err
 	}
-	
+
 	n.rpcClient, err = n.ethereum.Attach()
 	if err != nil {
 		n.logger.Error(fmt.Errorf("failed to attach to the inproc geth: %v", err).Error())
 		os.Exit(1)
 	}
 
+	n.logger.Info("Started database engine...")
 	return nil
 }
-
 
 func (n *Node) Stop() error {
 	n.logger.Debug("Stopping ethereum service")
 	if err := n.ethereum.Stop(); err != nil {
 		return err
 	}
-	
+
 	n.logger.Debug("Stopping database service")
 	if err := n.database.Stop(); err != nil {
 		return err

@@ -2,15 +2,18 @@ package main
 
 import (
 	"gopkg.in/urfave/cli.v1"
-	"github.com/lightstreams-network/lightchain/node"
-	"fmt"
-	"os"
-	"github.com/lightstreams-network/lightchain/consensus"
-	"github.com/lightstreams-network/lightchain/database"
-	
-	tmtCommon "github.com/tendermint/tmlibs/common"
 	"github.com/spf13/cobra"
 	"path/filepath"
+	"flag"
+	"fmt"
+	"os"
+	
+	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
+	tmtCommon "github.com/tendermint/tmlibs/common"
+	
+	"github.com/lightstreams-network/lightchain/node"
+	"github.com/lightstreams-network/lightchain/consensus"
+	"github.com/lightstreams-network/lightchain/database"
 )
 
 func runCmd() *cobra.Command {
@@ -46,12 +49,14 @@ func runCmd() *cobra.Command {
 			}
 			
 			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg)
+			logger.Debug("Initializing lightchain node...")
 			lightChainNode, err := node.NewNode(&nodeCfg) // Former abciNode
 			if err != nil {
 				logger.Error(fmt.Errorf("lightchain node could not be initialized: %v", err).Error())
 				os.Exit(1)
 			}
 			
+			logger.Debug("Starting lightchain node...")
 			if err := lightChainNode.Start(); err != nil {
 				logger.Error(fmt.Errorf("lightchain node could not be started: %v", err).Error())
 				os.Exit(1)
@@ -94,36 +99,38 @@ func addNodeFlags(cmd *cobra.Command) {
 }
 
 func newNodeClientCtx(cmd *cobra.Command) *cli.Context {
-	ctx := cli.NewContext(nil, nil, nil)
+	var boolEmptyBucket bool
+	var stringEmptyBucket string
+	
+	app := ethUtils.NewApp("0.0.0", "the lightchain command line interface")
+	flagSet := flag.NewFlagSet("FakeCli", flag.ExitOnError)
+	ctx := cli.NewContext(app, flagSet, nil)
+	
 	rpcEnabledFlagValue, _ := cmd.Flags().GetBool(RPCEnabledFlag.GetName())
-
-	if rpcEnabledFlagValue {
-		ctx.Set(RPCEnabledFlag.GetName(), "true")
-	} else {
-		ctx.Set(RPCEnabledFlag.GetName(), "false")
-	}
+	flagSet.BoolVar(&boolEmptyBucket, RPCEnabledFlag.GetName(), rpcEnabledFlagValue, RPCEnabledFlag.Usage)
 	
 	rpcListenAddrValue, _ := cmd.Flags().GetString(RPCListenAddrFlag.GetName())
-	ctx.Set(RPCListenAddrFlag.GetName(), rpcListenAddrValue)
+	flagSet.StringVar(&stringEmptyBucket, RPCListenAddrFlag.GetName(), rpcListenAddrValue, RPCListenAddrFlag.Usage)
 	
 	rpcPortFlagValue, _ := cmd.Flags().GetString(RPCPortFlag.GetName())
-	ctx.Set(RPCPortFlag.GetName(), rpcPortFlagValue)
+	flagSet.StringVar(&stringEmptyBucket, RPCPortFlag.GetName(), rpcPortFlagValue, RPCPortFlag.Usage)
 	
 	rpcApiFlag, _ := cmd.Flags().GetString(RPCApiFlag.GetName())
-	ctx.Set(RPCApiFlag.GetName(), rpcApiFlag)
+	flagSet.StringVar(&stringEmptyBucket, RPCApiFlag.GetName(), rpcApiFlag, RPCApiFlag.Usage)
 	
 	wsEnabledFlagValue, _ := cmd.Flags().GetBool(WSEnabledFlag.GetName())
-	if wsEnabledFlagValue {
-		ctx.Set(WSEnabledFlag.GetName(), "true")
-	} else {
-		ctx.Set(WSEnabledFlag.GetName(), "false")
-	}
+	flagSet.BoolVar(&boolEmptyBucket, WSEnabledFlag.GetName(), wsEnabledFlagValue, WSEnabledFlag.Usage)
 	
 	wsListenAddrFlag, _ := cmd.Flags().GetString(WSListenAddrFlag.GetName())
-	ctx.Set(WSListenAddrFlag.GetName(), wsListenAddrFlag)
+	flagSet.StringVar(&stringEmptyBucket, WSListenAddrFlag.GetName(), wsListenAddrFlag, WSListenAddrFlag.Usage)
 	
 	wsPortFlag, _ := cmd.Flags().GetString(WSPortFlag.GetName())
-	ctx.Set(WSPortFlag.GetName(), wsPortFlag)
+	flagSet.StringVar(&stringEmptyBucket, WSPortFlag.GetName(), wsPortFlag, WSPortFlag.Usage)
+	
+	// Default values required
+	flagSet.StringVar(&stringEmptyBucket, ethUtils.GCModeFlag.GetName(), ethUtils.GCModeFlag.Value, ethUtils.GCModeFlag.Usage)
+	
+	ctx.Set(ethUtils.GCModeFlag.GetName(), ethUtils.GCModeFlag.Value)
 	
 	return ctx
 }
