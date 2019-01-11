@@ -6,14 +6,13 @@ import (
 	"github.com/ethereum/go-ethereum/cmd/utils"
 )
 
-// @TODO Move to consts remaining default values
-var (
-	GenesisTargetGasLimit   = uint64(100000000)
-	TendermintP2PListenPort = uint(26656)
-	TendermintRpcListenPort = uint(26657)
-	ProxyListenPort 		= uint(26658)
+const (
+	GenesisTargetGasLimit     = uint64(100000000)
+	TendermintP2PListenPort   = uint(26656)
+	TendermintRpcListenPort   = uint(26657)
+	TendermintProxyListenPort = uint(26658)
+	TendermintProxyProtocol   = "rpc"
 )
-
 
 var (
 	// ----------------------------
@@ -25,7 +24,7 @@ var (
 	}
 	TendermintProxyListenPortFlag = cli.UintFlag{
 		Name:  "tmt_proxy_port",
-		Value: ProxyListenPort,
+		Value: TendermintProxyListenPort,
 		Usage: "Lightchain RPC port used to receive incoming messages from Tendermint",
 	}
 	TendermintP2PListenPortFlag = cli.UintFlag{

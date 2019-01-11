@@ -34,8 +34,9 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 	consensusCfg := consensus.NewConfig(
 		filepath.Join(dataDir, consensus.DataDirName),
 		utils.TendermintRpcListenPort,
-		utils.ProxyListenPort,
+		utils.TendermintProxyListenPort,
 		utils.TendermintP2PListenPort,
+		utils.TendermintProxyProtocol,
 	)
 	
 	dbCfg := database.NewConfig(

@@ -8,8 +8,7 @@ import (
 
 var (
 	DataDirFlag = utils.DataDirFlag
-	
-	// Geth NODE
+
 	RPCEnabledFlag = ethUtils.RPCEnabledFlag
 	RPCListenAddrFlag = ethUtils.RPCListenAddrFlag
 	RPCPortFlag = ethUtils.RPCPortFlag
@@ -17,11 +16,11 @@ var (
 	WSEnabledFlag = ethUtils.WSEnabledFlag
 	WSListenAddrFlag = ethUtils.WSListenAddrFlag
 	WSPortFlag = ethUtils.WSPortFlag
-	
-	// Lightchain Node
+
 	ConsensusRpcListenPortFlag = utils.TendermintRpcListenPortFlag
 	ConsensusP2PListenPortFlag = utils.TendermintP2PListenPortFlag
 	ConsensusProxyListenPortFlag = utils.TendermintProxyListenPortFlag
+	ConsensusProxyProtocolFlag = utils.ABCIProtocolFlag
 )
 
 var (

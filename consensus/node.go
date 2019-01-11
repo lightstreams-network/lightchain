@@ -5,8 +5,10 @@ import (
 	"github.com/tendermint/tendermint/privval"
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/tendermint/tendermint/proxy"
+	"github.com/lightstreams-network/lightchain/database"
 
 	tmtNode "github.com/tendermint/tendermint/node"
+	tmtServer "github.com/tendermint/tendermint/abci/server"
 	rpcTypes "github.com/tendermint/tendermint/rpc/core/types"
 	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
 	ethRpc "github.com/ethereum/go-ethereum/rpc"
@@ -45,12 +47,33 @@ func NewNode(cfg *Config) (*Node, error) {
 	}, nil
 }
 
-func (n *Node) Start(rpcClient *ethRpc.Client) error {
+func (n *Node) Start(rpcClient *ethRpc.Client, db *database.Database) error {
 	if err := n.tendermint.Start(); err != nil {
 		return err
 	}
 
-	n.logger.Info("Started node", "nodeInfo", n.tendermint.Switch().NodeInfo())
+	tendermintABCI, err := NewTendermintABCI(db, rpcClient, n.logger)
+	if err != nil {
+		return err
+	}
+
+	err = tendermintABCI.InitEthState()
+	if err != nil {
+		return err
+	}
+
+	abciSrv, err := tmtServer.NewServer(n.cfg.tendermintCfg.ProxyApp, n.cfg.proxyProtocol, tendermintABCI)
+	if err != nil {
+		return err
+	}
+
+	abciSrv.SetLogger(log.NewLogger().With("module", "node-server"))
+
+	if err := abciSrv.Start(); err != nil {
+		return err
+	}
+
+	n.logger.Info("Consensus node started", "nodeInfo", n.tendermint.Switch().NodeInfo())
 
 	return nil
 }

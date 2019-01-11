@@ -22,9 +22,10 @@ type Config struct {
 	rpcListenPort   uint
 	p2pListenPort   uint
 	proxyListenPort uint
+	proxyProtocol   string
 }
 
-func NewConfig(dataDir string, rpcListenPort uint, p2pListenPort uint, proxyListenPort uint) Config {
+func NewConfig(dataDir string, rpcListenPort uint, p2pListenPort uint, proxyListenPort uint, proxyProtocol string) Config {
 	tendermintCfg := config.DefaultConfig()
 	tendermintCfg.SetRoot(dataDir)
 	tendermintCfg.RPC.ListenAddress = fmt.Sprintf("tcp://0.0.0.0:%d", rpcListenPort)
@@ -37,6 +38,7 @@ func NewConfig(dataDir string, rpcListenPort uint, p2pListenPort uint, proxyList
 		rpcListenPort,
 		p2pListenPort,
 		proxyListenPort,
+		proxyProtocol,
 	}
 }
 

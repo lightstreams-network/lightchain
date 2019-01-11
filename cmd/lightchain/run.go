@@ -5,13 +5,10 @@ import (
 	"github.com/lightstreams-network/lightchain/node"
 	"fmt"
 	"os"
-	"github.com/lightstreams-network/lightchain/utils"
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/database"
 	
-	tmtServer "github.com/tendermint/tendermint/abci/server"
 	tmtCommon "github.com/tendermint/tmlibs/common"
-	"github.com/lightstreams-network/lightchain/log"
 	"github.com/spf13/cobra"
 	"path/filepath"
 )
@@ -30,12 +27,14 @@ func runCmd() *cobra.Command {
 			rpcListenPort, _ := cmd.Flags().GetUint(ConsensusRpcListenPortFlag.GetName())
 			p2pListenPort, _ := cmd.Flags().GetUint(ConsensusP2PListenPortFlag.GetName())
 			proxyListenPort, _ := cmd.Flags().GetUint(ConsensusProxyListenPortFlag.GetName())
+			proxyProtocol, _ := cmd.Flags().GetString(ConsensusProxyProtocolFlag.GetName())
 
 			consensusCfg := consensus.NewConfig(
 				filepath.Join(dataDir, consensus.DataDirName),
 				rpcListenPort,
 				p2pListenPort,
 				proxyListenPort,
+				proxyProtocol,
 			)
 			
 			// Fake cli.context required by Ethereum node 
@@ -49,12 +48,12 @@ func runCmd() *cobra.Command {
 			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg)
 			lightChainNode, err := node.NewNode(&nodeCfg) // Former abciNode
 			if err != nil {
-				logger.Error(fmt.Errorf("lightchain node could not be created: %v", err).Error())
+				logger.Error(fmt.Errorf("lightchain node could not be initialized: %v", err).Error())
 				os.Exit(1)
 			}
 			
 			if err := lightChainNode.Start(); err != nil {
-				logger.Error(fmt.Errorf("lightchain node could not be created: %v", err).Error())
+				logger.Error(fmt.Errorf("lightchain node could not be started: %v", err).Error())
 				os.Exit(1)
 			}
 			
@@ -66,39 +65,6 @@ func runCmd() *cobra.Command {
 			})
 
 			os.Exit(0)
-			
-			// @TODO Move it to Consensus.Start()
-			
-			// Create the ABCI application - in memory or persisted to disk
-			tendermintABCI, err := consensus.NewTendermintABCI(ethBackend, rpcClient, ethLogger)
-			if err != nil {
-				logger.Error(err.Error())
-				os.Exit(1)
-			}
-
-			// Init the ETH state
-			err = tendermintABCI.InitEthState()
-			if err != nil {
-				logger.Error(err.Error())
-				os.Exit(1)
-			}
-
-			// Start the app on the ABCI server listener
-			abciAddr := fmt.Sprintf("tcp://0.0.0.0:%d", ctx.GlobalInt(utils.TendermintProxyListenPortFlag.Name))
-			abciProtocol := ctx.GlobalString(utils.ABCIProtocolFlag.Name)
-			abciSrv, err := tmtServer.NewServer(abciAddr, abciProtocol, tendermintABCI)
-			if err != nil {
-				logger.Error(err.Error())
-				os.Exit(1)
-			}
-
-			abciLogger := log.NewLogger()
-			abciSrv.SetLogger(abciLogger.With("module", "node-server"))
-
-			if err := abciSrv.Start(); err != nil {
-				logger.Error(err.Error())
-				os.Exit(1)
-			}
 		},
 	}
 
@@ -124,6 +90,7 @@ func addNodeFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint(ConsensusRpcListenPortFlag.GetName(), ConsensusRpcListenPortFlag.Value, ConsensusRpcListenPortFlag.Usage)
 	cmd.Flags().Uint(ConsensusP2PListenPortFlag.GetName(), ConsensusP2PListenPortFlag.Value, ConsensusP2PListenPortFlag.Usage)
 	cmd.Flags().Uint(ConsensusProxyListenPortFlag.GetName(), ConsensusProxyListenPortFlag.Value, ConsensusProxyListenPortFlag.Usage)
+	cmd.Flags().String(ConsensusProxyProtocolFlag.GetName(), ConsensusProxyProtocolFlag.Value, ConsensusProxyProtocolFlag.Usage)
 }
 
 func newNodeClientCtx(cmd *cobra.Command) *cli.Context {
