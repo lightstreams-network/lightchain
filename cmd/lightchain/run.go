@@ -70,15 +70,7 @@ func runCmd() *cobra.Command {
 
 			os.Exit(0)
 			
-			// @TODO REFACTOR FROM HERE
-
-			// Fetch the registered service of this type
-			var ethBackend *database.Database
-			if err := abciNode.Service(&ethBackend); err != nil {
-				logger.Error(fmt.Errorf("database ethBackend service not running: %v", err).Error())
-				os.Exit(1)
-			}
-
+			// @TODO Move it to Consensus.Start()
 			// In-proc RPC connection so ABCI Query can be forwarded over the database rpc
 			rpcClient, err := abciNode.Attach()
 			if err != nil {

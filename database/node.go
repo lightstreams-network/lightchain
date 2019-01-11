@@ -1,20 +1,22 @@
 package database
 
 import (
-	"google.golang.org/genproto/googleapis/spanner/admin/database/v1"
-	"fmt"
 	"os"
+	"fmt"
 	
 	ethNode "github.com/ethereum/go-ethereum/node"
+	ethRpc "github.com/ethereum/go-ethereum/rpc"
 	
 	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
 	
 	"github.com/lightstreams-network/lightchain/log"
+	"google.golang.org/genproto/googleapis/spanner/admin/database/v1"
 )
 
 // Node is the main object.
 type Node struct {
 	ethereum *ethNode.Node
+	rpcClient *ethRpc.Client
 	cfg      *Config
 	logger	log.Logger
 }
@@ -30,6 +32,7 @@ func NewNode(cfg *Config) (*Node, error) {
 
 	return &Node{
 		stack,
+		nil,
 		cfg,
 		dbLogger,
 	}, nil // nolint: vet
@@ -45,6 +48,7 @@ func (n *Node) Start(uriClient *rpcClient.URIClient) error {
 	}
 
 	// Stop it Eth.p2p server
+	n.logger.Info("Stopping p2p communication of ethereum node")
 	n.ethereum.Server().Stop()
 	
 	// Register NewNode ABCI Application Service
@@ -58,8 +62,14 @@ func (n *Node) Start(uriClient *rpcClient.URIClient) error {
 	// Fetch the registered service of this type
 	var ethDb *database.Database
 	if err := n.ethereum.Service(&ethDb); err != nil {
-		n.logger.Error(fmt.Errorf("database ethBackend service not running: %v", err).Error())
+		n.logger.Error(fmt.Errorf("database service not running: %v", err).Error())
 		return err
+	}
+	
+	n.rpcClient, err = n.ethereum.Attach()
+	if err != nil {
+		n.logger.Error(fmt.Errorf("failed to attach to the inproc geth: %v", err).Error())
+		os.Exit(1)
 	}
 
 	return nil
@@ -73,4 +83,8 @@ func (n *Node) Stop() error {
 	}
 
 	return nil
+}
+
+func (n *Node) RpcClient() *ethRpc.Client {
+	return n.rpcClient
 }

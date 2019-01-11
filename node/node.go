@@ -44,7 +44,7 @@ func (n *Node) Start() error {
 		return err
 	}
 
-	n.consensusNode.Start()
+	n.consensusNode.Start(n.dbNode.RpcClient())
 	if err != nil {
 		return err
 	}

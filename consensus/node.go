@@ -16,6 +16,7 @@ import (
 	
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/tendermint/tendermint/proxy"
+	ethRpc "github.com/ethereum/go-ethereum/rpc"
 )
 
 
@@ -36,7 +37,7 @@ func NewNode(cfg *Config) (*Node, error) {
 	}, nil
 }
 
-func (n *Node) Start() error {
+func (n *Node) Start(rpcClient *ethRpc.Client) error {
 	logger := log.NewLogger()
 
 	if err := n.tendermint.Start(); err != nil {
