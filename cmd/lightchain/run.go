@@ -50,7 +50,7 @@ func runCmd() *cobra.Command {
 			}
 			
 			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg)
-			abciNode, err := node.CreateNode(&nodeCfg)
+			abciNode, err := node.NewNode(&nodeCfg)
 			if err != nil {
 				logger.Error(fmt.Errorf("lightchain node could not be created: %v", err).Error())
 				os.Exit(1)

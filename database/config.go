@@ -53,6 +53,7 @@ func NewConfig(dataDir string, ethCfg eth.Config, nodeCfg ethNode.Config, ethUrl
 	return Config{
 		dataDir,
 		gethCfg,
+		"",
 	}
 }
 
@@ -64,12 +65,12 @@ func NewConfigNode(dataDir string, ctx *cli.Context) (Config, error) {
 
 	ethUtils.SetNodeConfig(ctx, &gethCfg.Node)
 	SetNodeDefaultConfig(&gethCfg.Node, dataDir)
- 	stack, err := NewNode(&gethCfg.Node)
+ 	dbNode, err := NewNode(&gethCfg.Node)
 	if err != nil {
 		return Config{}, err
 	}
 
-	ethUtils.SetEthConfig(ctx, &stack.Node, &gethCfg.Eth)
+	ethUtils.SetEthConfig(ctx, dbNode.ethNode, &gethCfg.Eth)
 	SetEthDefaultConfig(&gethCfg.Eth)
 
  	// @TODO Review the need of including `stack` as part of the method output

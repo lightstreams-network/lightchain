@@ -7,21 +7,40 @@ import (
 
 type Node struct {
 	dbNode *database.Node
-	consensusNode *consensus.Node
+	consensusNode consensus.Node
+}
+
+// makeFullNode creates a full go-database node
+func NewNode(cfg *Config) (*Node, error) {
+	
+	dbNode, err := database.NewNode(&cfg.dbCfg)
+	if err != nil {
+		return nil, err
+	}
+	
+	consensusNode, err := consensus.NewNode(cfg.consensusCfg)
+	if err != nil {
+		return nil, err
+	}
+	
+	
+	return &Node {
+		dbNode,
+		consensusNode,
+	}, nil
 }
 
 
 // Start starts base node and stop p2p server
 func (n *Node) Start() error {
-	// start p2p server
-	err := n.dbNode.Start()
+	// Start database node
+	uriClient := n.consensusNode.NewURIClient()
+	err := n.dbNode.Start(uriClient)
 	if err != nil {
 		return err
 	}
 
-	// Stop it Eth.p2p server
-	n.dbNode.Server().Stop()
-
+	n.consensusNode.Start()
 	return nil
 }
 
@@ -34,3 +53,4 @@ func (n *Node) Stop() error {
 
 	return nil
 }
+

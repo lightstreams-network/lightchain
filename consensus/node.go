@@ -2,27 +2,30 @@ package consensus
 
 import (
 	"gopkg.in/urfave/cli.v1"
+	"fmt"
+	
+	"github.com/tendermint/tendermint/p2p"
+	"github.com/tendermint/tendermint/privval"
 	
 	tmtConfig "github.com/tendermint/tendermint/config"
 	tmtNode "github.com/tendermint/tendermint/node"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
 	tmtFlags "github.com/tendermint/tendermint/libs/cli/flags"
-	
-	"github.com/tendermint/tendermint/p2p"
-	"github.com/tendermint/tendermint/privval"
+	rpcTypes "github.com/tendermint/tendermint/rpc/core/types"
+	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
 	
 	"github.com/lightstreams-network/lightchain/log"
-	"fmt"
 	"github.com/tendermint/tendermint/proxy"
 )
 
 
 type Node struct {
 	tmtNode *tmtNode.Node
+	cfg *Config
 } 
 
 func NewNode(cfg Config) (*Node, error) {
-	return &Node{ nil }, nil
+	return &Node{ nil, &cfg }, nil
 }
 
 func (n *Node) Start() error {
@@ -31,6 +34,12 @@ func (n *Node) Start() error {
 
 func (n *Node) Stop() error {
 	return nil
+}
+
+func (n *Node) NewURIClient() *rpcClient.URIClient {
+	client := rpcClient.NewURIClient(n.cfg) // tendermint RPC client
+	rpcTypes.RegisterAmino(client.Codec())
+	return client
 }
 
 /// NEXT TO REFACTOR
