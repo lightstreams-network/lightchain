@@ -20,15 +20,26 @@ import (
 
 
 type Node struct {
-	tmtNode *tmtNode.Node
-	cfg *Config
+	tendermint *tmtNode.Node
+	cfg        *Config
 } 
 
-func NewNode(cfg Config) (*Node, error) {
-	return &Node{ nil, &cfg }, nil
+func NewNode(cfg *Config) (*Node, error) {
+	return &Node{
+		nil,
+		cfg,
+	}, nil
 }
 
 func (n *Node) Start() error {
+	logger := log.NewLogger()
+
+	if err := n.tendermint.Start(); err != nil {
+		return err
+	}
+
+	logger.Info("Started node", "nodeInfo", n.tendermint.Switch().NodeInfo())
+
 	return nil
 }
 
@@ -44,26 +55,10 @@ func (n *Node) NewURIClient() *rpcClient.URIClient {
 
 /// NEXT TO REFACTOR
 
-func StartNode(ctx *cli.Context, n *tmtNode.Node) error {
-	logger := log.NewLogger()
-
-	if err := n.Start(); err != nil {
-		return fmt.Errorf("Failed to start node: %v", err)
-	}
-	logger.Info("Started node", "nodeInfo", n.Switch().NodeInfo())
-
-	return nil
-}
-
 func CreateNewNode(ctx *cli.Context, logger tmtLog.Logger) (*tmtNode.Node, error) {
-	ctxTmtCfg := MakeTendermintConfig(ctx)
-	cfg, err := ParseTendermintConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
 
 	// Generate node PrivKey
-	nodeKey, err := p2p.LoadOrGenNodeKey(cfg.NodeKeyFile())
+	nodeKey, err := p2p.LoadOrGenNodeKey(n.cfg.NodeKeyFile())
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +72,8 @@ func CreateNewNode(ctx *cli.Context, logger tmtLog.Logger) (*tmtNode.Node, error
 		return nil, err
 	}
 	
-	return tmtNode.NewNode(cfg,
+	return tmtNode.NewNode(
+		cfg,
 		privval.LoadOrGenFilePV(cfg.PrivValidatorFile()),
 		nodeKey,
 		proxy.DefaultClientCreator(cfg.ProxyApp, cfg.ABCI, cfg.DBDir()),

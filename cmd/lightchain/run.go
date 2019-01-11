@@ -108,18 +108,6 @@ func runCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			tmtLogger := log.NewLogger()
-			tmtNode, err := consensus.CreateNewNode(ctx,  tmtLogger.With("module", "tendermint"))
-			if err != nil {
-				logger.Error(fmt.Errorf("failed to create consensus node: %v", err).Error())
-				os.Exit(1)
-			}
-
-			if err := consensus.StartNode(ctx, tmtNode); err != nil {
-				logger.Error(err.Error())
-				os.Exit(1)
-			}
-
 			tmtCommon.TrapSignal(func() {
 				if err := tmtNode.Stop(); err != nil {
 					logger.Error(fmt.Errorf("error stopping Tendermint service. %v", err).Error())

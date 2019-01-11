@@ -70,7 +70,7 @@ func NewConfigNode(dataDir string, ctx *cli.Context) (Config, error) {
 		return Config{}, err
 	}
 
-	ethUtils.SetEthConfig(ctx, dbNode.ethNode, &gethCfg.Eth)
+	ethUtils.SetEthConfig(ctx, dbNode.ethereum, &gethCfg.Eth)
 	SetEthDefaultConfig(&gethCfg.Eth)
 
  	// @TODO Review the need of including `stack` as part of the method output
@@ -82,7 +82,7 @@ func NewConfigNode(dataDir string, ctx *cli.Context) (Config, error) {
 
 
 
-// DefaultEthNodeConfig returns the default configuration for a go-ethereum ethNode
+// DefaultEthNodeConfig returns the default configuration for a go-ethereum ethereum
 func DefaultEthNodeConfig() ethNode.Config {
 	cfg := ethNode.DefaultConfig
 	cfg.Name = utils.ClientIdentifier
@@ -95,7 +95,7 @@ func DefaultEthNodeConfig() ethNode.Config {
 	return cfg
 }
 
-// SetNodeConfig takes a ethNode configuration and applies lightchain specific configuration
+// SetNodeConfig takes a ethereum configuration and applies lightchain specific configuration
 func SetNodeDefaultConfig(cfg *ethNode.Config, dataDir string) {
 	cfg.P2P.MaxPeers = 0
 	cfg.P2P.NoDiscovery = true

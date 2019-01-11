@@ -26,8 +26,6 @@ type jsonRequest struct {
 	Params []interface{}   `json:"params,omitempty"`
 }
 
-var bigZero = big.NewInt(0)
-
 // maxTransactionSize is 32KB in order to prevent DOS attacks
 const maxTransactionSize = 32768
 
@@ -40,8 +38,7 @@ type TendermintABCI struct {
 	getCurrentDBState func() (*state.StateDB, error)
 }
 
-// Todo: assert this somehow
-//var _ tmtAbciTypes.Application = TendermintABCI{}
+var _ tmtAbciTypes.Application = TendermintABCI{}
 
 func NewTendermintABCI(db *database.Database, client *rpc.Client, logger tmtLog.Logger) (*TendermintABCI, error) {
 	txState, err := db.Ethereum().BlockChain().State()
@@ -77,7 +74,7 @@ func (abci *TendermintABCI) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.Resp
 	// This check determines whether it is the first time lightchain gets started.
 	// If it is the first time, then we have to respond with an empty hash, since
 	// that is what tmtCfg expects.
-	if height.Cmp(bigZero) == 0 {
+	if height.Cmp(big.NewInt(0)) == 0 {
 		return tmtAbciTypes.ResponseInfo{
 			Data:             "ABCIEthereum",
 			LastBlockHeight:  height.Int64(),
