@@ -7,19 +7,19 @@ import (
 	"github.com/lightstreams-network/lightchain/database"
 )
 
-var logger = log.NewLogger()
-
 func InitNode(cfg Config) error {
-	logger.Info("Initializing DataDir", "dir", cfg.DataDir)
+	var logger = log.NewLogger()
+	logger.With("module", "node")
+	logger.Info("Initializing lightchain node data dir...", "dir", cfg.DataDir)
+
 	if err := utils.CreatePathIfNotExists(cfg.DataDir); err != nil {
 		return err
 	}
 	
-	if err := consensus.InitNode(cfg.consensusCfg); err != nil {
+	if err := consensus.Init(cfg.consensusCfg, logger); err != nil {
 		return err
 	}
 
-	
 	if err := database.Init(cfg.dbCfg); err != nil {
 		return err
 	}

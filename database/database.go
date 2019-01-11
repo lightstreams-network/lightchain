@@ -36,7 +36,7 @@ func New(ctx *node.ServiceContext, ethCfg *eth.Config, tmtRPCClient tmtRpcClient
 	state := NewEthState()
 
 	// eth.NewNode takes a ServiceContext for the EventMux, the AccountManager,
-	// and some basic functions around the DataDir.
+	// and some basic functions around the dataDir.
 	ethereum, err := eth.New(ctx, ethCfg)
 	if err != nil {
 		return nil, err

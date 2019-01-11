@@ -1,34 +1,37 @@
 package consensus
 
 import (
+	"fmt"
 	"github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/p2p"
-	
-	tmtCommon "github.com/tendermint/tendermint/libs/common"
 	"github.com/lightstreams-network/lightchain/log"
+
+	tmtCommon "github.com/tendermint/tendermint/libs/common"
+	tmtConfig "github.com/tendermint/tendermint/config"
+	"path/filepath"
+	"github.com/lightstreams-network/lightchain/utils"
+	"io/ioutil"
 )
 
-var logger = log.NewLogger()
+func Init(cfg Config, logger log.Logger) error {
+	// This is a necessary evil because
+	// Tendermint is using panics instead of errors where they shouldn't...
+	defer recoverNodeInitPanic()
 
-func InitNode(cfg Config) error {
-	if err := ensureTendermintDataDir(cfg); err != nil {
-		return nil
-	}
+	createConsensusDataDirIfNotExists(cfg.dataDir)
 
-	// Generate Private File
-	privValFile := cfg.tmtCfg.PrivValidatorFile()
+	privateValidatorFile := cfg.tendermintCfg.PrivValidatorFile()
 	var pv *privval.FilePV
-	if tmtCommon.FileExists(privValFile) {
-		pv = privval.LoadFilePV(privValFile)
-		logger.Info("Found private validator", "path", privValFile)
+	if tmtCommon.FileExists(privateValidatorFile) {
+		pv = privval.LoadFilePV(privateValidatorFile)
+		logger.Info("Found private validator", "path", privateValidatorFile)
 	} else {
-		pv = privval.GenFilePV(privValFile)
+		pv = privval.GenFilePV(privateValidatorFile)
 		pv.Save()
-		logger.Info("Generated private validator", "path", privValFile)
+		logger.Info("Generated private validator", "path", privateValidatorFile)
 	}
 
-	// Generate NodeKey File
-	nodeKeyFile := cfg.tmtCfg.NodeKeyFile()
+	nodeKeyFile := cfg.tendermintCfg.NodeKeyFile()
 	if tmtCommon.FileExists(nodeKeyFile) {
 		logger.Info("Found node key", "path", nodeKeyFile)
 	} else {
@@ -38,8 +41,7 @@ func InitNode(cfg Config) error {
 		logger.Info("Generated node key", "path", nodeKeyFile)
 	}
 
-	// Genesis file
-	genFile := cfg.tmtCfg.GenesisFile()
+	genFile := cfg.tendermintCfg.GenesisFile()
 	if tmtCommon.FileExists(genFile) {
 		logger.Info("Found genesis file", "path", genFile)
 	} else {
@@ -52,18 +54,47 @@ func InitNode(cfg Config) error {
 		}
 		logger.Info("Generated genesis file", "path", genFile)
 	}
-	
-	// Config file
-	cfgFile := cfg.TendermintConfigFilePath()
+
+	cfgFilePath := cfg.TendermintConfigFilePath()
 	cfgDoc, err := readTendermintDefaultConfig()
 	if err != nil {
 		return err
 	}
-	if err := tmtCommon.WriteFile(cfgFile, cfgDoc, 0644); err != nil {
+
+	if err := tmtCommon.WriteFile(cfgFilePath, cfgDoc, 0644); err != nil {
 		return err
 	}
-	logger.Info("Generated config file", "path", cfgFile)
-	
+	logger.Info("Generated Tendermint config file", "path", cfgFilePath)
+
 	return nil
 }
 
+func createConsensusDataDirIfNotExists(dataDir string) {
+	tmtConfig.EnsureRoot(dataDir)
+}
+
+func readTendermintDefaultGenesis() ([]byte, error) {
+	fPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/tendermint/genesis.json"))
+	if err != nil {
+		return nil, err
+	}
+
+	return ioutil.ReadFile(fPath)
+}
+
+func readTendermintDefaultConfig() ([]byte, error) {
+	fPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/tendermint/config.toml"))
+	if err != nil {
+		return nil, err
+	}
+
+	return ioutil.ReadFile(fPath)
+}
+
+func recoverNodeInitPanic() error {
+	if r := recover(); r!= nil {
+		return fmt.Errorf("panic occured initializing consensus node init. %v", r)
+	}
+
+	return nil
+}

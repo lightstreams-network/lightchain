@@ -26,13 +26,13 @@ func runCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			logger.Info("Launching the lightchain node...")
 			dataDir, _ := cmd.Flags().GetString(DataDirFlag.GetName())
-			
-			
-			rpcListenPort, _ := cmd.Flags().GetUint16(ConsensusRpcListenPortFlag.GetName())
-			p2pListenPort, _ := cmd.Flags().GetUint16(ConsensusP2PListenPortFlag.GetName())
-			proxyListenPort, _ := cmd.Flags().GetUint16(ConsensusProxyListenPortFlag.GetName())
+
+			rpcListenPort, _ := cmd.Flags().GetUint(ConsensusRpcListenPortFlag.GetName())
+			p2pListenPort, _ := cmd.Flags().GetUint(ConsensusP2PListenPortFlag.GetName())
+			proxyListenPort, _ := cmd.Flags().GetUint(ConsensusProxyListenPortFlag.GetName())
+
 			consensusCfg := consensus.NewConfig(
-				filepath.Join(dataDir, consensus.DataDirPath),
+				filepath.Join(dataDir, consensus.DataDirName),
 				rpcListenPort,
 				p2pListenPort,
 				proxyListenPort,
