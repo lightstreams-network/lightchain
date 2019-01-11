@@ -53,11 +53,13 @@ func (n *Node) Start() error {
 
 
 func (n *Node) Stop() error {
+	n.logger.Debug("Stopping database node...")
 	err := n.dbNode.Stop()
 	if err != nil {
 		return err
 	}
 	
+	n.logger.Debug("Stopping consensus node...")
 	n.consensusNode.Stop()
 	if err != nil {
 		return err

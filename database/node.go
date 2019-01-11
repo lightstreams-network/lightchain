@@ -11,6 +11,8 @@ import (
 	
 	"github.com/lightstreams-network/lightchain/log"
 	"google.golang.org/genproto/googleapis/spanner/admin/database/v1"
+	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 // Node is the main object.
@@ -48,6 +50,9 @@ func (n *Node) Start(uriClient *rpcClient.URIClient) error {
 	if err != nil {
 		return err
 	}
+	
+	n.logger.Debug("Register wallet event handlers to open and auto-derive wallets")
+	go registerEventHandlers(n)
 
 	// Stop it Eth.p2p server
 	n.logger.Debug("Stopping p2p communication of ethereum node")
@@ -64,6 +69,8 @@ func (n *Node) Start(uriClient *rpcClient.URIClient) error {
 	}); err != nil {
 		return err
 	}
+	
+	
 	
 	// Fetch the registered service of this type
 	var ethDb *database.Database
@@ -83,10 +90,12 @@ func (n *Node) Start(uriClient *rpcClient.URIClient) error {
 
 
 func (n *Node) Stop() error {
+	n.logger.Debug("Stopping ethereum service")
 	if err := n.ethereum.Stop(); err != nil {
 		return err
 	}
 	
+	n.logger.Debug("Stopping database service")
 	if err := n.database.Stop(); err != nil {
 		return err
 	}
@@ -100,4 +109,51 @@ func (n *Node) RpcClient() *ethRpc.Client {
 
 func (n *Node) Database() *Database {
 	return n.database
+}
+
+func registerEventHandlers(n *Node) error {
+	events := make(chan accounts.WalletEvent, 16)
+	n.ethereum.AccountManager().Subscribe(events)
+
+	// Create an chain state reader for self-derivation
+	client, err := n.ethereum.Attach() // Ethereum RPC client
+	if err != nil {
+		n.logger.Error(fmt.Errorf("Failed to attach to self: %v", err).Error())
+		return err
+	}
+	stateReader := ethclient.NewClient(client)
+
+	// Open and self derive any wallets already attached
+	for _, wallet := range n.ethereum.AccountManager().Wallets() {
+		if err := wallet.Open(""); err != nil {
+			n.logger.Warn("Failed to open wallet", "url", wallet.URL(), "err", err)
+		} else {
+			wallet.SelfDerive(accounts.DefaultBaseDerivationPath, stateReader)
+		}
+	}
+
+	// Listen for wallet event till termination
+	for event := range events {
+		switch event.Kind {
+		case accounts.WalletArrived:
+			if err := event.Wallet.Open(""); err != nil {
+				n.logger.Warn("New wallet appeared, failed to open", "url", event.Wallet.URL(), "err", err)
+			}
+		case accounts.WalletOpened:
+			status, _ := event.Wallet.Status()
+			n.logger.Info("New wallet appeared", "url", event.Wallet.URL(), "status", status)
+
+			if event.Wallet.URL().Scheme == "ledger" {
+				event.Wallet.SelfDerive(accounts.DefaultLedgerBaseDerivationPath, stateReader)
+			} else {
+				event.Wallet.SelfDerive(accounts.DefaultBaseDerivationPath, stateReader)
+			}
+
+		case accounts.WalletDropped:
+			n.logger.Info("Old wallet dropped", "url", event.Wallet.URL())
+			event.Wallet.Close()
+		}
+	}
+
+	return nil
 }

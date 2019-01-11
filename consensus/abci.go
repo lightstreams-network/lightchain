@@ -38,7 +38,7 @@ type TendermintABCI struct {
 	getCurrentDBState func() (*state.StateDB, error)
 }
 
-var _ tmtAbciTypes.Application = TendermintABCI{}
+var _ tmtAbciTypes.Application = &TendermintABCI{}
 
 func NewTendermintABCI(db *database.Database, client *rpc.Client, logger tmtLog.Logger) (*TendermintABCI, error) {
 	txState, err := db.Ethereum().BlockChain().State()

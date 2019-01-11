@@ -53,6 +53,14 @@ func (l Logger) Error(msg string, ctx ...interface{}) {
 	log.Error(msg, ctx...)
 }
 
+// Error proxies everything to the go-ethereum logging facilities
+// #unstable
+func (l Logger) Warn(msg string, ctx ...interface{}) {
+	ctx = append(l.keyvals, ctx...)
+	log.Warn(msg, ctx...)
+}
+
+
 // With proxies everything to the go-ethereum logging facilities
 // #unstable
 func (l Logger) With(ctx ...interface{}) tmtLog.Logger {
