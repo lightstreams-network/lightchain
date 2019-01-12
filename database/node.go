@@ -10,7 +10,6 @@ import (
 	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
 
 	"github.com/lightstreams-network/lightchain/log"
-	"google.golang.org/genproto/googleapis/spanner/admin/database/v1"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -25,25 +24,39 @@ type Node struct {
 }
 
 // NewNode creates a new node.
-func NewNode(cfg *Config) (*Node, error) {
-	dbLogger := log.NewLogger()
-	dbLogger.With("module", "database")
+func NewNode(cfg *Config, uriClient *rpcClient.URIClient) (*Node, error) {
+	logger := log.NewLogger()
+	logger.With("module", "database")
 	stack, err := ethNode.New(&cfg.GethConfig.Node)
 	if err != nil {
 		return nil, err
 	}
-
-	return &Node{
+	
+	n := Node{
 		stack,
 		nil,
 		nil,
 		cfg,
-		dbLogger,
-	}, nil // nolint: vet
+		logger,
+	}
+
+	logger.Debug("Binding ethereum events to rpc client...")
+	if err := stack.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {
+		logger.Info(fmt.Sprintf("registering ABCI application service"))
+		n.database, err = NewDatabase(ctx, &cfg.GethConfig.Eth, uriClient)
+		if err != nil {
+			return nil, err
+		}
+		return n.database, nil
+	}); err != nil {
+		return &n, err
+	}
+	
+	return &n, nil // nolint: vet
 }
 
 // Start starts base node and stop p2p server
-func (n *Node) Start(uriClient *rpcClient.URIClient) error {
+func (n *Node) Start() error {
 	// start p2p server
 	n.logger.Debug("Starting ethereum node")
 	err := n.ethereum.Start()
@@ -56,26 +69,15 @@ func (n *Node) Start(uriClient *rpcClient.URIClient) error {
 	n.ethereum.Server().Stop()
 
 	n.logger.Debug("Register wallet event handlers to open and auto-derive wallets")
-	go registerEventHandlers(n)
-
-	// Register NewNode ABCI Application Service
-	n.logger.Debug("Binding ethereum events to rpc client...")
-	if err := n.ethereum.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {
-		n.logger.Info(fmt.Sprintf("registering ABCI application service"))
-		n.database, err = NewDatabase(ctx, &n.cfg.GethConfig.Eth, uriClient)
-		if err != nil {
-			return nil, err
-		}
-		return n.database, nil
-	}); err != nil {
-		return err
-	}
+	events := make(chan accounts.WalletEvent, 16)
+	n.ethereum.AccountManager().Subscribe(events)
+	go registerEventHandlers(n, events)
 
 	// Fetch the registered service of this type
-	var ethDb *database.Database
-	n.logger.Debug("Starting ethereum service...")
+	var ethDb *Database
+	n.logger.Debug("Validate ethereum service is running...")
 	if err := n.ethereum.Service(&ethDb); err != nil {
-		n.logger.Error(fmt.Errorf("database service not running: %v", err).Error())
+		n.logger.Error(fmt.Errorf("ethereum service not running: %v", err).Error())
 		return err
 	}
 
@@ -111,10 +113,7 @@ func (n *Node) Database() *Database {
 	return n.database
 }
 
-func registerEventHandlers(n *Node) error {
-	events := make(chan accounts.WalletEvent, 16)
-	n.ethereum.AccountManager().Subscribe(events)
-
+func registerEventHandlers(n *Node, events chan accounts.WalletEvent) error {
 	// Create an chain state reader for self-derivation
 	client, err := n.ethereum.Attach() // Ethereum RPC client
 	if err != nil {

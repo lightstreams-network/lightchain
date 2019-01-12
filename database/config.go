@@ -70,12 +70,12 @@ func NewConfigNode(dataDir string, ctx *cli.Context) (Config, error) {
 		gethCfg,
 	}
 
- 	dbNode, err := NewNode(&cfg)
+	ethereumNode, err := ethNode.New(&cfg.GethConfig.Node)
 	if err != nil {
-		return Config{}, err
+		return cfg, err
 	}
 
-	ethUtils.SetEthConfig(ctx, dbNode.ethereum, &cfg.GethConfig.Eth)
+	ethUtils.SetEthConfig(ctx, ethereumNode, &cfg.GethConfig.Eth)
 	setEthDefaultConfig(&cfg.GethConfig.Eth)
 
  	// @TODO Review the need of including `stack` as part of the method output

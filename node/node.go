@@ -17,14 +17,15 @@ func NewNode(cfg *Config) (*Node, error) {
 	logger := log.NewLogger()
 	logger.With("module", "node")
 
-	logger.Debug("Initializing database node...")
-	dbNode, err := database.NewNode(&cfg.dbCfg)
+	logger.Debug("Initializing consensus node...")
+	consensusNode, err := consensus.NewNode(&cfg.consensusCfg)
 	if err != nil {
 		return nil, err
 	}
-
-	logger.Debug("Initializing consensus node...")
-	consensusNode, err := consensus.NewNode(&cfg.consensusCfg)
+	
+	logger.Debug("Initializing database node...")
+	uriClient := consensusNode.NewURIClient()
+	dbNode, err := database.NewNode(&cfg.dbCfg, uriClient)
 	if err != nil {
 		return nil, err
 	}
@@ -40,8 +41,7 @@ func NewNode(cfg *Config) (*Node, error) {
 func (n *Node) Start() error {
 	// Start database node
 	n.logger.Info("Starting database engine...")
-	uriClient := n.consensusNode.NewURIClient()
-	err := n.dbNode.Start(uriClient)
+	err := n.dbNode.Start()
 	if err != nil {
 		return err
 	}
