@@ -13,6 +13,7 @@ import (
 	rpcTypes "github.com/tendermint/tendermint/rpc/core/types"
 	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
 	ethRpc "github.com/ethereum/go-ethereum/rpc"
+	"fmt"
 )
 
 type Node struct {
@@ -41,6 +42,32 @@ func NewNode(cfg *Config) (*Node, error) {
 
 func (n *Node) Start(rpcClient *ethRpc.Client, db *database.Database) error {
 	
+	n.logger.Debug("Creating tendermint ABCI application...")
+	tendermintABCI, err := NewTendermintABCI(db, rpcClient, n.logger)
+	if err != nil {
+		return err
+	}
+
+	n.logger.Debug("Initializing consensus state...")
+	err = tendermintABCI.InitEthState()
+	if err != nil {
+		return err
+	}
+
+	n.logger.Debug("Creating tendermint server...")
+	proxyLAddr := fmt.Sprintf("tcp://0.0.0.0:%d", n.cfg.proxyListenPort)
+	abciSrv, err := tmtServer.NewServer(proxyLAddr, n.cfg.proxyProtocol, tendermintABCI)
+	if err != nil {
+		return err
+	}
+
+	n.logger.Debug("Starting ABCI application server...")
+	abciSrv.SetLogger(log.NewLogger().With("module", "node-server"))
+	if err := abciSrv.Start(); err != nil {
+		return err
+	}
+	n.logger.Debug("Started ABCI application server")
+
 	n.logger.Info("Creating tendermint node...")
 	tendermint, err := tmtNode.NewNode(
 		n.cfg.tendermintCfg,
@@ -60,37 +87,13 @@ func (n *Node) Start(rpcClient *ethRpc.Client, db *database.Database) error {
 	}
 	
 	
-	n.logger.Info("Starting consensus engine...")
+	n.logger.Info("Starting tendermint node...")
 	if err := n.tendermint.Start(); err != nil {
 		return err
 	}
-
-	n.logger.Debug("Creating tendermint ABCI application...")
-	tendermintABCI, err := NewTendermintABCI(db, rpcClient, n.logger)
-	if err != nil {
-		return err
-	}
-
-	n.logger.Debug("Initializing consensus state...")
-	err = tendermintABCI.InitEthState()
-	if err != nil {
-		return err
-	}
-
-	n.logger.Debug("Creating tendermint server...")
-	abciSrv, err := tmtServer.NewServer(n.cfg.tendermintCfg.ProxyApp, n.cfg.proxyProtocol, tendermintABCI)
-	if err != nil {
-		return err
-	}
-
-	abciSrv.SetLogger(log.NewLogger().With("module", "node-server"))
-	if err := abciSrv.Start(); err != nil {
-		return err
-	}
+	n.logger.Info("Started tendermint node")
 
 	n.logger.Info("Consensus node started", "nodeInfo", n.tendermint.Switch().NodeInfo())
-
-	n.logger.Info("Started consensus node...")
 	return nil
 }
 
