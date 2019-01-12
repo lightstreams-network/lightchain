@@ -6,12 +6,14 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/eth"
+	ethLog "github.com/ethereum/go-ethereum/log"
 
 	"github.com/lightstreams-network/lightchain/node"
 	"github.com/lightstreams-network/lightchain/database"
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/utils"
 	"path/filepath"
+	"github.com/lightstreams-network/lightchain/log"
 )
 
 func initCmd() *cobra.Command {
@@ -29,6 +31,11 @@ func initCmd() *cobra.Command {
 }
 
 func initCmdRun(cmd *cobra.Command, args []string) {
+	lvlStr, _ := cmd.Flags().GetString(LogLvlFlag.Name)
+	if lvl, err := ethLog.LvlFromString(lvlStr); err == nil {
+		log.SetupLogger(lvl)
+	}
+			
 	dataDir, _ := cmd.Flags().GetString(DataDirFlag.Name)
 
 	consensusCfg := consensus.NewConfig(

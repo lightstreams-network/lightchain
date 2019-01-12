@@ -5,14 +5,12 @@ import (
 	"os"
 
 	"github.com/lightstreams-network/lightchain/log"
-	ethLog "github.com/ethereum/go-ethereum/log"
 	"github.com/spf13/cobra"
 )
 
 var logger = log.NewLogger()
 
 func main() {
-	log.SetupLogger(ethLog.LvlDebug)
 	lightchainCmd := LightchainCmd()
 
 	if err := lightchainCmd.Execute(); err != nil {
@@ -37,11 +35,12 @@ func LightchainCmd() *cobra.Command {
 	lightchainCmd.AddCommand(docsCmd())
 	lightchainCmd.AddCommand(initCmd())
 	lightchainCmd.AddCommand(runCmd())
-
 	return lightchainCmd
 }
 
 func addDefaultFlags(cmd *cobra.Command) {
+	cmd.Flags().String(LogLvlFlag.Name, LogLvlFlag.Value, LogLvlFlag.Usage)
+
 	cmd.Flags().String(DataDirFlag.Name, DataDirFlag.Value.Value, DataDirFlag.Usage)
 	cmd.MarkFlagRequired(DataDirFlag.Name)	
 }

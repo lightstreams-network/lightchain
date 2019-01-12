@@ -31,7 +31,7 @@ done
 
 INIT_ARGS="--datadir=${DATA_DIR}"
 
-RUN_ARGS="--datadir=${DATA_DIR}"
+RUN_ARGS="--datadir=${DATA_DIR} --lvl=dbug"
 
 pushd "$ROOT_PATH"
 

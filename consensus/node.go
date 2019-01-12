@@ -102,8 +102,8 @@ func (n *Node) Stop() error {
 }
 
 func (n *Node) NewURIClient() *rpcClient.URIClient {
-	client := rpcClient.NewURIClient(n.cfg.tendermintCfg.RPC.ListenAddress)
+	tendermintLAddr := fmt.Sprintf("tcp://127.0.0.1:%d", n.cfg.rpcListenPort)
+	client := rpcClient.NewURIClient(tendermintLAddr)
 	rpcTypes.RegisterAmino(client.Codec())
-
 	return client
 }

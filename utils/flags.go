@@ -3,6 +3,7 @@ package utils
 
 import (
 	"gopkg.in/urfave/cli.v1"
+	ethLog "github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/cmd/utils"
 )
 
@@ -36,6 +37,11 @@ var (
 		Name:  "datadir",
 		Usage: "Data directory for the databases and keystore",
 		Value: utils.DirectoryString{DefaultDataDir()},
+	}
+	LogLvlFlag = cli.StringFlag{
+		Name:  "lvl",
+		Usage: "Level of logging",
+		Value: ethLog.LvlInfo.String(),
 	}
 	GenesisPathFlag = utils.DirectoryFlag{
 		Name:  "genesis",

@@ -8,6 +8,7 @@ import (
 
 var (
 	DataDirFlag = utils.DataDirFlag
+	LogLvlFlag = utils.LogLvlFlag
 
 	RPCEnabledFlag = ethUtils.RPCEnabledFlag
 	RPCListenAddrFlag = ethUtils.RPCListenAddrFlag

@@ -10,10 +10,12 @@ import (
 	
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
 	tmtCommon "github.com/tendermint/tmlibs/common"
+	ethLog "github.com/ethereum/go-ethereum/log"
 	
 	"github.com/lightstreams-network/lightchain/node"
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/database"
+	"github.com/lightstreams-network/lightchain/log"
 )
 
 func runCmd() *cobra.Command {
@@ -24,6 +26,11 @@ func runCmd() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
+			lvlStr, _ := cmd.Flags().GetString(LogLvlFlag.Name)
+			if lvl, err := ethLog.LvlFromString(lvlStr); err == nil {
+				log.SetupLogger(lvl)
+			}
+			
 			logger.Info("Launching the lightchain node...")
 			dataDir, _ := cmd.Flags().GetString(DataDirFlag.GetName())
 
