@@ -25,6 +25,7 @@ func initCmd() *cobra.Command {
 	}
 
 	addDefaultFlags(initCmd)
+
 	return initCmd
 }
 
@@ -45,7 +46,8 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 	)
 	
 	dbDataDir := filepath.Join(dataDir, database.DataDirPath)
-	ctx := NewNodeClientCtx(dbDataDir, cmd)
+	ctx := newNodeClientCtx(dbDataDir, cmd)
+
 	dbCfg, err := database.NewConfig(dbDataDir, ctx)
 	if err != nil {
 		logger.Error(err.Error())

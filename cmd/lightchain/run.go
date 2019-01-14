@@ -28,13 +28,14 @@ func runCmd() *cobra.Command {
 				log.SetupLogger(lvl)
 			}
 			
-			logger.Info("Launching the lightchain node...")
-			dataDir, _ := cmd.Flags().GetString(DataDirFlag.GetName())
+			logger.Info("Launching Lightchain node...")
 
+			dataDir, _ := cmd.Flags().GetString(DataDirFlag.GetName())
 			rpcListenPort, _ := cmd.Flags().GetUint(ConsensusRpcListenPortFlag.GetName())
 			p2pListenPort, _ := cmd.Flags().GetUint(ConsensusP2PListenPortFlag.GetName())
 			proxyListenPort, _ := cmd.Flags().GetUint(ConsensusProxyListenPortFlag.GetName())
 			proxyProtocol, _ := cmd.Flags().GetString(ConsensusProxyProtocolFlag.GetName())
+			databaseDataDir := filepath.Join(dataDir, database.DataDirPath)
 
 			consensusCfg := consensus.NewConfig(
 				filepath.Join(dataDir, consensus.DataDirName),
@@ -45,8 +46,7 @@ func runCmd() *cobra.Command {
 			)
 			
 			// Fake cli.context required by Ethereum node
-			databaseDataDir := filepath.Join(dataDir, database.DataDirPath)
-			ctx := NewNodeClientCtx(databaseDataDir, cmd)
+			ctx := newNodeClientCtx(databaseDataDir, cmd)
 			dbCfg, err := database.NewConfig(databaseDataDir, ctx)
 			if err != nil {
 				logger.Error(fmt.Errorf("database node config could not be created: %v", err).Error())
@@ -54,10 +54,10 @@ func runCmd() *cobra.Command {
 			}
 			
 			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg)
-			logger.Debug("Initializing lightchain node...")
-			lightChainNode, err := node.NewNode(&nodeCfg) // Former abciNode
+
+			lightChainNode, err := node.NewNode(&nodeCfg)
 			if err != nil {
-				logger.Error(fmt.Errorf("lightchain node could not be initialized: %v", err).Error())
+				logger.Error(fmt.Errorf("lightchain node could not be instantiated: %v", err).Error())
 				os.Exit(1)
 			}
 			
@@ -79,26 +79,7 @@ func runCmd() *cobra.Command {
 	}
 
 	addDefaultFlags(runCmd)
-	addNodeFlags(runCmd)
+	addEthNodeFlags(runCmd)
 
 	return runCmd
-}
-
-func addNodeFlags(cmd *cobra.Command) {
-	// RPC Flags
-	cmd.Flags().Bool(RPCEnabledFlag.GetName(), false, RPCEnabledFlag.Usage)
-	cmd.Flags().String(RPCListenAddrFlag.GetName(), RPCListenAddrFlag.Value, RPCListenAddrFlag.Usage)
-	cmd.Flags().Int(RPCPortFlag.GetName(), RPCPortFlag.Value, RPCPortFlag.Usage)
-	cmd.Flags().String(RPCApiFlag.GetName(), RPCApiFlag.Value, RPCApiFlag.Usage)
-	
-	// WS Flags
-	cmd.Flags().Bool(WSEnabledFlag.GetName(), false, WSEnabledFlag.Usage)
-	cmd.Flags().String(WSListenAddrFlag.GetName(), WSListenAddrFlag.Value, WSListenAddrFlag.Usage)
-	cmd.Flags().Int(WSPortFlag.GetName(), WSPortFlag.Value, WSPortFlag.Usage)
-	
-	// Consensus Flags
-	cmd.Flags().Uint(ConsensusRpcListenPortFlag.GetName(), ConsensusRpcListenPortFlag.Value, ConsensusRpcListenPortFlag.Usage)
-	cmd.Flags().Uint(ConsensusP2PListenPortFlag.GetName(), ConsensusP2PListenPortFlag.Value, ConsensusP2PListenPortFlag.Usage)
-	cmd.Flags().Uint(ConsensusProxyListenPortFlag.GetName(), ConsensusProxyListenPortFlag.Value, ConsensusProxyListenPortFlag.Usage)
-	cmd.Flags().String(ConsensusProxyProtocolFlag.GetName(), ConsensusProxyProtocolFlag.Value, ConsensusProxyProtocolFlag.Usage)
 }
