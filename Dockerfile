@@ -30,14 +30,6 @@ RUN git clone -b v1.8.18 --single-branch git@github.com:ethereum/go-ethereum.git
 RUN cd ${GOPATH}/src/github.com/ethereum/go-ethereum && \
 	make geth && \
 	cp -f build/bin/geth ${GOPATH}/bin/
-	
-# Install Tendermint
-RUN mkdir -p $GOPATH/src/github.com/tendermint
-RUN git clone https://github.com/lightstreams-network/tendermint.git $GOPATH/src/github.com/tendermint/tendermint
-RUN cd $GOPATH/src/github.com/tendermint/tendermint && \
-	make get_tools && \
-	make get_vendors_deps && \
-	make install
 
 # Install Lightchain
 RUN mkdir -p $GOPATH/src/github.com/lightstreams-network/lightchain

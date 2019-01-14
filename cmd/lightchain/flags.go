@@ -1,120 +1,63 @@
-// nolint=lll
 package main
 
 import (
-	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
+	"path"
 	"gopkg.in/urfave/cli.v1"
-	"github.com/lightstreams-network/lightchain/config"
+	"github.com/mitchellh/go-homedir"
+	
+	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
+	ethLog "github.com/ethereum/go-ethereum/log"
 )
 
+const (
+	TendermintP2PListenPort   = uint(26656)
+	TendermintRpcListenPort   = uint(26657)
+	TendermintProxyListenPort = uint(26658)
+	TendermintProxyProtocol   = "rpc"
+)
+
+var defaultHomeDir, _ = homedir.Dir()
+
 var (
-	// ----------------------------
-	// ABCI Flags
-
-	// TendermintAddrFlag is the address that lightchain will use to connect to the tendermint core node
-	// #stable - 0.4.0
-	TendermintAddrFlag = cli.StringFlag{
-		Name:  "tendermint_addr",
-		Value: "tcp://127.0.0.1:26657",
-		Usage: "This is the address that lightchain will use to connect to the tendermint core node. Please provide a port.",
+	DataDirFlag = ethUtils.DirectoryFlag{
+		Name:  "datadir",
+		Usage: "Data directory for the databases and keystore",
+		Value: ethUtils.DirectoryString{path.Join(defaultHomeDir, "lightchain")},
 	}
 
-	// ABCIAddrFlag is the address that lightchain will use to listen to incoming ABCI connections
-	// #stable - 0.4.0
-	ABCIAddrFlag = cli.StringFlag{
-		Name:  "abci_laddr",
-		Value: "tcp://0.0.0.0:26658",
-		Usage: "This is the address that the ABCI server will use to listen to incoming connection from tendermint core.",
+	LogLvlFlag = cli.StringFlag{
+		Name:  "lvl",
+		Usage: "Level of logging",
+		Value: ethLog.LvlInfo.String(),
 	}
 
+	RPCEnabledFlag = ethUtils.RPCEnabledFlag
+	RPCListenAddrFlag = ethUtils.RPCListenAddrFlag
+	RPCPortFlag = ethUtils.RPCPortFlag
+	RPCApiFlag = ethUtils.RPCApiFlag
+	WSEnabledFlag = ethUtils.WSEnabledFlag
+	WSListenAddrFlag = ethUtils.WSListenAddrFlag
+	WSPortFlag = ethUtils.WSPortFlag
+
+	ConsensusRpcListenPortFlag = cli.UintFlag{
+		Name:  "tmt_rpc_port",
+		Value: TendermintRpcListenPort,
+		Usage: "Tendermint RPC port used to receive incoming messages from Lightchain",
+	}
+	ConsensusP2PListenPortFlag = cli.UintFlag{
+		Name:  "tmt_p2p_port",
+		Value: TendermintP2PListenPort,
+		Usage: "Tendermint port used to achieve exchange messages across nodes",
+	}
+	ConsensusProxyListenPortFlag = cli.UintFlag{
+		Name:  "tmt_proxy_port",
+		Value: TendermintProxyListenPort,
+		Usage: "Lightchain RPC port used to receive incoming messages from Tendermint",
+	}
 	// ABCIProtocolFlag defines whether GRPC or SOCKET should be used for the ABCI connections
-	// #stable - 0.4.0
-	ABCIProtocolFlag = cli.StringFlag{
+	ConsensusProxyProtocolFlag = cli.StringFlag{
 		Name:  "abci_protocol",
 		Value: "socket",
 		Usage: "socket | grpc",
-	}
-
-	// VerbosityFlag defines the verbosity of the logging
-	// #unstable
-	VerbosityFlag = cli.IntFlag{
-		Name:  "verbosity",
-		Value: 3,
-		Usage: "Logging verbosity: 0=silent, 1=error, 2=warn, 3=info, 4=core, 5=debug, 6=detail",
-	}
-
-	// ConfigFileFlag defines the path to a TOML config for go-ethereum
-	// #unstable
-	ConfigFileFlag = cli.StringFlag{
-		Name:  "config",
-		Usage: "TOML configuration file",
-	}
-
-	// TargetGasLimitFlag defines gas limit of the Genesis block
-	// #unstable
-	TargetGasLimitFlag = cli.Uint64Flag{
-		Name:  "targetgaslimit",
-		Usage: "Target gas limit sets the artificial target gas floor for the blocks to mine",
-		Value: config.GenesisTargetGasLimit,
-	}
-
-	// WithTendermintFlag asks to start Tendermint
-	// `tendermint init` and `tendermint node` when `lightchain init`
-	// and `lightchain` are invoked respectively.
-	WithTendermintFlag = cli.BoolFlag{
-		Name: "with-tendermint",
-		Usage: "If set, it will invoke `tendermint init` and `tendermint node` " +
-			"when `lightchain init` and `lightchain` are invoked respectively",
-	}
-)
-
-var (
-	// flags that configure the go-ethereum node
-	NodeFlags = []cli.Flag{
-		ethUtils.DataDirFlag,
-		ethUtils.KeyStoreDirFlag,
-		ethUtils.NoUSBFlag,
-		ethUtils.NetworkIdFlag,
-		// Performance tuning
-		ethUtils.CacheFlag,
-		ethUtils.TrieCacheGenFlag,
-		ethUtils.GCModeFlag,
-		// Account settings
-		ethUtils.UnlockedAccountFlag,
-		ethUtils.PasswordFileFlag,
-		ethUtils.VMEnableDebugFlag,
-		// Logging and debug settings
-		ethUtils.NoCompactionFlag,
-		// Gas price oracle settings
-		ethUtils.GpoBlocksFlag,
-		ethUtils.GpoPercentileFlag,
-		TargetGasLimitFlag,
-		// Gas Price
-		//ethUtils.GasPriceFlag,
-	}
-
-	RpcFlags = []cli.Flag{
-		ethUtils.RPCEnabledFlag,
-		ethUtils.RPCListenAddrFlag,
-		ethUtils.RPCPortFlag,
-		ethUtils.RPCCORSDomainFlag,
-		ethUtils.RPCVirtualHostsFlag,
-		ethUtils.RPCApiFlag,
-		ethUtils.IPCDisabledFlag,
-		ethUtils.WSEnabledFlag,
-		ethUtils.WSListenAddrFlag,
-		ethUtils.WSPortFlag,
-		ethUtils.WSApiFlag,
-		ethUtils.WSAllowedOriginsFlag,
-	}
-
-	// flags that configure the ABCI app
-	LightchainFlags = []cli.Flag{
-		TendermintAddrFlag,
-		ABCIAddrFlag,
-		ABCIProtocolFlag,
-		VerbosityFlag,
-		ConfigFileFlag,
-		WithTendermintFlag,
 	}
 )
