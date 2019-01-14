@@ -14,7 +14,7 @@ import (
 	"reflect"
 )
 
-var ProjectRootPath = filepath.Join(os.Getenv("GOPATH"), "src/github.com/lightstreams-network", "lightchain")
+var LightchainSetupDir = filepath.Join(os.Getenv("GOPATH"), "src/github.com/lightstreams-network", "lightchain", "setup")
 
 func Init(cfg Config, logger log.Logger) error {
 	keystoreDir := cfg.keystoreDir()
@@ -74,7 +74,7 @@ func readGenesisFile(genesisPath string) (*ethCore.Genesis, error) {
 }
 
 func readDefaultGenesis() ([]byte, error) {
-	fPath, err := filepath.Abs(filepath.Join(ProjectRootPath, "setup/genesis.json"))
+	fPath, err := filepath.Abs(filepath.Join(LightchainSetupDir, "genesis.json"))
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func readDefaultGenesis() ([]byte, error) {
 }
 
 func readDefaultKeystore() (map[string][]byte, error) {
-	dPath, err := filepath.Abs(filepath.Join(ProjectRootPath, "setup/keystore"))
+	dPath, err := filepath.Abs(filepath.Join(LightchainSetupDir, "keystore"))
 	if err != nil {
 		return nil, err
 	}

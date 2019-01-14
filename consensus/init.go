@@ -9,9 +9,11 @@ import (
 	tmtCommon "github.com/tendermint/tendermint/libs/common"
 	tmtConfig "github.com/tendermint/tendermint/config"
 	"path/filepath"
-	"github.com/lightstreams-network/lightchain/utils"
 	"io/ioutil"
+	"os"
 )
+
+var LightchainSetupDir = filepath.Join(os.Getenv("GOPATH"), "src/github.com/lightstreams-network", "lightchain", "setup")
 
 func Init(cfg Config, logger log.Logger) error {
 	// This is a necessary evil because
@@ -74,7 +76,7 @@ func createConsensusDataDirIfNotExists(dataDir string) {
 }
 
 func readTendermintDefaultGenesis() ([]byte, error) {
-	fPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/tendermint/genesis.json"))
+	fPath, err := filepath.Abs(filepath.Join(LightchainSetupDir, "tendermint/genesis.json"))
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +85,7 @@ func readTendermintDefaultGenesis() ([]byte, error) {
 }
 
 func readTendermintDefaultConfig() ([]byte, error) {
-	fPath, err := filepath.Abs(filepath.Join(utils.ProjectRootPath, "setup/tendermint/config.toml"))
+	fPath, err := filepath.Abs(filepath.Join(LightchainSetupDir, "tendermint/config.toml"))
 	if err != nil {
 		return nil, err
 	}
