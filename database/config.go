@@ -11,7 +11,6 @@ import (
 
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
 	ethCore "github.com/ethereum/go-ethereum/core"
-	ethLog "github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/eth"
 	ethNode "github.com/ethereum/go-ethereum/node"
 	"github.com/ethereum/go-ethereum/params"
@@ -33,6 +32,7 @@ var (
 type Config struct {
 	DataDir string
 	GethConfig GethConfig
+	ctx	*cli.Context
 }
 
 type ethstatsConfig struct {
@@ -45,18 +45,8 @@ type GethConfig struct {
 	Ethstats ethstatsConfig
 }
 
-func NewConfig(dataDir string, ethCfg eth.Config, nodeCfg ethNode.Config, ethUrl string) (Config) {
-	gethCfg := GethConfig {
-		ethCfg, nodeCfg, ethstatsConfig { ethUrl },
-	}
 
-	return Config{
-		dataDir,
-		gethCfg,
-	}
-}
-
-func NewConfigNode(dataDir string, ctx *cli.Context) (Config, error) {
+func NewConfig(dataDir string, ctx *cli.Context) (Config, error) {
 	gethCfg := GethConfig{
 		Eth:  eth.DefaultConfig,
 		Node: DefaultEthNodeConfig(),
@@ -68,17 +58,17 @@ func NewConfigNode(dataDir string, ctx *cli.Context) (Config, error) {
 	cfg := Config{
 		dataDir,
 		gethCfg,
+		ctx,
 	}
 
-	ethereumNode, err := ethNode.New(&cfg.GethConfig.Node)
-	if err != nil {
-		return cfg, err
-	}
-
-	ethUtils.SetEthConfig(ctx, ethereumNode, &cfg.GethConfig.Eth)
-	setEthDefaultConfig(&cfg.GethConfig.Eth)
-
- 	// @TODO Review the need of including `stack` as part of the method output
+	//ethereumNode, err := ethNode.New(&cfg.GethConfig.Node)
+	//if err != nil {
+	//	return cfg, err
+	//}
+	//
+	//ethUtils.SetEthConfig(ctx, ethereumNode, &cfg.GethConfig.Eth)
+	//setEthDefaultConfig(&cfg.GethConfig.Eth)
+	
 	return cfg, nil
 }
 
@@ -131,10 +121,8 @@ func (c Config) genesisPath() string {
 }
 
 func readGenesisFile(genesisPath string) (*ethCore.Genesis, error) {
-	ethLog.Info("Trying to reading genesis", "dir", genesisPath)
 	genesisBlob, err := utils.ReadFileContent(genesisPath)
 	if err != nil {
-		ethLog.Warn("Cannot read genesis. Using default", err)
 		genesisBlob, err = readDefaultGenesis()
 		if err != nil {
 			return nil, err

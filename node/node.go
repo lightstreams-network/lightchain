@@ -41,16 +41,15 @@ func NewNode(cfg *Config) (*Node, error) {
 func (n *Node) Start() error {
 	// Start database node
 	n.logger.Info("Starting database engine...")
-	err := n.dbNode.Start()
-	if err != nil {
+	if err := n.dbNode.Start(); err != nil {
+		return err
+	}
+	
+	n.logger.Info("Starting consensus engine...")
+	if err := n.consensusNode.Start(n.dbNode.RpcClient(), n.dbNode.Database()); err != nil {
 		return err
 	}
 
-	n.logger.Info("Starting consensus engine...")
-	n.consensusNode.Start(n.dbNode.RpcClient(), n.dbNode.Database())
-	if err != nil {
-		return err
-	}
 	return nil
 }
 

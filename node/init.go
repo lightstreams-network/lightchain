@@ -20,7 +20,7 @@ func InitNode(cfg Config) error {
 		return err
 	}
 
-	if err := database.Init(cfg.dbCfg); err != nil {
+	if err := database.Init(cfg.dbCfg, logger); err != nil {
 		return err
 	}
 

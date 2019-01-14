@@ -5,7 +5,6 @@ import (
 	"os"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/eth"
 	ethLog "github.com/ethereum/go-ethereum/log"
 
 	"github.com/lightstreams-network/lightchain/node"
@@ -46,12 +45,13 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 		utils.TendermintProxyProtocol,
 	)
 	
-	dbCfg := database.NewConfig(
-		filepath.Join(dataDir, database.DataDirPath),
-		eth.DefaultConfig,
-		database.DefaultEthNodeConfig(),
-		"",
-	)
+	dbDataDir := filepath.Join(dataDir, database.DataDirPath)
+	ctx := NewNodeClientCtx(dbDataDir, cmd)
+	dbCfg, err := database.NewConfig(dbDataDir, ctx)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
 
 	nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg)
 	if err := node.InitNode(nodeCfg); err != nil {

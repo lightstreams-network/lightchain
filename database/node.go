@@ -6,6 +6,7 @@ import (
 
 	ethNode "github.com/ethereum/go-ethereum/node"
 	ethRpc "github.com/ethereum/go-ethereum/rpc"
+	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
 
 	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
 
@@ -27,13 +28,19 @@ type Node struct {
 func NewNode(cfg *Config, uriClient *rpcClient.URIClient) (*Node, error) {
 	logger := log.NewLogger()
 	logger.With("module", "database")
-	stack, err := ethNode.New(&cfg.GethConfig.Node)
+	ethereum, err := ethNode.New(&cfg.GethConfig.Node)
 	if err != nil {
 		return nil, err
 	}
-	
+
+	ethUtils.SetEthConfig(cfg.ctx, ethereum, &cfg.GethConfig.Eth)
+	setEthDefaultConfig(&cfg.GethConfig.Eth)
+	if err != nil {
+		return nil, err
+	}
+
 	n := Node{
-		stack,
+		ethereum,
 		nil,
 		nil,
 		cfg,
@@ -41,7 +48,7 @@ func NewNode(cfg *Config, uriClient *rpcClient.URIClient) (*Node, error) {
 	}
 
 	logger.Debug("Binding ethereum events to rpc client...")
-	if err := stack.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {
+	if err := ethereum.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {
 		logger.Info(fmt.Sprintf("registering ABCI application service"))
 		n.database, err = NewDatabase(ctx, &cfg.GethConfig.Eth, uriClient)
 		if err != nil {
@@ -94,11 +101,6 @@ func (n *Node) Start() error {
 func (n *Node) Stop() error {
 	n.logger.Debug("Stopping ethereum service")
 	if err := n.ethereum.Stop(); err != nil {
-		return err
-	}
-
-	n.logger.Debug("Stopping database service")
-	if err := n.database.Stop(); err != nil {
 		return err
 	}
 

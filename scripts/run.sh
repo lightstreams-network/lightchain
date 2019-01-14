@@ -31,7 +31,7 @@ done
 
 INIT_ARGS="--datadir=${DATA_DIR}"
 
-RUN_ARGS="--datadir=${DATA_DIR} --lvl=dbug"
+RUN_ARGS="--datadir=${DATA_DIR} --lvl=info"
 
 pushd "$ROOT_PATH"
 
@@ -39,9 +39,7 @@ if [ -n "${CLEAN}" ]; then
     echo "################################"
     echo -e "\t Restart environment"
     echo "################################"
-    if [ -n "${HARD_MODE}" ]; then
-        run "rm -rf ${DATA_DIR}"
-    fi
+    run "rm -rf ${DATA_DIR}"
 	run "$EXEC_BIN init ${INIT_ARGS}"
     echo -e "################################ \n"
 fi
