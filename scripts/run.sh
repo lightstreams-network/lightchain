@@ -32,6 +32,7 @@ done
 INIT_ARGS="--datadir=${DATA_DIR}"
 
 RUN_ARGS="--datadir=${DATA_DIR} --lvl=info"
+RUN_ARGS="${RUN_ARGS} --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi eth,net,web3,personal,admin"
 
 pushd "$ROOT_PATH"
 
