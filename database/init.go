@@ -8,7 +8,13 @@ import (
 	"github.com/ethereum/go-ethereum/ethdb"
 	
 	"github.com/lightstreams-network/lightchain/log"
+	"github.com/lightstreams-network/lightchain/utils"
+	"io/ioutil"
+	"encoding/json"
+	"reflect"
 )
+
+var ProjectRootPath = filepath.Join(os.Getenv("GOPATH"), "src/github.com/lightstreams-network", "lightchain")
 
 func Init(cfg Config, logger log.Logger) error {
 	keystoreDir := cfg.keystoreDir()
@@ -50,6 +56,61 @@ func Init(cfg Config, logger log.Logger) error {
 	return nil
 }
 
+func readGenesisFile(genesisPath string) (*ethCore.Genesis, error) {
+	genesisBlob, err := utils.ReadFileContent(genesisPath)
+	if err != nil {
+		genesisBlob, err = readDefaultGenesis()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	genesis, err := parseBlobGenesis(genesisBlob)
+	if err != nil {
+		return nil, err
+	}
+
+	return genesis, nil
+}
+
+func readDefaultGenesis() ([]byte, error) {
+	fPath, err := filepath.Abs(filepath.Join(ProjectRootPath, "setup/genesis.json"))
+	if err != nil {
+		return nil, err
+	}
+	return utils.ReadFileContent(fPath)
+}
+
+func readDefaultKeystore() (map[string][]byte, error) {
+	dPath, err := filepath.Abs(filepath.Join(ProjectRootPath, "setup/keystore"))
+	if err != nil {
+		return nil, err
+	}
+
+	var files = make(map[string][]byte)
+	err = filepath.Walk(dPath, func(file string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+		content, err := ioutil.ReadFile(file)
+		if err != nil {
+			return err
+		}
+		files[info.Name()] = content
+		return nil
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	return files, nil
+}
+
 func writeGenesisFile(genesisPath string, genesis *ethCore.Genesis) error {
 	genesisBlob, err := genesis.MarshalJSON()
 	if err != nil {
@@ -87,4 +148,22 @@ func writeKeystoreFiles(logger log.Logger, keystoreDir string, keystoreFiles map
 	}
 
 	return nil
+}
+
+// parseGenesisOrDefault tries to read the content from provided
+// genesisPath. If the path is empty or doesn't exist, it will
+// use defaultGenesisBytes as the fallback genesis source. Otherwise,
+// it will open that path and if it encounters an error that doesn't
+// satisfy os.IsNotExist, it returns that error.
+func parseBlobGenesis(genesisBlob []byte) (*ethCore.Genesis, error) {
+	genesis := new(ethCore.Genesis)
+	if err := json.Unmarshal(genesisBlob, genesis); err != nil {
+		return nil, err
+	}
+
+	if reflect.DeepEqual(blankGenesis, genesis) {
+		return nil, errBlankGenesis
+	}
+
+	return genesis, nil
 }
