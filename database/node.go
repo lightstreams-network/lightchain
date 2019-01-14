@@ -29,12 +29,6 @@ func NewNode(cfg *Config, uriClient *rpcClient.URIClient) (*Node, error) {
 	logger.With("module", "database")
 	
 	ethereum, err := ethNode.New(&cfg.GethConfig.NodeCfg)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//ethUtils.SetEthConfig(cfg.ctx, ethereum, &cfg.GethConfig.EthCfg)
-	//setEthDefaultConfig(&cfg.GethConfig.EthCfg)
 
 	if err != nil {
 		return nil, err

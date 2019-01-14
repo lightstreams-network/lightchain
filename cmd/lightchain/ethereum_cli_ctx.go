@@ -8,6 +8,7 @@ import (
 	"path"
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
 	ethLog "github.com/ethereum/go-ethereum/log"
+	"strconv"
 )
 
 const (
@@ -83,40 +84,44 @@ func addEthNodeFlags(cmd *cobra.Command) {
 }
 
 func newNodeClientCtx(dataDir string, cmd *cobra.Command) *cli.Context {
-	var boolEmptyBucket bool
-	var stringEmptyBucket string
 
 	app := ethUtils.NewApp("0.0.0", "the lightchain command line interface")
 	flagSet := flag.NewFlagSet("Ethereum CLI ctx", flag.ExitOnError)
-	ctx := cli.NewContext(app, flagSet, nil)
 
-	flagSet.StringVar(&stringEmptyBucket, ethUtils.DataDirFlag.GetName(), dataDir, ethUtils.DataDirFlag.Usage)
+	flagSet.String(ethUtils.DataDirFlag.GetName(), dataDir, ethUtils.DataDirFlag.Usage)
 
 	rpcEnabledFlagValue, _ := cmd.Flags().GetBool(RPCEnabledFlag.GetName())
-	flagSet.BoolVar(&boolEmptyBucket, RPCEnabledFlag.GetName(), rpcEnabledFlagValue, RPCEnabledFlag.Usage)
-
+	flagSet.Bool(RPCEnabledFlag.GetName(), rpcEnabledFlagValue, RPCEnabledFlag.Usage)
+	flagSet.Set(RPCEnabledFlag.GetName(), strconv.FormatBool(rpcEnabledFlagValue)) 
+	
 	rpcListenAddrValue, _ := cmd.Flags().GetString(RPCListenAddrFlag.GetName())
-	flagSet.StringVar(&stringEmptyBucket, RPCListenAddrFlag.GetName(), rpcListenAddrValue, RPCListenAddrFlag.Usage)
-
-	rpcPortFlagValue, _ := cmd.Flags().GetString(RPCPortFlag.GetName())
-	flagSet.StringVar(&stringEmptyBucket, RPCPortFlag.GetName(), rpcPortFlagValue, RPCPortFlag.Usage)
-
-	rpcApiFlag, _ := cmd.Flags().GetString(RPCApiFlag.GetName())
-	flagSet.StringVar(&stringEmptyBucket, RPCApiFlag.GetName(), rpcApiFlag, RPCApiFlag.Usage)
+	flagSet.String(RPCListenAddrFlag.GetName(), rpcListenAddrValue, RPCListenAddrFlag.Usage)
+	flagSet.Set(RPCListenAddrFlag.GetName(), rpcListenAddrValue)
+	
+	rpcPortFlagValue, _ := cmd.Flags().GetInt(RPCPortFlag.GetName())
+	flagSet.Int(RPCPortFlag.GetName(), rpcPortFlagValue, RPCPortFlag.Usage)
+	flagSet.Set(RPCPortFlag.GetName(), strconv.Itoa(rpcPortFlagValue))
+	
+	rpcApiFlagValue, _ := cmd.Flags().GetString(RPCApiFlag.GetName())
+	flagSet.String(RPCApiFlag.GetName(), rpcApiFlagValue, RPCApiFlag.Usage)
+	flagSet.Set(RPCApiFlag.GetName(), rpcApiFlagValue)
 
 	wsEnabledFlagValue, _ := cmd.Flags().GetBool(WSEnabledFlag.GetName())
-	flagSet.BoolVar(&boolEmptyBucket, WSEnabledFlag.GetName(), wsEnabledFlagValue, WSEnabledFlag.Usage)
-
-	wsListenAddrFlag, _ := cmd.Flags().GetString(WSListenAddrFlag.GetName())
-	flagSet.StringVar(&stringEmptyBucket, WSListenAddrFlag.GetName(), wsListenAddrFlag, WSListenAddrFlag.Usage)
-
-	wsPortFlag, _ := cmd.Flags().GetString(WSPortFlag.GetName())
-	flagSet.StringVar(&stringEmptyBucket, WSPortFlag.GetName(), wsPortFlag, WSPortFlag.Usage)
-
+	flagSet.Bool(WSEnabledFlag.GetName(), wsEnabledFlagValue, WSEnabledFlag.Usage)
+	flagSet.Set(WSEnabledFlag.GetName(), strconv.FormatBool(wsEnabledFlagValue))
+	
+	wsListenAddrFlagValue, _ := cmd.Flags().GetString(WSListenAddrFlag.GetName())
+	flagSet.String(WSListenAddrFlag.GetName(), wsListenAddrFlagValue, WSListenAddrFlag.Usage)
+	flagSet.Set(WSListenAddrFlag.GetName(), wsListenAddrFlagValue)
+	
+	wsPortFlagValue, _ := cmd.Flags().GetInt(WSPortFlag.GetName())
+	flagSet.Int(WSPortFlag.GetName(), wsPortFlagValue, WSPortFlag.Usage)
+	flagSet.Set(WSPortFlag.GetName(), strconv.Itoa(wsPortFlagValue))
+	
 	// Default values required
-	flagSet.StringVar(&stringEmptyBucket, ethUtils.GCModeFlag.GetName(), ethUtils.GCModeFlag.Value, ethUtils.GCModeFlag.Usage)
+	flagSet.String(ethUtils.GCModeFlag.GetName(), ethUtils.GCModeFlag.Value, ethUtils.GCModeFlag.Usage)
+	flagSet.Set(ethUtils.GCModeFlag.GetName(), ethUtils.GCModeFlag.Value)
 
-	ctx.Set(ethUtils.GCModeFlag.GetName(), ethUtils.GCModeFlag.Value)
-
+	ctx := cli.NewContext(app, flagSet, nil)
 	return ctx
 }
