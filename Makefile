@@ -59,8 +59,6 @@ get_vendor_deps:
 	@rm -rf vendor
 	@echo "--> dep ensure"
 	@dep ensure
-	@rm -rf vendor/github.com/ethereum/go-ethereum/vendor
-	@rm -rf vendor/github.com/tendermint/tendermint/vendor
 
 clean:
 	@rm build/lightchain
