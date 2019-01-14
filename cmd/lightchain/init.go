@@ -10,7 +10,6 @@ import (
 	"github.com/lightstreams-network/lightchain/node"
 	"github.com/lightstreams-network/lightchain/database"
 	"github.com/lightstreams-network/lightchain/consensus"
-	"github.com/lightstreams-network/lightchain/utils"
 	"path/filepath"
 	"github.com/lightstreams-network/lightchain/log"
 )
@@ -39,10 +38,10 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 
 	consensusCfg := consensus.NewConfig(
 		filepath.Join(dataDir, consensus.DataDirName),
-		utils.TendermintRpcListenPort,
-		utils.TendermintProxyListenPort,
-		utils.TendermintP2PListenPort,
-		utils.TendermintProxyProtocol,
+		TendermintRpcListenPort,
+		TendermintProxyListenPort,
+		TendermintP2PListenPort,
+		TendermintProxyProtocol,
 	)
 	
 	dbDataDir := filepath.Join(dataDir, database.DataDirPath)

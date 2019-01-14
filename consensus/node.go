@@ -9,6 +9,7 @@ import (
 
 	tmtNode "github.com/tendermint/tendermint/node"
 	tmtP2P "github.com/tendermint/tendermint/p2p"
+	tmtCommon "github.com/tendermint/tendermint/libs/common"
 	tmtServer "github.com/tendermint/tendermint/abci/server"
 	rpcTypes "github.com/tendermint/tendermint/rpc/core/types"
 	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
@@ -27,7 +28,12 @@ func NewNode(cfg *Config) (*Node, error) {
 	consensusLogger := log.NewLogger()
 	consensusLogger.With("module", "consensus")
 	
-	nodeKey, err := p2p.LoadOrGenNodeKey(cfg.tendermintCfg.NodeKeyFile())
+	nodeKeyFile := cfg.tendermintCfg.NodeKeyFile()
+	if ! tmtCommon.FileExists(nodeKeyFile) {
+		return nil, fmt.Errorf("Tendermint key file does not exists")
+	}
+	
+	nodeKey, err := p2p.LoadOrGenNodeKey(nodeKeyFile)
 	if err != nil {
 		return nil, err
 	}

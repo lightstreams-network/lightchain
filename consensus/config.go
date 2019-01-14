@@ -61,14 +61,13 @@ func applyTendermintConfig(configPath string, tmtCfg *config.Config) error {
 		return err
 	}
 	
-	err := viper.Unmarshal(tmtCfg)
-	if err != nil {
+	if err := viper.Unmarshal(tmtCfg); err != nil {
 		return err
 	}
 	
-	if err = tmtCfg.ValidateBasic(); err != nil {
-		return fmt.Errorf("Error in config file: %v", err)
+	if err := tmtCfg.ValidateBasic(); err != nil {
+		return err
 	}
 	
-	return err
+	return nil
 }

@@ -31,17 +31,16 @@ func Init(cfg Config, logger log.Logger) error {
 		return err
 	}
 	
-	genesisPath := cfg.genesisPath()
-	genesis, err := readGenesisFile(genesisPath)
+	genesis, err := readGenesisFile(cfg.DataDir)
 	if err != nil {
 		logger.Error("reading genesis err: %v", err)
 		return err
 	}
-	if err = writeGenesisFile(genesisPath, genesis); err != nil {
+	if err = writeGenesisFile(cfg.genesisPath(), genesis); err != nil {
 		logger.Error("could not write genesis file: %v", err)
 		return err
 	}
-	logger.Info("Generated genesis block", "path", genesisPath)
+	logger.Info("Generated genesis block", "path", cfg.genesisPath())
 
 	chainDataDir := cfg.chainDbDir()
 	chainDb, err := ethdb.NewLDBDatabase(chainDataDir, 0, 0)
@@ -55,7 +54,8 @@ func Init(cfg Config, logger log.Logger) error {
 	return nil
 }
 
-func readGenesisFile(genesisPath string) (*ethCore.Genesis, error) {
+func readGenesisFile(dataDir string) (*ethCore.Genesis, error) {
+	genesisPath := filepath.Join(dataDir, GenesisPath)
 	genesisBlob, err := ioutil.ReadFile(genesisPath)
 	if err != nil {
 		genesisBlob, err = readDefaultGenesis()

@@ -1,14 +1,35 @@
 package main
 
 import (
+	"path"
 	"gopkg.in/urfave/cli.v1"
+	"github.com/mitchellh/go-homedir"
+	
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
-	"github.com/lightstreams-network/lightchain/utils"
+	ethLog "github.com/ethereum/go-ethereum/log"
 )
 
+const (
+	TendermintP2PListenPort   = uint(26656)
+	TendermintRpcListenPort   = uint(26657)
+	TendermintProxyListenPort = uint(26658)
+	TendermintProxyProtocol   = "rpc"
+)
+
+var defaultHomeDir, _ = homedir.Dir()
+
 var (
-	DataDirFlag = utils.DataDirFlag
-	LogLvlFlag = utils.LogLvlFlag
+	DataDirFlag = ethUtils.DirectoryFlag{
+		Name:  "datadir",
+		Usage: "Data directory for the databases and keystore",
+		Value: ethUtils.DirectoryString{path.Join(defaultHomeDir, "lightchain")},
+	}
+
+	LogLvlFlag = cli.StringFlag{
+		Name:  "lvl",
+		Usage: "Level of logging",
+		Value: ethLog.LvlInfo.String(),
+	}
 
 	RPCEnabledFlag = ethUtils.RPCEnabledFlag
 	RPCListenAddrFlag = ethUtils.RPCListenAddrFlag
@@ -18,64 +39,25 @@ var (
 	WSListenAddrFlag = ethUtils.WSListenAddrFlag
 	WSPortFlag = ethUtils.WSPortFlag
 
-	ConsensusRpcListenPortFlag = utils.TendermintRpcListenPortFlag
-	ConsensusP2PListenPortFlag = utils.TendermintP2PListenPortFlag
-	ConsensusProxyListenPortFlag = utils.TendermintProxyListenPortFlag
-	ConsensusProxyProtocolFlag = utils.ABCIProtocolFlag
-)
-
-var (
-	// flags that configure the go-ethereum node
-	NodeFlags = []cli.Flag{
-		//ethUtils.DataDirFlag,
-		ethUtils.KeyStoreDirFlag,
-		ethUtils.NoUSBFlag,
-		ethUtils.NetworkIdFlag,
-		// Performance tuning
-		ethUtils.CacheFlag,
-		ethUtils.TrieCacheGenFlag,
-		ethUtils.GCModeFlag,
-		// Account settings
-		ethUtils.UnlockedAccountFlag,
-		ethUtils.PasswordFileFlag,
-		ethUtils.VMEnableDebugFlag,
-		// Logging and debug settings
-		ethUtils.NoCompactionFlag,
-		// Gas price oracle settings
-		ethUtils.GpoBlocksFlag,
-		ethUtils.GpoPercentileFlag,
-		// Gas Price
-		//ethUtils.GasPriceFlag,
+	ConsensusRpcListenPortFlag = cli.UintFlag{
+		Name:  "tmt_rpc_port",
+		Value: TendermintRpcListenPort,
+		Usage: "Tendermint RPC port used to receive incoming messages from Lightchain",
 	}
-
-	RpcFlags = []cli.Flag{
-		ethUtils.RPCEnabledFlag,
-		ethUtils.RPCListenAddrFlag,
-		ethUtils.RPCPortFlag,
-		ethUtils.RPCCORSDomainFlag,
-		ethUtils.RPCVirtualHostsFlag,
-		ethUtils.RPCApiFlag,
-		ethUtils.IPCDisabledFlag,
-		ethUtils.WSEnabledFlag,
-		ethUtils.WSListenAddrFlag,
-		ethUtils.WSPortFlag,
-		ethUtils.WSApiFlag,
-		ethUtils.WSAllowedOriginsFlag,
+	ConsensusP2PListenPortFlag = cli.UintFlag{
+		Name:  "tmt_p2p_port",
+		Value: TendermintP2PListenPort,
+		Usage: "Tendermint port used to achieve exchange messages across nodes",
 	}
-
-	// flags that configure the ABCI app
-	LightchainFlags = []cli.Flag{
-		utils.DataDirFlag,
-		utils.TendermintRpcListenPortFlag,
-		utils.TendermintP2PListenPortFlag,
-		utils.TendermintProxyListenPortFlag,
-		
-		utils.TargetGasLimitFlag,
-		//utils.TendermintAddrFlag,
-		//utils.ABCIAddrFlag,
-		utils.ABCIProtocolFlag,
-		utils.VerbosityFlag,
-		utils.ConfigFileFlag,
-		//utils.WithTendermintFlag,
+	ConsensusProxyListenPortFlag = cli.UintFlag{
+		Name:  "tmt_proxy_port",
+		Value: TendermintProxyListenPort,
+		Usage: "Lightchain RPC port used to receive incoming messages from Tendermint",
+	}
+	// ABCIProtocolFlag defines whether GRPC or SOCKET should be used for the ABCI connections
+	ConsensusProxyProtocolFlag = cli.StringFlag{
+		Name:  "abci_protocol",
+		Value: "socket",
+		Usage: "socket | grpc",
 	}
 )

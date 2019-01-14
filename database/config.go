@@ -27,7 +27,6 @@ var (
 type Config struct {
 	DataDir string
 	GethConfig GethConfig
-	ctx	*cli.Context
 }
 
 type ethstatsConfig struct {
@@ -35,36 +34,50 @@ type ethstatsConfig struct {
 }
 
 type GethConfig struct {
-	Eth      eth.Config
-	Node     ethNode.Config
+	EthCfg   eth.Config
+	NodeCfg  ethNode.Config
 	Ethstats ethstatsConfig
 }
 
 
 func NewConfig(dataDir string, ctx *cli.Context) (Config, error) {
 	gethCfg := GethConfig{
-		Eth:  eth.DefaultConfig,
-		Node: DefaultEthNodeConfig(dataDir),
+		EthCfg:  eth.DefaultConfig,
+		NodeCfg: DefaultEthNodeConfig(dataDir),
 	}
 
-	ethUtils.SetNodeConfig(ctx, &gethCfg.Node)
-	setNodeDefaultConfig(&gethCfg.Node, dataDir)
+	// Configure ethereum node server
+	ethUtils.SetNodeConfig(ctx, &gethCfg.NodeCfg)
+	gethCfg.NodeCfg.P2P.MaxPeers = 0
+	gethCfg.NodeCfg.P2P.NoDiscovery = true
+	gethCfg.NodeCfg.DataDir = dataDir
 	
-	cfg := Config{
+	// REMINDER: Following initialization is required to complete the configuration of the ethereum db
+	ethereum, err := ethNode.New(&gethCfg.NodeCfg)
+	if err != nil {
+		return Config{}, err
+	}
+
+	// Configure ethereum db settings
+	ethUtils.SetEthConfig(ctx, ethereum, &gethCfg.EthCfg)
+	gethCfg.EthCfg.Ethash.PowMode = ethash.ModeFake
+	
+	// Due to the low usages of the blockchain we need to reduce cache size to prevent huge number block replies on every restart. 
+	// @TODO once the usage of blockchain is larger we should tune these values again accordingly
+	gethCfg.EthCfg.DatabaseCache  = 32 // MB
+	gethCfg.EthCfg.TrieCleanCache = 8  // MB
+	gethCfg.EthCfg.TrieDirtyCache = 0  // MB
+	gethCfg.EthCfg.TrieTimeout = 5 * time.Minute
+	
+	gethCfg.EthCfg.Genesis, err = readGenesisFile(dataDir)
+	if err != nil {
+		return Config{}, err
+	}
+	
+	return Config {
 		dataDir,
 		gethCfg,
-		ctx,
-	}
-
-	//ethereumNode, err := ethNode.New(&cfg.GethConfig.Node)
-	//if err != nil {
-	//	return cfg, err
-	//}
-	//
-	//ethUtils.SetEthConfig(ctx, ethereumNode, &cfg.GethConfig.Eth)
-	//setEthDefaultConfig(&cfg.GethConfig.Eth)
-	
-	return cfg, nil
+	}, nil
 }
 
 // DefaultEthNodeConfig returns the default configuration for a go-ethereum ethereum
@@ -78,27 +91,6 @@ func DefaultEthNodeConfig(dataDir string) ethNode.Config {
 	cfg.DataDir = dataDir
 
 	return cfg
-}
-
-// SetNodeConfig takes a ethereum configuration and applies lightchain specific configuration
-func setNodeDefaultConfig(cfg *ethNode.Config, dataDir string) {
-	cfg.P2P.MaxPeers = 0
-	cfg.P2P.NoDiscovery = true
-	cfg.DataDir = dataDir
-}
-
-// SetEthConfig takes a ethereum configuration and applies lightchain specific configuration
-func setEthDefaultConfig(cfg *eth.Config) {
-	// PoW is being replaced by PoA with the usage of Tendermint
-	cfg.Ethash.PowMode = ethash.ModeFake
-	
-	// Due to the low usages of the blockchain we need to reduce cache size to prevent huge number
-	// block replies on every restart. 
-	// @TODO once the usage of blockchain is larger we should tune these values again accordingly
-	cfg.DatabaseCache  = 32 // MB
-	cfg.TrieCleanCache = 8  // MB
-	cfg.TrieDirtyCache = 0  // MB
-	cfg.TrieTimeout = 5 * time.Minute
 }
 
 func (c Config) keystoreDir() string {
