@@ -30,7 +30,7 @@ func NewNode(cfg *Config) (*Node, error) {
 	
 	nodeKeyFile := cfg.tendermintCfg.NodeKeyFile()
 	if ! tmtCommon.FileExists(nodeKeyFile) {
-		return nil, fmt.Errorf("Tendermint key file does not exists")
+		return nil, fmt.Errorf("Tenderm1s")
 	}
 	
 	nodeKey, err := p2p.LoadOrGenNodeKey(nodeKeyFile)

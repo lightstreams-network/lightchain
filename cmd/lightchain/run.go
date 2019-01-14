@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"os"
 	
-	tmtCommon "github.com/tendermint/tmlibs/common"
 	ethLog "github.com/ethereum/go-ethereum/log"
 	
 	"github.com/lightstreams-network/lightchain/node"
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/database"
 	"github.com/lightstreams-network/lightchain/log"
+	"github.com/tendermint/tendermint/libs/common"
 )
 
 func runCmd() *cobra.Command {
@@ -67,7 +67,7 @@ func runCmd() *cobra.Command {
 				os.Exit(1)
 			}
 			
-			tmtCommon.TrapSignal(func() {
+			common.TrapSignal(func() {
 				if err := lightChainNode.Stop(); err != nil {
 					logger.Error(fmt.Errorf("error stopping Tendermint service. %v", err).Error())
 				}

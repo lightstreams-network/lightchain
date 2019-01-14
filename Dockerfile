@@ -20,26 +20,21 @@ RUN apt-get update
 RUN apt-get install -y vim apt-utils git
 
 ## Install project dependencies
-RUN go get github.com/Masterminds/glide
-RUN go get github.com/gogo/protobuf/proto
 RUN go get -u github.com/golang/dep/cmd/dep
-
-# Install Geth
-RUN mkdir -p $GOPATH/src/github.com/ethereum/
-RUN git clone -b v1.8.18 --single-branch git@github.com:ethereum/go-ethereum.git $GOPATH/src/github.com/ethereum/go-ethereum
-RUN cd ${GOPATH}/src/github.com/ethereum/go-ethereum && \
-	make geth && \
-	cp -f build/bin/geth ${GOPATH}/bin/
 
 # Install Lightchain
 RUN mkdir -p $GOPATH/src/github.com/lightstreams-network/lightchain
 COPY . $GOPATH/src/github.com/lightstreams-network/lightchain
 RUN cd $GOPATH/src/github.com/lightstreams-network/lightchain && \
-	make make get_vendor_deps && \
+	make get_vendor_deps && \
 	make install
+	
+RUN cd $GOPATH/src/github.com/lightstreams-network/lightchain && \
+	lightchain init --datadir=${HOME}/.lightchain
 
 # Remove SSH keys and repos
 RUN rm -rf /root/.ssh/
 
-# Geth ws, rpc, p2p
+CMD ["lightchain", "run", "--datadir=${HOME}/.lightchain"]
+
 EXPOSE 8545 26657 26656

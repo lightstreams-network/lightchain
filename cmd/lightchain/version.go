@@ -18,6 +18,6 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Describes version.",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Sprintf("Version: %d.%d.%d-alpha The Base", Major, Minor, Fix)
+		fmt.Println(fmt.Sprintf("Version: %s.%s.%s-alpha Sirius-Net", Major, Minor, Fix))
 	},
 }
