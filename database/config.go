@@ -13,7 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
 	
-	"github.com/lightstreams-network/lightchain/utils"
 )
 
 var (
@@ -45,7 +44,7 @@ type GethConfig struct {
 func NewConfig(dataDir string, ctx *cli.Context) (Config, error) {
 	gethCfg := GethConfig{
 		Eth:  eth.DefaultConfig,
-		Node: DefaultEthNodeConfig(),
+		Node: DefaultEthNodeConfig(dataDir),
 	}
 
 	ethUtils.SetNodeConfig(ctx, &gethCfg.Node)
@@ -69,14 +68,14 @@ func NewConfig(dataDir string, ctx *cli.Context) (Config, error) {
 }
 
 // DefaultEthNodeConfig returns the default configuration for a go-ethereum ethereum
-func DefaultEthNodeConfig() ethNode.Config {
+func DefaultEthNodeConfig(dataDir string) ethNode.Config {
 	cfg := ethNode.DefaultConfig
 	cfg.Name = "lightchain"
 	cfg.Version = params.Version
 	cfg.HTTPModules = append(cfg.HTTPModules, "eth")
 	cfg.WSModules = append(cfg.WSModules, "eth")
 	cfg.IPCPath = "geth.ipc"
-	cfg.DataDir = utils.DefaultDataDir()
+	cfg.DataDir = dataDir
 
 	return cfg
 }

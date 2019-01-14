@@ -5,6 +5,8 @@ import (
 	"gopkg.in/urfave/cli.v1"
 	ethLog "github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/cmd/utils"
+	"github.com/mitchellh/go-homedir"
+	"path"
 )
 
 const (
@@ -14,6 +16,9 @@ const (
 	TendermintProxyListenPort = uint(26658)
 	TendermintProxyProtocol   = "rpc"
 )
+
+var defaultHomeDir, _ = homedir.Dir()
+var defaultDataDir = path.Join(defaultHomeDir, "lightchain")
 
 var (
 	// ----------------------------
@@ -36,7 +41,7 @@ var (
 	DataDirFlag = utils.DirectoryFlag{
 		Name:  "datadir",
 		Usage: "Data directory for the databases and keystore",
-		Value: utils.DirectoryString{DefaultDataDir()},
+		Value: utils.DirectoryString{defaultDataDir},
 	}
 	LogLvlFlag = cli.StringFlag{
 		Name:  "lvl",

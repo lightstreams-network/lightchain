@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethdb"
 	
 	"github.com/lightstreams-network/lightchain/log"
-	"github.com/lightstreams-network/lightchain/utils"
 	"io/ioutil"
 	"encoding/json"
 	"reflect"
@@ -57,7 +56,7 @@ func Init(cfg Config, logger log.Logger) error {
 }
 
 func readGenesisFile(genesisPath string) (*ethCore.Genesis, error) {
-	genesisBlob, err := utils.ReadFileContent(genesisPath)
+	genesisBlob, err := ioutil.ReadFile(genesisPath)
 	if err != nil {
 		genesisBlob, err = readDefaultGenesis()
 		if err != nil {
@@ -78,7 +77,8 @@ func readDefaultGenesis() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return utils.ReadFileContent(fPath)
+
+	return ioutil.ReadFile(fPath)
 }
 
 func readDefaultKeystore() (map[string][]byte, error) {

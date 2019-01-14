@@ -1,10 +1,10 @@
 package node
 
 import (
-	"github.com/lightstreams-network/lightchain/utils"
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/database"
+	"os"
 )
 
 func InitNode(cfg Config) error {
@@ -12,7 +12,7 @@ func InitNode(cfg Config) error {
 	logger.With("module", "node")
 	logger.Info("Initializing lightchain node data dir...", "dir", cfg.DataDir)
 
-	if err := utils.CreatePathIfNotExists(cfg.DataDir); err != nil {
+	if err := os.MkdirAll(cfg.DataDir, os.ModePerm); err != nil {
 		return err
 	}
 	
