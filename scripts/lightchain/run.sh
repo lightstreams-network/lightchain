@@ -20,18 +20,25 @@ while [ "$1" != "" ]; do
         --clean) 
             CLEAN=1 
         ;;
+        --hard) 
+            HARD_MODE=1 
+        ;;
         * )
             APPENDED_ARGS="${APPENDED_ARGS} $1"
     esac
     shift
 done
 
-INIT_ARGS="--datadir ${DATA_DIR}"
+INIT_ARGS=""
+#INIT_ARGS="--homedir ${DATA_DIR}"
 
-NODE_ARGS="--datadir ${DATA_DIR}"
-NODE_ARGS="${NODE_ARGS} --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpccorsdomain='*' --rpcvhosts=*"
-NODE_ARGS="${NODE_ARGS} --ws --wsaddr=0.0.0.0 --wsport=8546 --wsorigins='*' --rpcapi eth,net,web3,personal,admin"
-NODE_ARGS="${NODE_ARGS} --abci_laddr=tcp://0.0.0.0:26658 --tendermint_addr=tcp://127.0.0.1:26657"
+NODE_ARGS=""
+#NODE_ARGS="--homedir ${DATA_DIR}"
+NODE_ARGS="${NODE_ARGS} --tmt_rpc_port=25557 --tmt_proxy_port=25558 --tmt_p2p_port=25556"
+NODE_ARGS="${NODE_ARGS} --rpc --rpcaddr=0.0.0.0 --rpcport=8545"
+NODE_ARGS="${NODE_ARGS} --rpcapi eth,net,web3,personal,admin"
+#NODE_ARGS="${NODE_ARGS} --ws --wsaddr=0.0.0.0 --wsport=8546 --wsorigins='*'"
+#NODE_ARGS="${NODE_ARGS} --abci_laddr=tcp://0.0.0.0:26658 --tendermint_addr=tcp://127.0.0.1:26657"
 
 pushd "$ROOT_PATH"
 
@@ -39,9 +46,12 @@ if [ -n "${CLEAN}" ]; then
     echo "################################"
     echo -e "\t Restart environment"
     echo "################################"
-    
-    run "${EXEC_BIN} ${INIT_ARGS} unsafe_reset_all"
-    run "${EXEC_BIN} ${INIT_ARGS} init"
+    if [ -n "${HARD_MODE}" ]; then
+		run "rm -rf ${DATA_DIR}"
+	else
+		run "${EXEC_BIN} ${INIT_ARGS} unsafe_reset_all"
+	fi
+	run "${EXEC_BIN} ${INIT_ARGS} init"
     echo -e "################################ \n"
 fi
 

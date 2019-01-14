@@ -64,24 +64,6 @@ By default it is used the `genesis.json` but alternatively you can select a gene
 - `genesis.json`: Genesis block used to initialize blockchain.
 - `keystore/*`:  Accounts private keys, those accounts have been initialized along with the blockchain, their balance is defined as part of the `genesis` block.
 
-#### Tendermint
-
-Tendermint requires to be initialized, to do that first we need to define where tendermint data is going to be allocated, for the sake of simplicity it is recommend to be stored in a sub-folder of chosen lightchain datadir.
-
-```
-tendermint --home ${HOME}/.lightchain/tendermint init
-```
-
-```
-├── config
-│   ├── config.toml
-│   ├── genesis.json
-│   ├── node_key.json
-│   └── priv_validator.json
-└── data
-```
-To know more about the meaning of those files please visit [Tendermint official doc](https://tendermint.com/docs/).
-
 ###### Optional (Connect to `sirius`) 
 
 In the case we want to get our local tendermint node connected to `sirius` network

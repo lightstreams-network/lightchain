@@ -6,8 +6,8 @@ ROOT_PATH="$(cd "$(dirname "$0")" && pwd)/.."
 
 HOME_DIR="${HOME}/.lightchain/tendermint"
 EXEC_BIN="${GOPATH}/src/github.com/tendermint/tendermint/build/tendermint"
-CONFIG_FILE="${GOPATH}/src/github.com/lightstreams-network/lightchain/setup/tendermint/config.toml"
-GENESIS_FILE="${GOPATH}/src/github.com/lightstreams-network/lightchain/setup/tendermint/genesis.json"
+CONFIG_FILE="${GOPATH}/src/github.com/lightstreams-network/lightchain/_legacy/setup/tendermint/config.toml"
+GENESIS_FILE="${GOPATH}/src/github.com/lightstreams-network/lightchain/_legacy/setup/tendermint/genesis.json"
 
 while [ "$1" != "" ]; do
     case $1 in
