@@ -29,12 +29,13 @@ type Config struct {
 
 func NewConfig(dataDir string, rpcListenPort uint, p2pListenPort uint, proxyListenPort uint, proxyProtocol string) Config {
 	tendermintCfg := config.DefaultConfig()
+
+	applyTendermintConfig(filepath.Join(dataDir, "config"), tendermintCfg)
+
 	tendermintCfg.SetRoot(dataDir)
 	tendermintCfg.RPC.ListenAddress = fmt.Sprintf("tcp://0.0.0.0:%d", rpcListenPort)
 	tendermintCfg.P2P.ListenAddress = fmt.Sprintf("tcp://0.0.0.0:%d", p2pListenPort)
 	tendermintCfg.ProxyApp = fmt.Sprintf("tcp://127.0.0.1:%d", proxyListenPort)
-
-	applyTendermintConfig(filepath.Join(dataDir, "config"), tendermintCfg)
 
 	return Config {
 		dataDir,
