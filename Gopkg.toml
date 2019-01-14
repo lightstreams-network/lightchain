@@ -11,10 +11,6 @@
   version = "1.8.20"
 
 [[override]]
-  name = "google.golang.org/genproto"
-  revision = "7fd901a49ba6a7f87732eb344f6e3c5b19d1b200"
-
-[[override]]
   name = "github.com/tendermint/iavl"
   version = "^v0.11.0"
 
