@@ -42,12 +42,16 @@ fi
 pushd "$ROOT_PATH"
 
 if [ -n "${CLEAN}" ]; then
-    echo "################################"
-    echo -e "\t Restart environment"
-    echo "################################"
-    run "rm -rf ${DATA_DIR}"
-	run "$EXEC_BIN init ${INIT_ARGS}"
-    echo -e "################################ \n"
+	echo -e "You are about to wipe out ${DATA_DIR} "
+    read -p "Are you sure? [N/y]" -n 1 -r
+	echo    # (optional) move to a new line
+	if [[ $REPLY =~ ^[Yy]$ ]]; then
+	    echo -e "\t Restart environment"
+	    echo "################################"
+	    run "rm -rf ${DATA_DIR}"
+		run "$EXEC_BIN init ${INIT_ARGS}"
+		echo -e "################################ \n"
+	fi
 fi
 
 if [ -n "${IS_DEBUG}" ]; then
