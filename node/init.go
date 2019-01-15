@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func InitNode(cfg Config) error {
+func InitNode(cfg Config, ntw consensus.Network) error {
 	var logger = log.NewLogger()
 	logger.With("module", "node")
 	logger.Info("Initializing lightchain node data dir...", "dir", cfg.DataDir)
@@ -16,7 +16,7 @@ func InitNode(cfg Config) error {
 		return err
 	}
 	
-	if err := consensus.Init(cfg.consensusCfg, logger); err != nil {
+	if err := consensus.Init(cfg.consensusCfg, ntw, logger); err != nil {
 		return err
 	}
 

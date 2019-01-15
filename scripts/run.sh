@@ -20,8 +20,8 @@ while [ "$1" != "" ]; do
         --clean) 
             CLEAN=1 
         ;;
-        --hard) 
-            HARD_MODE=1 
+        --stand-alone) 
+            STANDALONE_NET=1 
         ;;
         * )
             APPENDED_ARGS="${APPENDED_ARGS} $1"
@@ -33,7 +33,11 @@ INIT_ARGS="--datadir=${DATA_DIR}"
 
 RUN_ARGS="--datadir=${DATA_DIR} --lvl=info"
 RUN_ARGS="${RUN_ARGS} --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi eth,net,web3,personal,admin"
-RUN_ARGS="${RUN_ARGS} --tmt_rpc_port=26757 --tmt_proxy_port=26758 --tmt_p2p_port=26756"
+RUN_ARGS="${RUN_ARGS} --tmt_rpc_port=26657 --tmt_proxy_port=26658 --tmt_p2p_port=26656"
+
+if [ -n "${STANDALONE_NET}" ]; then
+	INIT_ARGS="${INIT_ARGS} --stand-alone"
+fi
 
 pushd "$ROOT_PATH"
 

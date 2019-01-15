@@ -20,8 +20,8 @@ while [ "$1" != "" ]; do
         --clean) 
             CLEAN=1 
         ;;
-        --hard) 
-            HARD_MODE=1 
+        --stand-alone) 
+            STANDALONE_NET=1 
         ;;
         * )
             APPENDED_ARGS="${APPENDED_ARGS} $1"
@@ -30,6 +30,10 @@ while [ "$1" != "" ]; do
 done
 
 INIT_ARGS="--datadir=${DATA_DIR}"
+
+if [ -n "${STANDALONE_NET}" ]; then
+	INIT_ARGS="${INIT_ARGS} --stand-alone"
+fi
 
 pushd "$ROOT_PATH"
 
