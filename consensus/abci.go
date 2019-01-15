@@ -170,10 +170,14 @@ func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
 
 	abci.logger.Info("TendermintABCI::Commit()", "blockHash", blockHash.Hex())
 	abci.checkTxState = ethState.Copy()
+	rootHash, err := ethState.Commit(true)
+	if err != nil {
+		abci.logger.Error("Error committing latest state", "err", err) // nolint: errcheck
+	}
 	// The app should respond to the Commit request with a byte array, which is the deterministic state root of the
 	// application. It is included in the header of the next block. It can be used to provide easily verified
 	// Merkle-proofs of the state of the application.
-	return tmtAbciTypes.ResponseCommit{Data: blockHash.Bytes()}
+	return tmtAbciTypes.ResponseCommit{Data: rootHash.Bytes()}
 }
 
 // Query queries the state of the TendermintABCI
