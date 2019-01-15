@@ -20,7 +20,7 @@ while [ "$1" != "" ]; do
         --clean) 
             CLEAN=1 
         ;;
-        --stand-alone) 
+        --standalone) 
             STANDALONE_NET=1 
         ;;
         * )
@@ -32,7 +32,7 @@ done
 INIT_ARGS="--datadir=${DATA_DIR}"
 
 if [ -n "${STANDALONE_NET}" ]; then
-	INIT_ARGS="${INIT_ARGS} --stand-alone"
+	INIT_ARGS="${INIT_ARGS} --standalone"
 fi
 
 pushd "$ROOT_PATH"
