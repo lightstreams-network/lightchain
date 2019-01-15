@@ -18,7 +18,7 @@ import (
 
 var (
 	StandAloneNetFlag = cli.BoolFlag{
-		Name:  "stand-alone",
+		Name:  "standalone",
 		Usage: "Initialize a stand alone node not connected to any network",
 	}
 
