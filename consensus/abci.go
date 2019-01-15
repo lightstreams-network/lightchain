@@ -67,7 +67,8 @@ func (abci *TendermintABCI) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.Resp
 	blockchain := abci.db.Ethereum().BlockChain()
 	currentBlock := blockchain.CurrentBlock()
 	height := currentBlock.Number()
-	hash := currentBlock.Hash()
+	//hash := currentBlock.Hash()
+	root := currentBlock.Root() 
 
 	abci.logger.Debug("Info", "height", height) // nolint: errcheck
 
@@ -85,7 +86,7 @@ func (abci *TendermintABCI) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.Resp
 	return tmtAbciTypes.ResponseInfo{
 		Data:             "ABCIEthereum",
 		LastBlockHeight:  height.Int64(),
-		LastBlockAppHash: hash[:],
+		LastBlockAppHash: root[:],
 	}
 }
 
@@ -169,8 +170,8 @@ func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
 	}
 
 	abci.logger.Info("TendermintABCI::Commit()", "blockHash", blockHash.Hex())
+	rootHash, err := ethState.Commit(false)
 	abci.checkTxState = ethState.Copy()
-	rootHash, err := ethState.Commit(true)
 	if err != nil {
 		abci.logger.Error("Error committing latest state", "err", err) // nolint: errcheck
 	}
