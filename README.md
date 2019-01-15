@@ -1,14 +1,11 @@
 # Lightchain
 
-Official Lightstreams PoA Blockchain. Lightchain is an ethereum compatible blockchain 
-which performs byzantine fault tolerance consensus to replace the original PoW of Ethereum
-blockchain, that is accomplish by the integration of [`Tendermint`](https://tendermint.com) source
-code
+This is the official Lightstreams implementation of a proof-of-authority (PoA) blockchain. Lightchain is an ethereum-compatible blockchain which uses byzantine consensus to replace the original proof-of-work (PoW) from Ethereum. This is achieved by integrating [`Tendermint`](https://tendermint.com) for the consensus layer. 
 
 ## Pre-requirements
 
 - Go >= 1.10
-- Deps
+- deps
 
 ## Installation
 
@@ -22,60 +19,42 @@ make get_vendor_deps
 make install
 ```
 
-To validate if you installation was done correctly run command to obtain
-current installed version of Lightchain
+To validate if you installation was done correctly, run the following command to obtain current installed version of Lightchain
 ```
 lightchain version
 ```
   
-## Create Lightchain Node
+## Create a Lightchain node
 
-Lightstreams provides a testnet called `Sirius` by default new created nodes
-are being hooked to this network and automatically synchronized. Currently
-lightstreams team is actively working on improving the network performance
-and stability therefore some issues might still occur which force us to
-restore blockchain. To check the current state of `Sirius` network we provide
-an [blockchain explorer](https://explorer.lightstreams.io/home)
+Lightstreams provides a testnet called `Sirius` by default new created nodes are being hooked to this network and automatically synchronized. Currently lightstreams team is actively working on improving the network performance and stability therefore some issues might still occur which force us to restore blockchain. To check the current state of `Sirius` network we provide an [blockchain explorer](https://explorer.lightstreams.io/home) 
 
-
-We are working on launching **Lightstream Mainnet** which aims to provide
-a reliable and fast open blockchain. Stay tuned about project progress 
-by our [Blog](https://medium.com/lightstreams)
+We are working on launching the **Lightstream main network** which aims to provide a reliable and fast open blockchain. Stay tuned about our project's progress by reading our [blog](https://medium.com/lightstreams)
  
-### Node Initialization
+### Node initialization
 
-To initialise a new blockchain you need to run `init` command and 
-choose a local path where blockchain files are going to be stored.
-
+To initialise a new blockchain you need to run `lightchain init` and  choose a local path where blockchain files are going to be stored.
 ```
 lightchain init --datadir "${HOME}/.lightchain"
 ```
 
-Once above command is completed your blockchain is ready to be launch, as it was
-mentioned above by default the created node is setup to connect to lightstreams
-running testnet `Sirius`, in case you prefer to create an isolated node for testing
-proposes or whatever reason you can run the follow command instead:
-
+Once this is done, your blockchain is ready to be launche. The created node is setup to connect to the lightstreams' test network (`Sirius`). If you prefer to create an isolated node for testing proposes, you can run the following command instead:
 ```
 lightchain init --datadir "${HOME}/.lightchain" --standalone
 ```
 
-That will created the setup to run an isolated node with a new faucet ethereum
-account specify on the output
+When creating a standalone node, a faucet account with funds is created by default: 
 ```
 @TODO
 ```
 
-### Node Launch
+### Node launch
 
 To run a lightchain node you only need to run the following command:
 ```
 lightchain run --datadir "${HOME}/.lightchain"
 ```
 
-After above command is launched, in case you are not in `standalone` mode, 
-it will start running the network synchronization which will take several
-minutes.
+After running the command above (and only if you are not in `standalone` mode), it will start running the network synchronization which will take several minutes.
 
 
 ***Available flags***
@@ -92,23 +71,16 @@ minutes.
 --wsport int             WS-RPC server listening port (default 8546)
 ```
 
-## DApps
+## Applications
 
 ### Leth
-
 Lightstreams implemented its first DApp running onto Lightchain blockchain
 [**Leth**](https://docs.lightstreams.network/01.getting-started/). 
 
-Leth is application which intends to wrap Ethereum blockchain + IPFS into 
- a very simple interface which can be used either by 
- [HTTP Restful API](https://docs.lightstreams.network/api-docs/) or by 
- [Interactive Command line client](https://docs.lightstreams.network/04.cli-docs/leth/) 
-
+Leth is application which intends to wrap Ethereum blockchain + IPFS into a very simple interface which can be used either by [HTTP Restful API](https://docs.lightstreams.network/api-docs/) or by [Interactive Command line client] (https://docs.lightstreams.network/04.cli-docs/leth/) 
 
 ## Docker
-
-In case you prefer to encapsulate your node within a Docker container you can
-follow next instructions.
+In case you prefer to use Docker, follow the instructions below.
 
 First you create a new docker image, which will be tagged as `lightchain:latest`
 ```
@@ -161,14 +133,11 @@ curl -X http://localhost:26657/status
 ```
 
 Lightchain `datadir` is split into two main folder:
-1. **consensus**: As it is represented in the name, this folder contains every
-information regarding the by Byzantine consensus
-2. **database**: Allocates every file referring to the Ethereum compatible blockchain 
+1. **consensus**: contains all the information regarding consensus
+2. **database**: contains all files related to the Ethereum-compatible blockchain 
 
 ***Wiki***
-To know more about how Lightchain works and how Tendermint is integrated
-to perform the PoA, visit our repository [wiki](https://github.com/lightstreams-network/lightchain/wiki)
+To know more about how Lightchain works and how Tendermint is integrated to perform the PoA, visit our repository [wiki](https://github.com/lightstreams-network/lightchain/wiki)
 
 ## Tests
-
-[Read how to run tests.](truffle/Tests.md)
+[Read how to run tests](truffle/Tests.md)
