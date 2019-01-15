@@ -4,35 +4,11 @@ import (
 	"flag"
 	"github.com/spf13/cobra"
 	"gopkg.in/urfave/cli.v1"
-	"github.com/mitchellh/go-homedir"
-	"path"
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
-	ethLog "github.com/ethereum/go-ethereum/log"
 	"strconv"
 )
 
-const (
-	TendermintP2PListenPort   = uint(26656)
-	TendermintRpcListenPort   = uint(26657)
-	TendermintProxyListenPort = uint(26658)
-	TendermintProxyProtocol   = "rpc"
-)
-
 var (
-	defaultHomeDir, _ = homedir.Dir()
-
-	DataDirFlag = ethUtils.DirectoryFlag{
-		Name:  "datadir",
-		Usage: "Data directory for the databases and keystore",
-		Value: ethUtils.DirectoryString{path.Join(defaultHomeDir, "lightchain")},
-	}
-
-	LogLvlFlag = cli.StringFlag{
-		Name:  "lvl",
-		Usage: "Level of logging",
-		Value: ethLog.LvlInfo.String(),
-	}
-
 	RPCEnabledFlag = ethUtils.RPCEnabledFlag
 	RPCListenAddrFlag = ethUtils.RPCListenAddrFlag
 	RPCPortFlag = ethUtils.RPCPortFlag
@@ -40,28 +16,6 @@ var (
 	WSEnabledFlag = ethUtils.WSEnabledFlag
 	WSListenAddrFlag = ethUtils.WSListenAddrFlag
 	WSPortFlag = ethUtils.WSPortFlag
-
-	ConsensusRpcListenPortFlag = cli.UintFlag{
-		Name:  "tmt_rpc_port",
-		Value: TendermintRpcListenPort,
-		Usage: "Tendermint RPC port used to receive incoming messages from Lightchain",
-	}
-	ConsensusP2PListenPortFlag = cli.UintFlag{
-		Name:  "tmt_p2p_port",
-		Value: TendermintP2PListenPort,
-		Usage: "Tendermint port used to achieve exchange messages across nodes",
-	}
-	ConsensusProxyListenPortFlag = cli.UintFlag{
-		Name:  "tmt_proxy_port",
-		Value: TendermintProxyListenPort,
-		Usage: "Lightchain RPC port used to receive incoming messages from Tendermint",
-	}
-	// ABCIProtocolFlag defines whether GRPC or SOCKET should be used for the ABCI connections
-	ConsensusProxyProtocolFlag = cli.StringFlag{
-		Name:  "abci_protocol",
-		Value: "socket",
-		Usage: "socket | grpc",
-	}
 )
 
 func addEthNodeFlags(cmd *cobra.Command) {
@@ -75,12 +29,6 @@ func addEthNodeFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(WSEnabledFlag.GetName(), false, WSEnabledFlag.Usage)
 	cmd.Flags().String(WSListenAddrFlag.GetName(), WSListenAddrFlag.Value, WSListenAddrFlag.Usage)
 	cmd.Flags().Int(WSPortFlag.GetName(), WSPortFlag.Value, WSPortFlag.Usage)
-
-	// Consensus Flags
-	cmd.Flags().Uint(ConsensusRpcListenPortFlag.GetName(), ConsensusRpcListenPortFlag.Value, ConsensusRpcListenPortFlag.Usage)
-	cmd.Flags().Uint(ConsensusP2PListenPortFlag.GetName(), ConsensusP2PListenPortFlag.Value, ConsensusP2PListenPortFlag.Usage)
-	cmd.Flags().Uint(ConsensusProxyListenPortFlag.GetName(), ConsensusProxyListenPortFlag.Value, ConsensusProxyListenPortFlag.Usage)
-	cmd.Flags().String(ConsensusProxyProtocolFlag.GetName(), ConsensusProxyProtocolFlag.Value, ConsensusProxyProtocolFlag.Usage)
 }
 
 func newNodeClientCtx(dataDir string, cmd *cobra.Command) *cli.Context {

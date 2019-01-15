@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"fmt"
 	"os"
+	"gopkg.in/urfave/cli.v1"
 	
 	ethLog "github.com/ethereum/go-ethereum/log"
 	
@@ -13,6 +14,37 @@ import (
 	"github.com/lightstreams-network/lightchain/database"
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/tendermint/tendermint/libs/common"
+)
+
+const (
+	TendermintP2PListenPort   = uint(26656)
+	TendermintRpcListenPort   = uint(26657)
+	TendermintProxyListenPort = uint(26658)
+	TendermintProxyProtocol   = "rpc"
+)
+
+var (
+	ConsensusRpcListenPortFlag = cli.UintFlag{
+		Name:  "tmt_rpc_port",
+		Value: TendermintRpcListenPort,
+		Usage: "Tendermint RPC port used to receive incoming messages from Lightchain",
+	}
+	ConsensusP2PListenPortFlag = cli.UintFlag{
+		Name:  "tmt_p2p_port",
+		Value: TendermintP2PListenPort,
+		Usage: "Tendermint port used to achieve exchange messages across nodes",
+	}
+	ConsensusProxyListenPortFlag = cli.UintFlag{
+		Name:  "tmt_proxy_port",
+		Value: TendermintProxyListenPort,
+		Usage: "Lightchain RPC port used to receive incoming messages from Tendermint",
+	}
+	// ABCIProtocolFlag defines whether GRPC or SOCKET should be used for the ABCI connections
+	ConsensusProxyProtocolFlag = cli.StringFlag{
+		Name:  "abci_protocol",
+		Value: "socket",
+		Usage: "socket | grpc",
+	}
 )
 
 func runCmd() *cobra.Command {
@@ -79,7 +111,17 @@ func runCmd() *cobra.Command {
 	}
 
 	addDefaultFlags(runCmd)
+	addConsensusFlags(runCmd)
 	addEthNodeFlags(runCmd)
 
 	return runCmd
 }
+
+func addConsensusFlags(cmd *cobra.Command) {
+	// Consensus Flags
+	cmd.Flags().Uint(ConsensusRpcListenPortFlag.GetName(), ConsensusRpcListenPortFlag.Value, ConsensusRpcListenPortFlag.Usage)
+	cmd.Flags().Uint(ConsensusP2PListenPortFlag.GetName(), ConsensusP2PListenPortFlag.Value, ConsensusP2PListenPortFlag.Usage)
+	cmd.Flags().Uint(ConsensusProxyListenPortFlag.GetName(), ConsensusProxyListenPortFlag.Value, ConsensusProxyListenPortFlag.Usage)
+	cmd.Flags().String(ConsensusProxyProtocolFlag.GetName(), ConsensusProxyProtocolFlag.Value, ConsensusProxyProtocolFlag.Usage)
+}
+
