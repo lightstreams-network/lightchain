@@ -3,11 +3,34 @@ package main
 import (
 	"fmt"
 	"os"
+	"gopkg.in/urfave/cli.v1"
 	"github.com/spf13/cobra"
+	"github.com/mitchellh/go-homedir"
+	"path"
+	
+	ethLog "github.com/ethereum/go-ethereum/log"
+	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
+	
 	"github.com/lightstreams-network/lightchain/log"
 )
 
 var logger = log.NewLogger()
+
+var (
+	defaultHomeDir, _ = homedir.Dir()
+
+	DataDirFlag = ethUtils.DirectoryFlag{
+		Name:  "datadir",
+		Usage: "Data directory for the databases and keystore",
+		Value: ethUtils.DirectoryString{path.Join(defaultHomeDir, "lightchain")},
+	}
+
+	LogLvlFlag = cli.StringFlag{
+		Name:  "lvl",
+		Usage: "Level of logging",
+		Value: ethLog.LvlInfo.String(),
+	}
+)
 
 func main() {
 	lightchainCmd := LightchainCmd()
