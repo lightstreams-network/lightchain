@@ -1,5 +1,6 @@
 var HelloBlockchainWorld = artifacts.require("./HelloBlockchainWorld.sol");
 
 module.exports = function(deployer) {
-  deployer.deploy(HelloBlockchainWorld);
+  const from = process.env.ROOT_ACCOUNT;
+  deployer.deploy(HelloBlockchainWorld, { from });
 };

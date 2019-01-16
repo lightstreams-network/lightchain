@@ -8,12 +8,7 @@ import (
 	"os"
 )
 
-// Name represents name of blockchain used when running a node.
-type Network string
-
 const DataDirName = "consensus"
-
-const SiriusNetwork Network = "sirius"
 
 // Config is general consensus node config.
 //

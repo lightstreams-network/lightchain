@@ -37,15 +37,17 @@ To initialise a new blockchain you need to run `lightchain init` and  choose a l
 lightchain init --datadir "${HOME}/.lightchain"
 ```
 
-Once this is done, your blockchain is ready to be launche. The created node is setup to connect to the lightstreams' test network (`Sirius`). If you prefer to create an isolated node for testing proposes, you can run the following command instead:
+Request FREE tokens by posting in ...`@TODO`
+
+***Standalone node***
+
+Once this is done, your blockchain is ready to be launched. The created node is setup to connect to the lightstreams' test network (`Sirius`). If you prefer to create an isolated node for testing proposes, you can run the following command instead:
 ```
 lightchain init --datadir "${HOME}/.lightchain" --standalone
 ```
-
-When creating a standalone node, a faucet account with funds is created by default: 
-```
-@TODO
-```
+ 
+At the genesis block the ether account `0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e`
+has been initialized with _3M Photons_. Passphrase is `WelcomeToSirius`
 
 ### Node launch
 

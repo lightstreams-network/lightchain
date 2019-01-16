@@ -17,8 +17,7 @@ module.exports = {
         sirius: {
             host: "127.0.0.1",
             port: 8545,
-            network_id: "*",
-            from: "0x4f5adedca6d869e9f5f7dcf4b7a9dfa8231a095f"
+            network_id: "*"
         }
     }
 };
