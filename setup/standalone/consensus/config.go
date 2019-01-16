@@ -1,3 +1,6 @@
+package consensus
+
+const ConfigToml = `
 # This is a TOML config file.
 # For more information, see https://github.com/toml-lang/toml
 
@@ -8,7 +11,7 @@
 proxy_app = "tcp://127.0.0.1:26658"
 
 # A custom human readable name for this node
-moniker = "lightchain-moniker"
+moniker = "standalone-moniker"
 
 # If this node is many blocks behind the tip of the chain, FastSync
 # allows them to catchup quickly by downloading blocks in parallel
@@ -23,7 +26,7 @@ db_dir = "data"
 
 # Output level for logging, including package level options. Second line for debug.
 log_level = "main:info,state:info,*:error"
-# log_level = "main:info,state:info,*:error,*:debug"
+# log_level = "main:info,state:info,*:error"
 
 # Output format: 'plain' (colored text) or 'json'
 log_format = "plain"
@@ -113,10 +116,10 @@ external_address = ""
 seeds = ""
 
 # Comma separated list of nodes to keep persistent connections to
-persistent_peers = "A9984F4CA2D1BA468C3F3B1C55FF11692285FD77@sirius-seeder.lightstreams.io:9000"
+persistent_peers = ""
 
 # UPNP port forwarding
-upnp = true
+upnp = false
 
 # Path to address book
 addr_book_file = "config/addrbook.json"
@@ -193,7 +196,7 @@ skip_timeout_commit = false
 
 # EmptyBlocks mode and possible interval between empty blocks
 create_empty_blocks = true
-create_empty_blocks_interval = "5s"
+create_empty_blocks_interval = "2s"
 
 # Reactor sleep duration parameters
 peer_gossip_sleep_duration = "100ms"
@@ -248,3 +251,4 @@ max_open_connections = 3
 
 # Instrumentation namespace
 namespace = "tendermint"
+`

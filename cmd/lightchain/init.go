@@ -5,14 +5,15 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 	"fmt"
+	"path/filepath"
 
 	ethLog "github.com/ethereum/go-ethereum/log"
 
 	"github.com/lightstreams-network/lightchain/node"
 	"github.com/lightstreams-network/lightchain/database"
 	"github.com/lightstreams-network/lightchain/consensus"
-	"path/filepath"
 	"github.com/lightstreams-network/lightchain/log"
+	"github.com/lightstreams-network/lightchain/setup"
 )
 
 
@@ -40,12 +41,12 @@ func initCmd() *cobra.Command {
 
 	addDefaultFlags(initCmd)
 	initCmd.Flags().Bool(StandAloneNetFlag.Name, false, DataDirFlag.Usage)
-	initCmd.Flags().Bool(SiriusNetFlag.Name, true, SiriusNetFlag.Usage)
+	initCmd.Flags().Bool(SiriusNetFlag.Name, false, SiriusNetFlag.Usage)
 	return initCmd
 }
 
 func initCmdRun(cmd *cobra.Command, args []string) {
-	var network = consensus.SiriusNetwork
+	var network setup.Network;
 	lvlStr, _ := cmd.Flags().GetString(LogLvlFlag.Name)
 	if lvl, err := ethLog.LvlFromString(lvlStr); err == nil {
 		log.SetupLogger(lvl)
@@ -53,9 +54,17 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 
 	dataDir, _ := cmd.Flags().GetString(DataDirFlag.Name)
 	useStandAloneNet, _ := cmd.Flags().GetBool(StandAloneNetFlag.Name)
+	useSiriusNet, _ := cmd.Flags().GetBool(SiriusNetFlag.Name)
 	
-	if useStandAloneNet {
-		network = ""
+	if useStandAloneNet && useSiriusNet {
+		logger.Error(fmt.Errorf("Multiple network selected: %s, %s", setup.SiriusNetwork, setup.StandaloneNetwork).Error())
+		os.Exit(1)
+	} else if (useStandAloneNet) {
+		network = setup.StandaloneNetwork
+	} else if (useSiriusNet) {
+		network = setup.SiriusNetwork
+	} else {
+		network = setup.SiriusNetwork
 	}
 	
 	consensusCfg := consensus.NewConfig(

@@ -28,6 +28,13 @@ func NewNode(cfg *Config, uriClient *rpcClient.URIClient) (*Node, error) {
 	logger := log.NewLogger()
 	logger.With("module", "database")
 	
+	// @TODO Investigate why Genesis file is not automatically loaded
+	var err error
+	cfg.GethConfig.EthCfg.Genesis, err = readGenesisFile(cfg.genesisPath())
+	if err != nil {
+		return nil, err
+	}
+
 	ethereum, err := ethNode.New(&cfg.GethConfig.NodeCfg)
 
 	if err != nil {
