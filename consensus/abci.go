@@ -32,7 +32,7 @@ const maxTransactionSize = 32768
 type TendermintABCI struct {
 	db           *database.Database
 	checkTxState *state.StateDB
-	rpcClient    *rpc.Client
+	ethRPCClient *rpc.Client
 	logger       tmtLog.Logger
 
 	getCurrentDBState func() (*state.StateDB, error)
@@ -40,7 +40,7 @@ type TendermintABCI struct {
 
 var _ tmtAbciTypes.Application = &TendermintABCI{}
 
-func NewTendermintABCI(db *database.Database, client *rpc.Client, logger tmtLog.Logger) (*TendermintABCI, error) {
+func NewTendermintABCI(db *database.Database, ethRPCClient *rpc.Client, logger tmtLog.Logger) (*TendermintABCI, error) {
 	txState, err := db.Ethereum().BlockChain().State()
 	if err != nil {
 		return nil, err
@@ -48,10 +48,10 @@ func NewTendermintABCI(db *database.Database, client *rpc.Client, logger tmtLog.
 
 	abci := &TendermintABCI{
 		db:                db,
-		rpcClient:         client,
+		ethRPCClient:      ethRPCClient,
 		getCurrentDBState: db.Ethereum().BlockChain().State,
 		checkTxState:      txState.Copy(),
-		logger:			   logger,
+		logger:            logger,
 	}
 	
 	return abci, nil
@@ -191,7 +191,7 @@ func (abci *TendermintABCI) Query(query tmtAbciTypes.RequestQuery) tmtAbciTypes.
 			Log: err.Error()}
 	}
 	var result interface{}
-	if err := abci.rpcClient.Call(&result, in.Method, in.Params...); err != nil {
+	if err := abci.ethRPCClient.Call(&result, in.Method, in.Params...); err != nil {
 		return tmtAbciTypes.ResponseQuery{Code: uint32(abciTypes.ErrInternalError.Code),
 			Log: err.Error()}
 	}

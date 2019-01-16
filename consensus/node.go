@@ -46,10 +46,9 @@ func NewNode(cfg *Config) (*Node, error) {
 	}, nil
 }
 
-func (n *Node) Start(rpcClient *ethRpc.Client, db *database.Database) error {
-	
+func (n *Node) Start(ethRPCClient *ethRpc.Client, db *database.Database) error {
 	n.logger.Debug("Creating tendermint ABCI application...")
-	tendermintABCI, err := NewTendermintABCI(db, rpcClient, n.logger)
+	tendermintABCI, err := NewTendermintABCI(db, ethRPCClient, n.logger)
 	if err != nil {
 		return err
 	}
