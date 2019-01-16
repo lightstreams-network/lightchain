@@ -1,19 +1,16 @@
-.PHONY: all clean build install
+.PHONY: all clean build install docker
 
 DEP_REPO = github.com/golang/dep/cmd/dep
-GO_ETHEREUM_REPO = github.com/ethereum/go-ethereum
-TENDERMINT_REPO = github.com/tendermint/tendermint
-
 DEP_BIN_PATH := $(shell command -v dep 2> /dev/null)
 
-define SSH_PRIV_KEY  
-$(shell cat $(SSHKEY) | head -n -1 | tail -n +2)
+BUILD_TAGS? := lightchain
+BUILD_DEBUG_FLAGS = -gcflags=all="-N -l"
+
+define VERSION_TAG
+	$(shell git ls-remote git@github.com:lightstreams-network/lightchain.git HEAD | cut -f1 | cut -c1-9)
 endef
 
-BUILD_TAGS? := lightchain
 
-VERSION_TAG := 0.1.0
-BUILD_DEBUG_FLAGS = -gcflags=all="-N -l"
 
 all: get_vendor_deps install
 
@@ -24,34 +21,19 @@ else
 	@echo "Not DEP found. Visit http://${DEP_REPO} and follow installation instructions."
 endif
 
-ifdef GETH_BIN_PATH
-	@echo "GETH is correctly installed"
-else
-	@echo "Not GETH found. Visit http://${GO_ETHEREUM_REPO} and follow installation instructions."
-endif
-
-ifndef TENDERMINT_BIN_PATH
-	@echo "TENDERMINT_REPO is correctly installed"
-else
-	@echo "Not DEP found. Visit http://${TENDERMINT_REPO} and follow installation instructions."
-endif
-
 install:
 	CGO_ENABLED=1 go install ./cmd/lightchain
 
 build:
 	CGO_ENABLED=1 go build -o ./build/lightchain ./cmd/lightchain
 
+clean:
+	@rm build/lightchain
+
 ### Development ###
 
 build-dev:
 	CGO_ENABLED=1 go build $(BUILD_DEBUG_FLAGS) -o ./build/lightchain ./cmd/lightchain
-
-### Docker ###
-docker:
-	@echo "Build docker image"
-	docker build -t lightchain:latest \
-		--build-arg ssh_prv_key="$(SSH_PRIV_KEY)" .
 
 ### Tooling ###
 
@@ -60,5 +42,8 @@ get_vendor_deps:
 	@echo "--> dep ensure"
 	@dep ensure
 
-clean:
-	@rm build/lightchain
+### Docker ###
+docker:
+	@echo "Build docker image"
+	docker build -t lightchain:latest --build-arg version="$(VERSION_TAG)" .
+
