@@ -69,11 +69,6 @@ func NewConfig(dataDir string, ctx *cli.Context) (Config, error) {
 	gethCfg.EthCfg.TrieDirtyCache = 0  // MB
 	gethCfg.EthCfg.TrieTimeout = 5 * time.Minute
 	
-	gethCfg.EthCfg.Genesis, err = readGenesisFile(dataDir)
-	if err != nil {
-		return Config{}, err
-	}
-	
 	return Config {
 		dataDir,
 		gethCfg,

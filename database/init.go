@@ -3,35 +3,52 @@ package database
 import (
 	"path/filepath"
 	"os"
+	"encoding/json"
+	"reflect"
+	"fmt"
 	
 	ethCore "github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/ethdb"
 	
 	"github.com/lightstreams-network/lightchain/log"
+	"github.com/lightstreams-network/lightchain/setup"
 	"io/ioutil"
-	"encoding/json"
-	"reflect"
 )
 
-var LightchainSetupDir = filepath.Join(os.Getenv("GOPATH"), "src/github.com/lightstreams-network", "lightchain", "setup")
-
-func Init(cfg Config, logger log.Logger) error {
+func Init(cfg Config, ntw setup.Network, logger log.Logger) error {
 	keystoreDir := cfg.keystoreDir()
 	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
 		logger.Error("mkdirAll keyStoreDir: %v", err)
 	}
 
-	keystoreFiles, err := readDefaultKeystore()
-	if err != nil {
-		logger.Error("could not open read keystore: %v", err)
-		return err
+	var keystoreFiles map[string][]byte
+	var genesisBlob []byte
+	var err error
+	switch ntw {
+	case setup.SiriusNetwork:
+		if keystoreFiles, err = setup.ReadSiriusDatabaseKeystore(); err != nil {
+			return err
+		}
+		if genesisBlob, err = setup.ReadSiriusDatabaseGenesis(); err != nil {
+			return err
+		}
+	case setup.StandaloneNetwork:
+		if keystoreFiles, err = setup.ReadStandaloneDatabaseKeystore(); err != nil {
+			return err
+		}
+		if genesisBlob, err = setup.ReadStandaloneDatabaseGenesis(); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("Invalid network selected %s", ntw)
 	}
+	
 	if err = writeKeystoreFiles(logger, keystoreDir, keystoreFiles); err != nil {
 		logger.Error("could not open write keystore: %v", err)
 		return err
 	}
 	
-	genesis, err := readGenesisFile(cfg.DataDir)
+	genesis, err := parseBlobGenesis(genesisBlob)
 	if err != nil {
 		logger.Error("reading genesis err: %v", err)
 		return err
@@ -49,19 +66,15 @@ func Init(cfg Config, logger log.Logger) error {
 		logger.Error("failed to write genesis block: %v", err)
 		return err
 	}
-
 	logger.Info("Successfully wrote genesis block and/or chain rule set", "hash", hash)
+	
 	return nil
 }
 
-func readGenesisFile(dataDir string) (*ethCore.Genesis, error) {
-	genesisPath := filepath.Join(dataDir, GenesisPath)
+func readGenesisFile(genesisPath string) (*ethCore.Genesis, error) {
 	genesisBlob, err := ioutil.ReadFile(genesisPath)
 	if err != nil {
-		genesisBlob, err = readDefaultGenesis()
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	genesis, err := parseBlobGenesis(genesisBlob)
@@ -70,45 +83,6 @@ func readGenesisFile(dataDir string) (*ethCore.Genesis, error) {
 	}
 
 	return genesis, nil
-}
-
-func readDefaultGenesis() ([]byte, error) {
-	fPath, err := filepath.Abs(filepath.Join(LightchainSetupDir, "genesis.json"))
-	if err != nil {
-		return nil, err
-	}
-
-	return ioutil.ReadFile(fPath)
-}
-
-func readDefaultKeystore() (map[string][]byte, error) {
-	dPath, err := filepath.Abs(filepath.Join(LightchainSetupDir, "keystore"))
-	if err != nil {
-		return nil, err
-	}
-
-	var files = make(map[string][]byte)
-	err = filepath.Walk(dPath, func(file string, info os.FileInfo, err error) error {
-		if err != nil {
-			return nil
-		}
-
-		if info.IsDir() {
-			return nil
-		}
-		content, err := ioutil.ReadFile(file)
-		if err != nil {
-			return err
-		}
-		files[info.Name()] = content
-		return nil
-	})
-
-	if err != nil {
-		panic(err)
-	}
-
-	return files, nil
 }
 
 func writeGenesisFile(genesisPath string, genesis *ethCore.Genesis) error {

@@ -1,3 +1,6 @@
+package consensus
+
+const Genesis = `
 {
     "genesis_time": "2018-12-16T15:20:31.254715867Z",
     "chain_id": "lightstreams-sirius-testnet",
@@ -42,7 +45,17 @@
             },
             "power": "10",
             "name": "sirius-validator-node3"
+        },
+        {
+            "address": "9A171D8706D6E09BE57326402D231B969DF5D872",
+            "pub_key": {
+                "type": "tendermint/PubKeyEd25519",
+                "value": "+PaREFjqJYsU1lpMkFiShhB52agOZyHSzSp4p0TFaak="
+            },
+            "power": "10",
+            "name": "sirius-validator-node4"
         }
     ],
     "app_hash": ""
 }
+`

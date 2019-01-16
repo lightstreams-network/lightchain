@@ -5,5 +5,5 @@ module.exports = (deployer) => {
   const pwd = process.env.PASSPHRASE;
   const from = process.env.ROOT_ACCOUNT;
   web3.personal.unlockAccount(from, pwd, 10000);
-  deployer.deploy(Migrations);
+  deployer.deploy(Migrations, { from });
 };
