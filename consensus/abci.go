@@ -36,6 +36,7 @@ type TendermintABCI struct {
 	logger       tmtLog.Logger
 
 	getCurrentDBState func() (*state.StateDB, error)
+	getCurrentBlock   func() *ethTypes.Block
 }
 
 var _ tmtAbciTypes.Application = &TendermintABCI{}
@@ -50,10 +51,11 @@ func NewTendermintABCI(db *database.Database, client *rpc.Client, logger tmtLog.
 		db:                db,
 		rpcClient:         client,
 		getCurrentDBState: db.Ethereum().BlockChain().State,
+		getCurrentBlock:   db.Ethereum().BlockChain().CurrentBlock,
 		checkTxState:      txState.Copy(),
-		logger:			   logger,
+		logger:            logger,
 	}
-	
+
 	return abci, nil
 }
 
@@ -68,7 +70,7 @@ func (abci *TendermintABCI) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.Resp
 	currentBlock := blockchain.CurrentBlock()
 	height := currentBlock.Number()
 	//hash := currentBlock.Hash()
-	root := currentBlock.Root() 
+	root := currentBlock.Root()
 
 	abci.logger.Debug("Info", "height", height) // nolint: errcheck
 
@@ -170,7 +172,7 @@ func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
 	}
 
 	abci.logger.Info("TendermintABCI::Commit()", "blockHash", blockHash.Hex())
-	rootHash, err := ethState.Commit(false)
+	rootHash := abci.getCurrentBlock().Root()
 	abci.checkTxState = ethState.Copy()
 	if err != nil {
 		abci.logger.Error("Error committing latest state", "err", err) // nolint: errcheck

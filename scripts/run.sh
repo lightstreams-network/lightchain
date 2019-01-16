@@ -51,6 +51,9 @@ if [ -n "${CLEAN}" ]; then
 	    run "rm -rf ${DATA_DIR}"
 		run "$EXEC_BIN init ${INIT_ARGS}"
 		echo -e "################################ \n"
+	else
+		echo -e "Exiting"
+		exit 1
 	fi
 fi
 

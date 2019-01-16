@@ -46,6 +46,9 @@ if [ -n "${CLEAN}" ]; then
 	    echo "################################"
 	    run "rm -rf ${DATA_DIR}"
 		echo -e "################################ \n"
+	else
+		echo -e "Exiting"
+		exit 1
 	fi
 fi
 
