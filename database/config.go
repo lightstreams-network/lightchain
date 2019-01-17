@@ -17,9 +17,12 @@ import (
 
 var (
 	DataDirPath = "database"
+	
+	// IMPORTANT: Following three values needs to correspond to the internal values used by go-ethereum
 	KeystorePath = "keystore"
-	ChainDbPath = "chaindb"
+	ChainDbPath = "chaindata" // it needs to match to the value passed at go-ethereum/eth/backend.go:CreateDB()
 	GenesisPath = "genesis.json"
+	
 	blankGenesis = new(ethCore.Genesis)
 	errBlankGenesis = errors.New("could not parse a valid/non-blank Genesis")
 )
@@ -52,6 +55,10 @@ func NewConfig(dataDir string, ctx *cli.Context) (Config, error) {
 	gethCfg.NodeCfg.P2P.NoDiscovery = true
 	gethCfg.NodeCfg.DataDir = dataDir
 	
+	// IMPORTANT: If we do not define ".Name" Ethereum lib will automatically set it by the process name which will use 
+	// to generate every subfolder underneath
+	gethCfg.NodeCfg.Name = "."
+
 	// REMINDER: Following initialization is required to complete the configuration of the ethereum db
 	ethereum, err := ethNode.New(&gethCfg.NodeCfg)
 	if err != nil {
