@@ -35,7 +35,6 @@ func NewNode(cfg *Config, consensusAPI conAPI.API) (*Node, error) {
 	}
 
 	ethereum, err := ethNode.New(&cfg.GethConfig.NodeCfg)
-
 	if err != nil {
 		return nil, err
 	}
