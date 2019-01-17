@@ -7,11 +7,10 @@ import (
 	ethNode "github.com/ethereum/go-ethereum/node"
 	ethRpc "github.com/ethereum/go-ethereum/rpc"
 
-	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
-
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/ethclient"
+	conAPI "github.com/lightstreams-network/lightchain/consensus/api"
 )
 
 // Node is the main object.
@@ -24,7 +23,7 @@ type Node struct {
 }
 
 // NewNode creates a new node.
-func NewNode(cfg *Config, uriClient *rpcClient.URIClient) (*Node, error) {
+func NewNode(cfg *Config, consensusAPI conAPI.API) (*Node, error) {
 	logger := log.NewLogger()
 	logger.With("module", "database")
 	
@@ -51,11 +50,13 @@ func NewNode(cfg *Config, uriClient *rpcClient.URIClient) (*Node, error) {
 
 	logger.Debug("Binding ethereum events to rpc client...")
 	if err := ethereum.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {
-		logger.Info(fmt.Sprintf("registering ABCI application service"))
-		n.database, err = NewDatabase(ctx, &cfg.GethConfig.EthCfg, uriClient)
+		logger.Info(fmt.Sprintf("Registering database..."))
+
+		n.database, err = NewDatabase(ctx, &cfg.GethConfig.EthCfg, consensusAPI)
 		if err != nil {
 			return nil, err
 		}
+
 		return n.database, nil
 	}); err != nil {
 		return &n, err
@@ -66,14 +67,12 @@ func NewNode(cfg *Config, uriClient *rpcClient.URIClient) (*Node, error) {
 
 // Start starts base node and stop p2p server
 func (n *Node) Start() error {
-	// start p2p server
 	n.logger.Debug("Starting ethereum node")
 	err := n.ethereum.Start()
 	if err != nil {
 		return err
 	}
-	
-	// Stop it Eth.p2p server
+
 	n.logger.Debug("Stopping p2p communication of ethereum node")
 	n.ethereum.Server().Stop()
 

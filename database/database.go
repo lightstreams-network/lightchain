@@ -10,15 +10,17 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/log"
 
+	"github.com/ethereum/go-ethereum/eth/downloader"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
-	tmtRpcClient "github.com/tendermint/tendermint/rpc/lib/client"
+	dbAPI "github.com/lightstreams-network/lightchain/database/api"
+	conAPI "github.com/lightstreams-network/lightchain/consensus/api"
 )
 
 // Database manages the underlying ethereum state for storage and processing
-// and maintains the connection to Tendermint for forwarding txs
+// and maintains the connection to Tendermint for forwarding txs.
 
-// Database handles the chain database and VM
+// Database handles the chain database and VM.
 type Database struct {
 	eth    *eth.Ethereum
 	ethCfg *eth.Config
@@ -28,15 +30,12 @@ type Database struct {
 
 	ethState *EthState
 
-	tmtRPCClient tmtRpcClient.HTTPClient
+	consensusAPI conAPI.API
 }
 
-// NewDatabase creates a new database
-func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, tmtRPCClient tmtRpcClient.HTTPClient) (*Database, error) {
+func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consensusAPI conAPI.API) (*Database, error) {
 	state := NewEthState()
 
-	// eth.NewNode takes a ServiceContext for the EventMux, the AccountManager,
-	// and some basic functions around the dataDir.
 	ethereum, err := eth.New(ctx, ethCfg)
 	if err != nil {
 		return nil, err
@@ -45,65 +44,54 @@ func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, tmtRPCClient tmtR
 	state.SetEthereum(ethereum)
 	state.SetEthConfig(ethCfg)
 
-	// send special event to go-eth to switch homestead=true.
 	currentBlock := ethereum.BlockChain().CurrentBlock()
 	ethereum.EventMux().Post(core.ChainHeadEvent{currentBlock})
 
-	// We don't need PoW/Uncle validation.
 	ethereum.BlockChain().SetValidator(NullBlockProcessor{})
 
 	db := &Database{
 		eth:          ethereum,
 		ethCfg:       ethCfg,
 		ethState:     state,
-		tmtRPCClient: tmtRPCClient,
+		consensusAPI: consensusAPI,
 	}
 
 	return db, nil
 }
 
-// Ethereum returns the underlying the ethereum object.
-// #stable
 func (db *Database) Ethereum() *eth.Ethereum {
 	return db.eth
 }
 
-// Config returns the eth.Config.
-// #stable
 func (db *Database) Config() *eth.Config {
 	return db.ethCfg
 }
 
-//----------------------------------------------------------------------
-// Handle block processing
-
 // DeliverTx appends a transaction to the current block
 func (db *Database) DeliverTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
-	log.Info("Lightchain.Database::DeliverTx", "tx", tx.Hash().String())
+	log.Info("Database::DeliverTx", "tx", tx.Hash().String())
 	return db.ethState.DeliverTx(tx)
 }
 
-//// AccumulateRewards accumulates the rewards based on the given strategy
-//func (db *Database) AccumulateRewards(strategy *coreUtils.Strategy) {
-//	db.ethState.AccumulateRewards(strategy)
-//}
-
 // Commit finalises the current block
 func (db *Database) Commit(receiver common.Address) (common.Hash, error) {
-	log.Info("Lightchain.Database::Commit", "data", db.ethState.work)
+	log.Info("Database::Commit", "data", db.ethState.work)
 	return db.ethState.Commit(receiver)
 }
 
 // InitEthState initializes the EthState
 func (db *Database) InitEthState(receiver common.Address) error {
-	log.Info("Lightchain.Database::InitEthState", "data", receiver)
+	log.Info("Database::InitEthState", "data", receiver)
 	return db.ethState.ResetWorkState(receiver)
 }
 
 // UpdateHeaderWithTimeInfo uses the tendermint header to update the eth header
 func (db *Database) UpdateHeaderWithTimeInfo(tmHeader *tmtAbciTypes.Header) {
-	db.ethState.UpdateHeaderWithTimeInfo(db.eth.APIBackend.ChainConfig(),
-		uint64(tmHeader.Time.Unix()), uint64(tmHeader.GetNumTxs()))
+	db.ethState.UpdateHeaderWithTimeInfo(
+		db.eth.APIBackend.ChainConfig(),
+		uint64(tmHeader.Time.Unix()),
+		uint64(tmHeader.GetNumTxs()),
+	)
 }
 
 // GasLimit returns the maximum gas per block
@@ -111,36 +99,56 @@ func (db *Database) GasLimit() uint64 {
 	return db.ethState.GasLimit().Gas()
 }
 
-//----------------------------------------------------------------------
-// Implements: eth.Service
-
-// APIs returns the collection of RPC services the eth package offers.
+// APIs returns the collection of Ethereum RPC services.
+//
+// Overwrites go-ethereum/eth/backend.go::APIs().
+//
+// Some of the APIs must be re-implemented to support Ethereum web3 features
+// due to dependency on Tendermint, e.g Syncing().
 func (db *Database) APIs() []rpc.API {
-	apis := db.Ethereum().APIs()
-	retApis := []rpc.API{}
-	for _, v := range apis {
-		if v.Namespace == "net" {
-			v.Service = NewNetRPCService(db.ethCfg.NetworkId)
-		}
+	ethAPIs := db.Ethereum().APIs()
+	newAPIs := []rpc.API{}
+
+	for _, v := range ethAPIs {
 		if v.Namespace == "miner" {
 			continue
 		}
+
+		if v.Namespace == "debug" {
+			continue
+		}
+
+		if v.Namespace == "admin" {
+			continue
+		}
+
 		if _, ok := v.Service.(*eth.PublicMinerAPI); ok {
 			continue
 		}
-		retApis = append(retApis, v)
+
+		if v.Namespace == "net" {
+			v.Service = dbAPI.NewNullPublicNetAPI(db.ethCfg.NetworkId)
+		}
+
+		if _, ok := v.Service.(*eth.PublicEthereumAPI); ok {
+			v.Service = dbAPI.NewPublicEthAPI(db.consensusAPI)
+		}
+
+		if _, ok := v.Service.(downloader.PublicDownloaderAPI); ok {
+			v.Service = dbAPI.NewPublicDownloaderAPI()
+		}
+
+		newAPIs = append(newAPIs, v)
 	}
-	return retApis
+
+	return newAPIs
 }
 
-// Start implements node.Service, starting all internal goroutines needed by the Ethereum
-// protocol implementation.
 func (db *Database) Start(_ *p2p.Server) error {
 	go db.txBroadcastLoop()
 	return nil
 }
 
-// Stop implements node.Service, terminating all internal goroutines used by the Ethereum protocol.
 func (db *Database) Stop() error {
 	db.ethTxSub.Unsubscribe()
 	db.eth.BlockChain().Stop()
@@ -153,7 +161,6 @@ func (db *Database) Stop() error {
 	return nil
 }
 
-// Protocols implements node.Service, returning all the currently configured network protocols to start.
 func (db *Database) Protocols() []p2p.Protocol {
 	return nil
 }
