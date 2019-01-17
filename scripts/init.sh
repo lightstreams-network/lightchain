@@ -37,6 +37,9 @@ fi
 
 pushd "$ROOT_PATH"
 
+echo -e "Compiling latest version...."
+run "make build"
+
 if [ -n "${CLEAN}" ]; then
 	echo -e "You are about to wipe out ${DATA_DIR} "
     read -p "Are you sure? [N/y]" -n 1 -r
