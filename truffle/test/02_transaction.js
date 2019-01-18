@@ -6,15 +6,19 @@
  * - Validate Encoded data
  */
 
-
-const { convertFromWeiBnToPht, convertPhtToWeiBN, fetchTxReceipt, calculateGasCostBN } = require('./utils');
+const { convertFromWeiBnToPht, convertPhtToWeiBN, fetchTxReceipt, calculateGasCostBN, extractEnvAccountAndPwd } = require('./utils');
 
 const HelloBlockchainWorld = artifacts.require("HelloBlockchainWorld");
 
-contract('TestTransaction', () => {
-  const ROOT_ACCOUNT = process.env.ROOT_ACCOUNT;
-  const NEW_ACCOUNT_PASS = "password";
+contract('TestTransaction', async () => {
+  let ROOT_ACCOUNT;
   let NEW_ACCOUNT_ADDR;
+  const NEW_ACCOUNT_PASS = "password";
+
+  it("setup", async () => {
+      const account = await extractEnvAccountAndPwd(process.env.NETWORK);
+      ROOT_ACCOUNT = account.from;
+  });
 
   it('should fail transfer on insufficient funds', async function() {
     const instance = await HelloBlockchainWorld.deployed();
@@ -33,7 +37,7 @@ contract('TestTransaction', () => {
       assert.equal(e.message, errMsg);
     }
   });
-  
+
   it('should fail transaction because gas limit is set too low', async function() {
     const weiBalancePreTxBN = await web3.eth.getBalance(ROOT_ACCOUNT);
     const weiAmountSentBN = convertPhtToWeiBN(0.1);
@@ -51,11 +55,11 @@ contract('TestTransaction', () => {
     } catch ( e ) {
       assert.equal(e.message, errMsg);
     }
-    
+
     const weiBalancePostTxBN = await web3.eth.getBalance(ROOT_ACCOUNT);
     assert.equal(weiBalancePostTxBN.toNumber(), weiBalancePreTxBN.toNumber(), 'No gas is wasted as trx failed')
   });
-  
+
   it('should transfer 0.1 PHT and gas is spent in the transaction', async function() {
     const amountToSend = convertPhtToWeiBN(0.1);
     const sender = ROOT_ACCOUNT;
