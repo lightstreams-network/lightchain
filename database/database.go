@@ -14,7 +14,7 @@ import (
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
 	dbAPI "github.com/lightstreams-network/lightchain/database/api"
-	conAPI "github.com/lightstreams-network/lightchain/consensus/api"
+	consensusAPI "github.com/lightstreams-network/lightchain/consensus/api"
 )
 
 // Database manages the underlying ethereum state for storage and processing
@@ -30,10 +30,10 @@ type Database struct {
 
 	ethState *EthState
 
-	consensusAPI conAPI.API
+	consAPI consensusAPI.API
 }
 
-func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consensusAPI conAPI.API) (*Database, error) {
+func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensusAPI.API) (*Database, error) {
 	state := NewEthState()
 
 	ethereum, err := eth.New(ctx, ethCfg)
@@ -50,10 +50,10 @@ func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consensusAPI conA
 	ethereum.BlockChain().SetValidator(NullBlockProcessor{})
 
 	db := &Database{
-		eth:          ethereum,
-		ethCfg:       ethCfg,
-		ethState:     state,
-		consensusAPI: consensusAPI,
+		eth:      ethereum,
+		ethCfg:   ethCfg,
+		ethState: state,
+		consAPI:  consAPI,
 	}
 
 	return db, nil
@@ -122,16 +122,20 @@ func (db *Database) APIs() []rpc.API {
 			continue
 		}
 
-		if _, ok := v.Service.(*eth.PublicMinerAPI); ok {
-			continue
-		}
-
 		if v.Namespace == "net" {
 			v.Service = dbAPI.NewNullPublicNetAPI(db.ethCfg.NetworkId)
 		}
 
+		if _, ok := v.Service.(*eth.PublicMinerAPI); ok {
+			continue
+		}
+
 		if _, ok := v.Service.(*eth.PublicEthereumAPI); ok {
-			v.Service = dbAPI.NewPublicEthAPI(db.consensusAPI)
+			v.Service = dbAPI.NewPublicEthereumAPI(
+				db.ethCfg.Genesis.Config.ChainID,
+				db.eth,
+				db.consAPI,
+			)
 		}
 
 		if _, ok := v.Service.(downloader.PublicDownloaderAPI); ok {

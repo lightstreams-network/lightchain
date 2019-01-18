@@ -25,7 +25,7 @@ func (db *Database) txBroadcastLoop() {
 
 		for _, tx := range obj.Txs {
 			log.Info("New TX", "data", tx.Hash().String())
-			if err := db.consensusAPI.BroadcastTx(*tx); err != nil {
+			if err := db.consAPI.BroadcastTx(*tx); err != nil {
 				log.Error("Error broadcasting tx", "err", err)
 			}
 		}
@@ -35,7 +35,7 @@ func (db *Database) txBroadcastLoop() {
 // Wait for Tendermint RPC to open the socket and run http endpoint
 func (db *Database) waitForTendermint() {
 	for {
-		status, err := db.consensusAPI.Status()
+		status, err := db.consAPI.Status()
 		if err == nil {
 			break
 		}
