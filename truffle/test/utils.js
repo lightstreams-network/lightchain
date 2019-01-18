@@ -1,3 +1,5 @@
+require('dotenv').config({path: `${process.env.PWD}/.env`});
+
 module.exports.convertFromWeiBnToPht = function(bn) {
   return Number(web3._extend.utils.fromWei(bn.toNumber(), 'ether'));
 };
@@ -43,6 +45,30 @@ module.exports.fetchTxReceipt = function(txReceiptId, timeoutInSec = 30) {
 module.exports.waitFor = (waitInSeconds) => {
   return new Promise((resolve) => {
     setTimeout(resolve, waitInSeconds * 1000);
+  });
+};
+
+module.exports.extractEnvAccountAndPwd = (network) => {
+  return new Promise((resolve, reject) => {
+      const account = {
+        from: "",
+        pwd: "",
+      };
+
+      if (network === "sirius") {
+          account.from = process.env.SIRIUS_ACCOUNT;
+          account.pwd = process.env.SIRIUS_PASSPHRASE;
+
+          resolve(account);
+      } else if (network === "standalone") {
+          account.from = process.env.STANDALONE_ACCOUNT;
+          account.pwd = process.env.STANDALONE_PASSPHRASE;
+
+          resolve(account);
+      } else {
+          console.log("unknown network " + network);
+          reject("undefined network to deploy to");
+      }
   });
 };
 

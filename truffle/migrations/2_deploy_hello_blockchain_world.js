@@ -1,9 +1,8 @@
-require('dotenv').config({path: `${process.env.PWD}/.env`});
-
+const { waitFor, extractEnvAccountAndPwd } = require('../test/utils');
 const HelloBlockchainWorld = artifacts.require("./HelloBlockchainWorld.sol");
 
-module.exports = (deployer) => {
-  const from = process.env.ROOT_ACCOUNT;
+module.exports = async (deployer) => {
   console.log("Deploying `HelloBlockchainWorld.sol` ...");
-  deployer.deploy(HelloBlockchainWorld, { from });
+
+  deployer.deploy(HelloBlockchainWorld);
 };

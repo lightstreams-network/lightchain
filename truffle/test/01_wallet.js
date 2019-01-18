@@ -18,12 +18,17 @@ async function isAccountLocked(address) {
   }
 }
 
-const { convertFromWeiBnToPht, convertPhtToWeiBN, fetchTxReceipt, waitFor } = require('./utils');
+const { convertFromWeiBnToPht, convertPhtToWeiBN, fetchTxReceipt, waitFor, extractEnvAccountAndPwd } = require('./utils');
 
-contract('WalletTest', () => {
-  const ROOT_ACCOUNT = process.env.ROOT_ACCOUNT;
-  const NEW_ACCOUNT_PASS = "password";
+contract('WalletTest', async accounts => {
+  let ROOT_ACCOUNT;
   let NEW_ACCOUNT_ADDR;
+  let NEW_ACCOUNT_PASS = "password";
+
+  it("setup", async () => {
+    const account = await extractEnvAccountAndPwd(process.env.NETWORK);
+    ROOT_ACCOUNT = account.from;
+  });
 
   it("should create a new account with balance 0 and locked", async () => {
     NEW_ACCOUNT_ADDR = await web3.personal.newAccount(NEW_ACCOUNT_PASS);
@@ -60,7 +65,7 @@ contract('WalletTest', () => {
     });
 
     await fetchTxReceipt(txReceiptId, 15);
-    
+
     const weiBalancePostTxBN = await web3.eth.getBalance(NEW_ACCOUNT_ADDR);
     assert.equal(
         weiBalancePostTxBN.toNumber(),
