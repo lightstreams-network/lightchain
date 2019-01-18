@@ -9,8 +9,8 @@ cp .env.sample .env
 
 In case you are running over `standalone` network:
 ```
-ROOT_ACCOUNT="0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e"
-PASSPHRASE="WelcomeToSirius"
+STANDALONE_ACCOUNT="0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e"
+STANDALONE_PASSPHRASE="WelcomeToSirius"
 ```
 
 That account corresponds to one of the ones defined
@@ -18,7 +18,9 @@ on the genesis block `/setup/genesis.json`.
 
 Once environment is ready we can run the test
 ```
-npm run test
+npm run test-standalone
+npm run test-sirius
+
 ```
 
 ### Notes
