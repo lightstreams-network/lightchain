@@ -7,22 +7,22 @@ import (
 )
 
 // A dummy PublicNetAPI in order to overwrite the `ethereum/go-ethereum/internal/ethapi/api.go`.
-type NullPublicNetAPI struct {
-	networkVersion uint64
+type PublicNetAPI struct {
+	NetworkVersion uint64
 }
 
-func NewNullPublicNetAPI(networkVersion uint64) *NullPublicNetAPI {
-	return &NullPublicNetAPI{networkVersion}
+func NewPublicNetAPI(networkVersion uint64) *PublicNetAPI {
+	return &PublicNetAPI{networkVersion}
 }
 
-func (n *NullPublicNetAPI) Listening() bool {
+func (n *PublicNetAPI) Listening() bool {
 	return true
 }
 
-func (n *NullPublicNetAPI) PeerCount() hexutil.Uint {
+func (n *PublicNetAPI) PeerCount() hexutil.Uint {
 	return hexutil.Uint(0)
 }
 
-func (n *NullPublicNetAPI) Version() string {
-	return fmt.Sprintf("%d", n.networkVersion)
+func (n *PublicNetAPI) Version() string {
+	return fmt.Sprintf("%d", n.NetworkVersion)
 }

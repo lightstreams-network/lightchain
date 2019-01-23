@@ -11,8 +11,8 @@ import (
 type PublicDownloaderAPI struct {
 }
 
-func NewPublicDownloaderAPI() PublicDownloaderAPI {
-	return PublicDownloaderAPI{}
+func NewPublicDownloaderAPI() *PublicDownloaderAPI {
+	return &PublicDownloaderAPI{}
 }
 
 func (api *PublicDownloaderAPI) Syncing(ctx context.Context) (*rpc.Subscription, error) {

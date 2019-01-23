@@ -103,27 +103,20 @@ func (db *Database) GasLimit() uint64 {
 //
 // Overwrites go-ethereum/eth/backend.go::APIs().
 //
-// Some of the APIs must be re-implemented to support Ethereum web3 features
+// Some of the API methods must be re-implemented to support Ethereum web3 features
 // due to dependency on Tendermint, e.g Syncing().
 func (db *Database) APIs() []rpc.API {
 	ethAPIs := db.Ethereum().APIs()
 	newAPIs := []rpc.API{}
 
 	for _, v := range ethAPIs {
-		if v.Namespace == "miner" {
-			continue
-		}
-
-		if v.Namespace == "debug" {
-			continue
-		}
-
-		if v.Namespace == "admin" {
-			continue
-		}
-
 		if v.Namespace == "net" {
-			v.Service = dbAPI.NewNullPublicNetAPI(db.ethCfg.NetworkId)
+			v.Service = dbAPI.NewPublicNetAPI(db.ethCfg.NetworkId)
+			continue
+		}
+
+		if v.Namespace != "eth" {
+			continue
 		}
 
 		if _, ok := v.Service.(*eth.PublicMinerAPI); ok {
