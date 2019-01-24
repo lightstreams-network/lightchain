@@ -4,6 +4,7 @@ import (
 	"github.com/lightstreams-network/lightchain/database"
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/log"
+	conAPI "github.com/lightstreams-network/lightchain/consensus/api"
 )
 
 type Node struct {
@@ -22,10 +23,11 @@ func NewNode(cfg *Config) (*Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
+	conRPCAPI := conAPI.NewRPCApi(cfg.consensusCfg.RPCListenPort())
+
 	logger.Debug("Initializing database node...")
-	uriClient := consensusNode.NewURIClient()
-	dbNode, err := database.NewNode(&cfg.dbCfg, uriClient)
+	dbNode, err := database.NewNode(&cfg.dbCfg, conRPCAPI)
 	if err != nil {
 		return nil, err
 	}

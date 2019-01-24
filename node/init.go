@@ -9,7 +9,7 @@ import (
 	"github.com/lightstreams-network/lightchain/setup"
 )
 
-func InitNode(cfg Config, ntw setup.Network) error {
+func Init(cfg Config, ntw setup.Network) error {
 	var logger = log.NewLogger()
 	logger.With("module", "node")
 	logger.Info("Initializing lightchain node data dir...", "dir", cfg.DataDir)

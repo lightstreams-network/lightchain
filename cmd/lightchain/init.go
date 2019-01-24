@@ -85,7 +85,7 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 	}
 
 	nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg)
-	if err := node.InitNode(nodeCfg, network); err != nil {
+	if err := node.Init(nodeCfg, network); err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
