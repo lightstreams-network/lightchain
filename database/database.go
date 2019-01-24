@@ -110,17 +110,16 @@ func (db *Database) APIs() []rpc.API {
 	newAPIs := []rpc.API{}
 
 	for _, v := range ethAPIs {
-		if v.Namespace == "net" {
-			v.Service = dbAPI.NewPublicNetAPI(db.ethCfg.NetworkId)
-			continue
-		}
-
-		if v.Namespace != "eth" {
+		if isDefaultAPI(v.Namespace) {
 			continue
 		}
 
 		if _, ok := v.Service.(*eth.PublicMinerAPI); ok {
 			continue
+		}
+
+		if v.Namespace == "net" {
+			v.Service = dbAPI.NewPublicNetAPI(db.ethCfg.NetworkId)
 		}
 
 		if _, ok := v.Service.(*eth.PublicEthereumAPI); ok {
@@ -170,4 +169,8 @@ func (db *Database) FlushStateTrieDb() error {
 		return err
 	}
 	return nil
+}
+
+func isDefaultAPI(namespace string) bool {
+	return namespace == "miner" || namespace == "debug" || namespace == "admin"
 }
