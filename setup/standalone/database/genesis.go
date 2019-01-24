@@ -1,9 +1,12 @@
 package database
 
+// IMPORTANT: In order to prevent a replay-attack protection, ensure a UNIQUE CHAIN ID
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
+
 const Genesis = `
 {
     "config": {
-        "chainId": 1,
+        "chainId": 161,
         "eip150Block": 0,
         "eip155Block": 0,
         "eip158Block": 0,

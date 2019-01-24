@@ -1,6 +1,5 @@
 package database
 
-
 var Keystore = map[string]string{
 	"UTC--2019-01-16T08-35-20.225Z--61f3b85929c20980176d4a09771284625685c40e" : 
 		`{"version":3,"id":"f971c491-0962-4d36-8d3b-9d2227e8c5ee","address":"61f3b85929c20980176d4a09771284625685c40e","Crypto":{"ciphertext":"41f00ea4d04e31797eccac76fe9acddee205de9623b84ba62345965580363c33","cipherparams":{"iv":"a091009f87bd7e93c82d40ea1dd40880"},"cipher":"aes-128-ctr","kdf":"scrypt","kdfparams":{"dklen":32,"salt":"4dc21aa7e7a6f573f77a876a994af4f8031769bf9ce53924f032423fd0ae269a","n":8192,"r":8,"p":1},"mac":"bf43b08c0be319518a74ac6153e29758efe4d72e68d5ac68b64a20052ea0842a"}}`,
