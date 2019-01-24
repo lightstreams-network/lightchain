@@ -18,7 +18,7 @@ import (
 func Init(cfg Config, ntw setup.Network, logger log.Logger) error {
 	keystoreDir := cfg.keystoreDir()
 	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
-		logger.Error("mkdirAll keyStoreDir: %v", err)
+		return err
 	}
 
 	var keystoreFiles map[string][]byte
@@ -40,21 +40,22 @@ func Init(cfg Config, ntw setup.Network, logger log.Logger) error {
 			return err
 		}
 	default:
-		return fmt.Errorf("Invalid network selected %s", ntw)
+		return fmt.Errorf("invalid network selected %s", ntw)
 	}
 	
 	if err = writeKeystoreFiles(logger, keystoreDir, keystoreFiles); err != nil {
-		logger.Error("could not open write keystore: %v", err)
+		err = fmt.Errorf("could not open write keystore: %v", err)
 		return err
 	}
 	
 	genesis, err := parseBlobGenesis(genesisBlob)
 	if err != nil {
-		logger.Error("reading genesis err: %v", err)
+		err = fmt.Errorf("reading genesis err: %v", err)
 		return err
 	}
+
 	if err = writeGenesisFile(cfg.genesisPath(), genesis); err != nil {
-		logger.Error("could not write genesis file: %v", err)
+		err = fmt.Errorf("could not write genesis file: %v", err)
 		return err
 	}
 	logger.Info("Generated genesis block", "path", cfg.genesisPath())
@@ -63,7 +64,7 @@ func Init(cfg Config, ntw setup.Network, logger log.Logger) error {
 	chainDb, err := ethdb.NewLDBDatabase(chainDataDir, 0, 0)
 	_, hash, err := ethCore.SetupGenesisBlock(chainDb, genesis)
 	if err != nil {
-		logger.Error("failed to write genesis block: %v", err)
+		err = fmt.Errorf("failed to write genesis block: %v", err)
 		return err
 	}
 	logger.Info("Successfully wrote genesis block and/or chain rule set", "hash", hash)
