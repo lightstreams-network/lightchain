@@ -11,8 +11,6 @@ import (
 	tmtP2P "github.com/tendermint/tendermint/p2p"
 	tmtCommon "github.com/tendermint/tendermint/libs/common"
 	tmtServer "github.com/tendermint/tendermint/abci/server"
-	rpcTypes "github.com/tendermint/tendermint/rpc/core/types"
-	rpcClient "github.com/tendermint/tendermint/rpc/lib/client"
 	ethRpc "github.com/ethereum/go-ethereum/rpc"
 	"fmt"
 )
@@ -46,10 +44,9 @@ func NewNode(cfg *Config) (*Node, error) {
 	}, nil
 }
 
-func (n *Node) Start(rpcClient *ethRpc.Client, db *database.Database) error {
-	
+func (n *Node) Start(ethRPCClient *ethRpc.Client, db *database.Database) error {
 	n.logger.Debug("Creating tendermint ABCI application...")
-	tendermintABCI, err := NewTendermintABCI(db, rpcClient, n.logger)
+	tendermintABCI, err := NewTendermintABCI(db, ethRPCClient, n.logger)
 	if err != nil {
 		return err
 	}
@@ -105,11 +102,4 @@ func (n *Node) Start(rpcClient *ethRpc.Client, db *database.Database) error {
 
 func (n *Node) Stop() error {
 	return nil
-}
-
-func (n *Node) NewURIClient() *rpcClient.URIClient {
-	tendermintLAddr := fmt.Sprintf("tcp://127.0.0.1:%d", n.cfg.rpcListenPort)
-	client := rpcClient.NewURIClient(tendermintLAddr)
-	rpcTypes.RegisterAmino(client.Codec())
-	return client
 }
