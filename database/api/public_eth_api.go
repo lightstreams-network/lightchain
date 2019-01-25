@@ -3,7 +3,6 @@ package api
 import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/eth"
-	"github.com/ethereum/go-ethereum"
 	"math/big"
 	consensusAPI "github.com/lightstreams-network/lightchain/consensus/api"
 )
@@ -34,8 +33,7 @@ func (api *PublicEthereumAPI) ChainId() hexutil.Uint64 {
 func (e *PublicEthereumAPI) Syncing() (interface{}, error) {
 	progress, err := e.consAPI.SyncProgress()
 	if err != nil {
-		// I have to pretend all 0 values are an error due to badly designed Ethereum API interface
-		return ethereum.SyncProgress{0, 0, 0, 0 , 0}, nil
+		return map[string]interface{} {}, err
 	}
 
 	if progress.CurrentBlock == progress.HighestBlock {

@@ -8,6 +8,10 @@ import (
 	"fmt"
 	"bytes"
 	"github.com/lightstreams-network/lightchain/log"
+	"net/http"
+	"io/ioutil"
+	"strings"
+	"encoding/json"
 )
 
 // API is a main consensus interface exposing functionalities to `database` and other packages.
@@ -40,20 +44,17 @@ func (a *rpcApi) SyncProgress() (eth.SyncProgress, error) {
 	status := tmtTypes.ResultStatus{}
 	_, err := a.client.Call("status", map[string]interface{} {}, &status)
 	if err != nil {
-		return eth.SyncProgress{}, nil
+		return eth.SyncProgress{}, err
 	}
 
-	// Arbitrary values representing not synced state
-	currentBlock := uint64(0)
-	highestBlock := uint64(1000000)
-
-	if !status.SyncInfo.CatchingUp {
-		currentBlock = highestBlock
+	highestBlock, err := fetchLatestValidatorBlockHeight()
+	if err != nil {
+		return eth.SyncProgress{}, err
 	}
-
+	
 	return eth.SyncProgress{
 		0,
-		currentBlock,
+		uint64(status.SyncInfo.LatestBlockHeight),
 		highestBlock,
 		0,
 		0,
@@ -89,4 +90,31 @@ func (a *rpcApi) Status() (tmtTypes.ResultStatus, error) {
 	}
 
 	return *status, nil
+}
+
+// The Explorer can be considered as a source of truth of the network
+// as connected validator could be out of sync as well.
+func fetchLatestValidatorBlockHeight() (uint64, error) {
+	url := "https://explorer.lightstreams.io/web3relay"
+	payload := strings.NewReader("{\n\t\"action\": \"blockrate\"\n}")
+	req, _ := http.NewRequest("POST", url, payload)
+	req.Header.Add("Content-Type", "application/json")
+
+	res, _ := http.DefaultClient.Do(req)
+	defer res.Body.Close()
+
+	resBody, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return 0, err
+	}
+
+	web3RelayResp := struct {
+		BlockHeight uint64 `json:"blockHeight"`
+	}{}
+	err = json.Unmarshal(resBody, &web3RelayResp)
+	if err != nil {
+		return 0, err
+	}
+
+	return web3RelayResp.BlockHeight, nil
 }
