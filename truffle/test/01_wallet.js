@@ -5,31 +5,13 @@
  * - Double spend (on two tendermint nodes)
  */
 
-async function isAccountLocked(address) {
-  try {
-    web3.eth.sendTransaction({
-      from: address,
-      to: address,
-      value: 0
-    });
-    return false;
-  } catch ( err ) {
-    return (err.message === "authentication needed: password or unlock");
-  }
-}
+const { isAccountLocked, convertFromWeiBnToPht, convertPhtToWeiBN, fetchTxReceipt, waitFor, extractEnvAccountAndPwd } = require('./utils');
 
-const { convertFromWeiBnToPht, convertPhtToWeiBN, fetchTxReceipt, waitFor, extractEnvAccountAndPwd } = require('./utils');
-
-contract('WalletTest', async accounts => {
-  let ROOT_ACCOUNT;
+contract('WalletTest', async () => {
+  let ROOT_ACCOUNT = extractEnvAccountAndPwd(process.env.NETWORK).from;
   let NEW_ACCOUNT_ADDR;
   let NEW_ACCOUNT_PASS = "password";
-
-  it("setup", async () => {
-    const account = await extractEnvAccountAndPwd(process.env.NETWORK);
-    ROOT_ACCOUNT = account.from;
-  });
-
+  
   it("should create a new account with balance 0 and locked", async () => {
     NEW_ACCOUNT_ADDR = await web3.personal.newAccount(NEW_ACCOUNT_PASS);
     const balanceWei = await web3.eth.getBalance(NEW_ACCOUNT_ADDR);

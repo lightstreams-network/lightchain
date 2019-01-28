@@ -1,5 +1,26 @@
 require('dotenv').config({path: `${process.env.PWD}/.env`});
 
+const isAccountLocked = async (address) => {
+  try {
+    web3.eth.sendTransaction({
+      from: address,
+      to: address,
+      value: 0
+    });
+    return false;
+  } catch ( err ) {
+    return (err.message === "authentication needed: password or unlock");
+  }
+};
+module.exports.isAccountLocked = isAccountLocked;
+
+const waitFor = (waitInSeconds) => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, waitInSeconds * 1000);
+  });
+};
+module.exports.waitFor = waitFor;
+
 module.exports.convertFromWeiBnToPht = function(bn) {
   return Number(web3._extend.utils.fromWei(bn.toNumber(), 'ether'));
 };
@@ -17,12 +38,6 @@ module.exports.fetchTxReceipt = function(txReceiptId, timeoutInSec = 30) {
   const startTime = new Date();
   const retryInSec = 2;
 
-  const waitTime = function(waitInSec) {
-    return new Promise((resolve) => {
-      setTimeout(resolve, waitInSec * 1000)
-    })
-  };
-
   return new Promise(async (resolve, reject) => {
     while ( true ) {
       let txReceipt = web3.eth.getTransactionReceipt(txReceiptId);
@@ -37,39 +52,27 @@ module.exports.fetchTxReceipt = function(txReceiptId, timeoutInSec = 30) {
         return;
       }
 
-      await waitTime(retryInSec)
+      await waitFor(retryInSec)
     }
   });
 };
 
-module.exports.waitFor = (waitInSeconds) => {
-  return new Promise((resolve) => {
-    setTimeout(resolve, waitInSeconds * 1000);
-  });
-};
-
 module.exports.extractEnvAccountAndPwd = (network) => {
-  return new Promise((resolve, reject) => {
-      const account = {
-        from: "",
-        pwd: "",
-      };
+  if (network === "sirius") {
+    return {
+      from: process.env.SIRIUS_ACCOUNT,
+      pwd: process.env.SIRIUS_PASSPHRASE
+    }
+  }
+  if (network === "standalone") {
+    return {
+      from: process.env.STANDALONE_ACCOUNT,
+      pwd: process.env.STANDALONE_PASSPHRASE
+    }
+  }
 
-      if (network === "sirius") {
-          account.from = process.env.SIRIUS_ACCOUNT;
-          account.pwd = process.env.SIRIUS_PASSPHRASE;
-
-          resolve(account);
-      } else if (network === "standalone") {
-          account.from = process.env.STANDALONE_ACCOUNT;
-          account.pwd = process.env.STANDALONE_PASSPHRASE;
-
-          resolve(account);
-      } else {
-          console.log("unknown network " + network);
-          reject("undefined network to deploy to");
-      }
-  });
+  console.error("unknown network " + network);
+  throw Error("undefined network to deploy to");
 };
 
 module.exports.timeTravel = (time) => {
@@ -86,4 +89,27 @@ module.exports.timeTravel = (time) => {
       return resolve(result)
     });
   })
+};
+
+module.exports.waitForAccountToUnlock = function(address, timeoutInSec = 10) {
+  const startTime = new Date();
+  const retryInSec = 2;
+
+  return new Promise(async (resolve, reject) => {
+    while ( true ) {
+      let isUnlock = isAccountLocked(address);
+      if (isUnlock) {
+        resolve(txReceipt);
+        return;
+      }
+
+      const now = new Date();
+      if (now.getTime() - startTime.getTime() > timeoutInSec * 1000) {
+        reject(`Timeout after ${timeoutInSec} seconds`);
+        return;
+      }
+
+      await waitFor(retryInSec)
+    }
+  });
 };

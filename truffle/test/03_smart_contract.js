@@ -6,19 +6,14 @@
  * - Test latest protection to popular attacks
  */
 
-const { convertFromWeiBnToPht, convertPhtToWeiBN, fetchTxReceipt, calculateGasCostBN, extractEnvAccountAndPwd } = require('./utils');
+const { isAccountLocked, convertPhtToWeiBN, fetchTxReceipt, calculateGasCostBN, extractEnvAccountAndPwd } = require('./utils');
 
 const HelloBlockchainWorld = artifacts.require("HelloBlockchainWorld");
 
 contract('HelloBlockchainWorld', async () => {
-  let ROOT_ACCOUNT;
+  let ROOT_ACCOUNT = extractEnvAccountAndPwd(process.env.NETWORK).from;
   let NEW_ACCOUNT_ADDR;
   const NEW_ACCOUNT_PASS = "password";
-
-  it("setup", async () => {
-      const account = await extractEnvAccountAndPwd(process.env.NETWORK);
-      ROOT_ACCOUNT = account.from;
-  });
 
   it("should return the msg.sender when reading the owner attribute", async () => {
     const instance = await HelloBlockchainWorld.deployed();

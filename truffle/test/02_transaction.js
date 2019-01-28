@@ -6,19 +6,14 @@
  * - Validate Encoded data
  */
 
-const { convertFromWeiBnToPht, convertPhtToWeiBN, fetchTxReceipt, calculateGasCostBN, extractEnvAccountAndPwd } = require('./utils');
+const { isAccountLocked, convertPhtToWeiBN, fetchTxReceipt, calculateGasCostBN, extractEnvAccountAndPwd } = require('./utils');
 
 const HelloBlockchainWorld = artifacts.require("HelloBlockchainWorld");
 
 contract('TestTransaction', async () => {
-  let ROOT_ACCOUNT;
+  let ROOT_ACCOUNT = extractEnvAccountAndPwd(process.env.NETWORK).from;
   let NEW_ACCOUNT_ADDR;
   const NEW_ACCOUNT_PASS = "password";
-
-  it("setup", async () => {
-      const account = await extractEnvAccountAndPwd(process.env.NETWORK);
-      ROOT_ACCOUNT = account.from;
-  });
 
   it('should fail transfer on insufficient funds', async function() {
     const instance = await HelloBlockchainWorld.deployed();
@@ -61,14 +56,17 @@ contract('TestTransaction', async () => {
   });
 
   it('should transfer 0.1 PHT and gas is spent in the transaction', async function() {
-    const amountToSend = convertPhtToWeiBN(0.1);
+    const amountToSendBN = convertPhtToWeiBN(0.1);
     const sender = ROOT_ACCOUNT;
+    const recipient = NEW_ACCOUNT_ADDR;
+    
     const senderBalancePreTxBN = await web3.eth.getBalance(sender);
+    const recipientBalancePreTxBN = await web3.eth.getBalance(recipient);
 
     const txReceiptId = await web3.eth.sendTransaction({
       from: sender,
-      to: NEW_ACCOUNT_ADDR,
-      value: amountToSend
+      to: recipient,
+      value: amountToSendBN
     });
 
     const txReceipt = await fetchTxReceipt(txReceiptId, 15);
@@ -78,12 +76,14 @@ contract('TestTransaction', async () => {
     assert.equal(txReceipt.gasUsed, expectedGasUsed, 'transfer should consume fixed amount of gas for security purposes');
     assert.equal(txReceipt.status, expectedStatus, 'tx receipt should return a successful status');
 
+    const expectedRecipientBalanceBN = recipientBalancePreTxBN.add(amountToSendBN);
     const recipientBalancePostTxBN = await web3.eth.getBalance(NEW_ACCOUNT_ADDR);
-    assert.equal(recipientBalancePostTxBN.toNumber(), amountToSend.toNumber(), "recipient account balance is incorrect");
+    assert.equal(recipientBalancePostTxBN.toNumber(), expectedRecipientBalanceBN.toNumber(), "recipient account balance is incorrect");
 
-    const expectedSenderBalance = senderBalancePreTxBN.sub(amountToSend.add(calculateGasCostBN(txReceipt.gasUsed)));
+    const gasUsedCostBN = calculateGasCostBN(txReceipt.gasUsed);
+    const expectedSenderBalanceBN = senderBalancePreTxBN.sub(amountToSendBN).sub(gasUsedCostBN);
     const senderBalancePostTxBN = await web3.eth.getBalance(sender);
 
-    assert.equal(senderBalancePostTxBN.toNumber(), expectedSenderBalance.toNumber(), "from account balance is incorrect")
+    assert.equal(senderBalancePostTxBN.toNumber(), expectedSenderBalanceBN.toNumber(), "from account balance is incorrect")
   });
 });

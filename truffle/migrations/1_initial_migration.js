@@ -1,19 +1,25 @@
-require('dotenv').config({path: `${process.env.PWD}/.env`});
+require('dotenv').config({ path: `${process.env.PWD}/.env` });
 
-const { waitFor, extractEnvAccountAndPwd } = require('../test/utils');
+const { waitForAccountToUnlock, extractEnvAccountAndPwd } = require('../test/utils');
 const Migrations = artifacts.require("./Migrations.sol");
 
-module.exports = async (deployer) => {
-    const { from, pwd } = await extractEnvAccountAndPwd(deployer.network);
+module.exports = (deployer) => {
+  process.env.NETWORK = deployer.network;
+  const { from, pwd } = extractEnvAccountAndPwd(deployer.network);
 
-    let isUnlock = web3.personal.unlockAccount(from, pwd, 1000);
-    if (!isUnlock) {
-        console.error(`Account ${from} could not be unlock`);
-        process.exit(1);
-    }
-    console.error(`Account ${from} was unlocked successfully.`);
-    console.log("Deploying `Migrations.sol` ...");
+  let isUnlock = web3.personal.unlockAccount(from, pwd, 1000);
+  if (!isUnlock) {
+    console.error(`Account ${from} could not be unlock`);
+    process.exit(1);
+  }
 
-    await waitFor(3);
-    deployer.deploy(Migrations, { from });
+  // waitForAccountToUnlock(from).then(() => {
+  console.log(`Account ${from} was unlocked successfully.`);
+  console.log("Deploying `Migrations.sol` ...");
+  deployer.deploy(Migrations, { overwrite: false }).then(() => {
+    console.log("Deployment of `Migrations.sol` completed");
+  });
+  // }).catch((err) => {
+  //   console.error(err)
+  // });
 };
