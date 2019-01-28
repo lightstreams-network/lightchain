@@ -12,7 +12,7 @@ const Major = "0"
 const Minor = "9"
 
 // Fix version component of the current release
-const Fix = "0"
+const Fix = "1"
 
 var versionCmd = &cobra.Command{
 	Use:   "version",

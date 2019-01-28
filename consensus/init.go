@@ -20,15 +20,16 @@ func Init(cfg Config, ntw setup.Network, logger log.Logger) error {
 
 	createConsensusDataDirIfNotExists(cfg.dataDir)
 
-	privateValidatorFile := cfg.tendermintCfg.PrivValidatorFile()
+	privateValidatorKeyFile := cfg.tendermintCfg.PrivValidatorKeyFile()
+	privateValidatorStateFile := cfg.tendermintCfg.PrivValidatorStateFile()
 	var pv *privval.FilePV
-	if tmtCommon.FileExists(privateValidatorFile) {
-		pv = privval.LoadFilePV(privateValidatorFile)
-		logger.Info("Found private validator", "path", privateValidatorFile)
+	if tmtCommon.FileExists(privateValidatorKeyFile) {
+		pv = privval.LoadFilePV(privateValidatorKeyFile, privateValidatorStateFile)
+		logger.Info("Found private validator", "path", privateValidatorKeyFile)
 	} else {
-		pv = privval.GenFilePV(privateValidatorFile)
+		pv = privval.GenFilePV(privateValidatorKeyFile, privateValidatorStateFile)
 		pv.Save()
-		logger.Info("Generated private validator", "path", privateValidatorFile)
+		logger.Info("Generated private validator", "path", privateValidatorKeyFile)
 	}
 
 	nodeKeyFile := cfg.tendermintCfg.NodeKeyFile()

@@ -8,7 +8,7 @@
 
 [[constraint]]
   name = "github.com/ethereum/go-ethereum"
-  version = "1.8.20"
+  version = "1.8.21"
 
 [[override]]
   name = "github.com/tendermint/iavl"
@@ -16,23 +16,29 @@
 
 [[override]]
   name = "github.com/tendermint/tendermint"
-  version = "^0.27.0"
+  version = "^0.29.0"
 
 [[override]]
   name = "github.com/tendermint/go-amino"
   version = "~0.14.1"
-
-[[constraint]]
-  name = "github.com/stretchr/testify"
-  version = "^1.2.1"
-
+  
 [[override]]
-  name = "gopkg.in/fatih/set.v0"
-  version = "^0.1.0"
+  name = "golang.org/x/crypto"
+  revision = "ff983b9c42bc9fbf91556e191cc8efb585c16908"
 
 [[constraint]]
   branch = "master"
   name = "github.com/mitchellh/go-homedir"
 
 [prune]
+  non-go = true
   go-tests = true
+  unused-packages = true
+  [[prune.project]]
+    name = "github.com/ethereum/crypto"
+    non-go = false
+    unused-packages = false
+  [[prune.project]]
+    name = "github.com/karalabe/hid"
+    non-go = false
+    unused-packages = false

@@ -23,7 +23,7 @@ var cdc = amino.NewCodec()
 func init() {
 	cdc.RegisterInterface((*crypto.PubKey)(nil), nil)
 	cdc.RegisterConcrete(ed25519.PubKeyEd25519{},
-		ed25519.PubKeyAminoRoute, nil)
+		ed25519.PubKeyAminoName, nil)
 }
 
 // Name represents name of blockchain used when running a node.

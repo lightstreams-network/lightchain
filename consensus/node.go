@@ -74,7 +74,7 @@ func (n *Node) Start(ethRPCClient *ethRpc.Client, db *database.Database) error {
 	n.logger.Info("Creating tendermint node...")
 	tendermint, err := tmtNode.NewNode(
 		n.cfg.tendermintCfg,
-		privval.LoadOrGenFilePV(n.cfg.tendermintCfg.PrivValidatorFile()),
+		privval.LoadOrGenFilePV(n.cfg.tendermintCfg.PrivValidatorKeyFile(), n.cfg.tendermintCfg.PrivValidatorStateFile()),
 		n.nodeKey,
 		proxy.DefaultClientCreator(n.cfg.tendermintCfg.ProxyApp, n.cfg.tendermintCfg.ABCI, n.cfg.tendermintCfg.DBDir()),
 		tmtNode.DefaultGenesisDocProviderFunc(n.cfg.tendermintCfg),
