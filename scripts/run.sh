@@ -53,6 +53,7 @@ if [ -n "${CLEAN}" ]; then
 	    echo "################################"
 	    run "rm -rf ${DATA_DIR}"
 		run "$EXEC_BIN init ${INIT_ARGS}"
+		run "cp ./setup/sirius/database/keystore/* ${DATA_DIR}/database/keystore/"
 		echo -e "################################ \n"
 	else
 		echo -e "Exiting"

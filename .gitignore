@@ -10,3 +10,5 @@ vendor
 */.glide
 .idea
 truffle/.env
+setup/sirius/database/keystore/*
+!**/**/.gitkeep

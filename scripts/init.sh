@@ -41,7 +41,7 @@ echo -e "Compiling latest version...."
 run "make build"
 
 if [ -n "${CLEAN}" ]; then
-	echo -e "You are about to wipe out ${DATA_DIR} "
+	echo -e "You are about to wipe out ${DATA_DIR}"
     read -p "Are you sure? [N/y]" -n 1 -r
 	echo    # (optional) move to a new line
 	if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -62,6 +62,8 @@ else
 fi
 
 run "$EXEC_CMD"
+
+run "cp ./setup/sirius/database/keystore/* ${DATA_DIR}/database/keystore/"
 
 popd
 
