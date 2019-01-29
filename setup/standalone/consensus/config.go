@@ -24,9 +24,8 @@ db_backend = "leveldb"
 # Database directory
 db_dir = "data"
 
-# Output level for logging, including package level options. Second line for debug.
+# Output level for logging, including package level options
 log_level = "main:info,state:info,*:error"
-# log_level = "main:info,state:info,*:error"
 
 # Output format: 'plain' (colored text) or 'json'
 log_format = "plain"
@@ -37,7 +36,10 @@ log_format = "plain"
 genesis_file = "config/genesis.json"
 
 # Path to the JSON file containing the private key to use as a validator in the consensus protocol
-priv_validator_file = "config/priv_validator.json"
+priv_validator_key_file = "config/priv_validator_key.json"
+
+# Path to the JSON file containing the last sign state of a validator
+priv_validator_state_file = "data/priv_validator_state.json"
 
 # TCP or UNIX socket address for Tendermint to listen on for
 # connections from an external PrivValidator process
@@ -67,13 +69,13 @@ laddr = "tcp://0.0.0.0:26657"
 # A list of origins a cross-domain request can be executed from
 # Default value '[]' disables cors support
 # Use '["*"]' to allow any origin
-cors_allowed_origins = "[]"
+cors_allowed_origins = []
 
 # A list of methods the client is allowed to use with cross-domain requests
-cors_allowed_methods = "[HEAD GET POST]"
+cors_allowed_methods = ["HEAD", "GET", "POST", ]
 
 # A list of non simple headers the client is allowed to use with cross-domain requests
-cors_allowed_headers = "[Origin Accept Content-Type X-Requested-With X-Server-Time]"
+cors_allowed_headers = ["Origin", "Accept", "Content-Type", "X-Requested-With", "X-Server-Time", ]
 
 # TCP or UNIX socket address for the gRPC server to listen on
 # NOTE: This server only supports /broadcast_tx_commit
@@ -81,7 +83,7 @@ grpc_laddr = ""
 
 # Maximum number of simultaneous connections.
 # Does not include RPC (HTTP&WebSocket) connections. See max_open_connections
-# If you want to accept more significant number than the default, make sure
+# If you want to accept a larger number than the default, make sure
 # you increase your OS limits.
 # 0 - unlimited.
 # Should be < {ulimit -Sn} - {MaxNumInboundPeers} - {MaxNumOutboundPeers} - {N of wal, db and other open files}
@@ -93,7 +95,7 @@ unsafe = false
 
 # Maximum number of simultaneous connections (including WebSocket).
 # Does not include gRPC connections. See grpc_max_open_connections
-# If you want to accept more significant number than the default, make sure
+# If you want to accept a larger number than the default, make sure
 # you increase your OS limits.
 # 0 - unlimited.
 # Should be < {ulimit -Sn} - {MaxNumInboundPeers} - {MaxNumOutboundPeers} - {N of wal, db and other open files}
@@ -153,7 +155,7 @@ pex = true
 # peers. If another node asks it for addresses, it responds and disconnects.
 #
 # Does not work if the peer-exchange reactor is disabled.
-seed_mode = true
+seed_mode = false
 
 # Comma separated list of peer IDs to keep private (will not be gossiped to other peers)
 private_peer_ids = ""
@@ -211,8 +213,8 @@ blocktime_iota = "1s"
 # What indexer to use for transactions
 #
 # Options:
-#   1) "null" (default)
-#   2) "kv" - the simplest possible indexer, backed by key-value storage (defaults to levelDB; see DBBackend).
+#   1) "null"
+#   2) "kv" (default) - the simplest possible indexer, backed by key-value storage (defaults to levelDB; see DBBackend).
 indexer = "kv"
 
 # Comma-separated list of tags to index (by default the only tag is "tx.hash")
@@ -244,7 +246,7 @@ prometheus = false
 prometheus_listen_addr = ":26660"
 
 # Maximum number of simultaneous connections.
-# If you want to accept more significant number than the default, make sure
+# If you want to accept a larger number than the default, make sure
 # you increase your OS limits.
 # 0 - unlimited.
 max_open_connections = 3
