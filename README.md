@@ -2,6 +2,10 @@
 
 This is the official Lightstreams implementation of a proof-of-authority (PoA) blockchain. Lightchain is an ethereum-compatible blockchain which uses byzantine consensus to replace the original proof-of-work (PoW) from Ethereum. This is achieved by integrating [`tendermint`](https://github.com/tendermint/tendermint) for the consensus layer.
 
+## About Lightstreams
+
+We are currently working hard to release the **Lightstream main network** which aims to provide a fast, privacy-enabled, content-sharing blockchain. Stay tuned about our project's progress by reading [the lightstreams blog](https://medium.com/lightstreams) or by checking out the [Lightstreams' website](https://www.lightstreams.network).
+
 ## Documentation
 
 You can find more detailed documentation in the [lightchain CLI reference documentation](https://docs.ligthstreams.network/cli-docs/lightchain).
@@ -34,10 +38,6 @@ Version: 0.9.1-alpha Sirius-Net
 ## Create a Lightchain node
 
 Lightstreams provides a testnet called `sirius`. By default, all new created nodes get connected to this network and are automatically synchronized. We are actively working on improving the network performance and stability, therefore some issues might still occur which force us to restore blockchain. To check the current state of the `sirius` network, you can go to the [lightstreams blockchain explorer](https://explorer.lightstreams.io/home)
-
-## About Lightstreams
-
-We are currently working hard to release the **Lightstream main network** which aims to provide a reliable and fast open blockchain. Stay tuned about our project's progress by reading [the lightstreams blog](https://medium.com/lightstreams)
 
 ### Node initialization
 
