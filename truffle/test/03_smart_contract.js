@@ -6,11 +6,11 @@
  * - Test latest protection to popular attacks
  */
 
-const { isAccountLocked, convertPhtToWeiBN, fetchTxReceipt, calculateGasCostBN, extractEnvAccountAndPwd } = require('./utils');
+const { convertPhtToWeiBN, fetchTxReceipt, calculateGasCostBN, extractEnvAccountAndPwd } = require('./utils');
 
 const HelloBlockchainWorld = artifacts.require("HelloBlockchainWorld");
 
-contract('HelloBlockchainWorld', async () => {
+contract('SmartContract', async () => {
   let ROOT_ACCOUNT = extractEnvAccountAndPwd(process.env.NETWORK).from;
   let NEW_ACCOUNT_ADDR;
   const NEW_ACCOUNT_PASS = "password";
