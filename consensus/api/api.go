@@ -43,12 +43,17 @@ func (a *rpcApi) SyncProgress() (eth.SyncProgress, error) {
 		return eth.SyncProgress{}, err
 	}
 
-	// Arbitrary values representing not synced state
-	currentBlock := uint64(0)
-	highestBlock := uint64(1000000)
+	currentBlock := uint64(status.SyncInfo.LatestBlockHeight)
+	highestBlock := uint64(status.SyncInfo.LatestBlockHeight)
 
-	if !status.SyncInfo.CatchingUp {
-		currentBlock = highestBlock
+	if status.SyncInfo.CatchingUp {
+		// Latest validator height is unknown because the syncing happens
+		// block by block until there are no more and then its considered done
+		// if there is no more validators with current state + 1.
+		//
+		// In the future there could be a precise solution to this if Tendermint
+		// would expose this information in the status.
+		highestBlock = currentBlock + 1
 	}
 	
 	return eth.SyncProgress{
