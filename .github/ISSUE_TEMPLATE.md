@@ -8,23 +8,23 @@ For general questions about Lightstreams or anything else, please use the [light
 
 #### System information
 ```
-Geth version: `lightchain version`
+Lightchain version: `lightchain version`
 OS & version: Windows/Linux/OSX
 Branch: master
 Commit hash: 
 
 ```
 #### Expected behaviour
-...
+
 
 #### Actual behaviour
-...
+
 
 #### Steps to reproduce the behaviour
-...
+
 
 #### Console output (if applicable)
-...
+
 
 ````
 [console output here]
