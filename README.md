@@ -1,6 +1,10 @@
 # Lightchain
 
-This is the official Lightstreams implementation of a proof-of-authority (PoA) blockchain. Lightchain is an ethereum-compatible blockchain which uses byzantine consensus to replace the original proof-of-work (PoW) from Ethereum. This is achieved by integrating [`Tendermint`](https://tendermint.com) for the consensus layer. 
+This is the official Lightstreams implementation of a proof-of-authority (PoA) blockchain. Lightchain is an ethereum-compatible blockchain which uses byzantine consensus to replace the original proof-of-work (PoW) from Ethereum. This is achieved by integrating [`tendermint`](https://github.com/tendermint/tendermint) for the consensus layer.
+
+## Documentation
+
+You can find more detailed documentation in the [lightchain CLI reference documentation](https://docs.ligthstreams.network/cli-docs/lightchain).
 
 ## Pre-requirements
 
@@ -9,10 +13,8 @@ This is the official Lightstreams implementation of a proof-of-authority (PoA) b
 
 ## Installation
 
-
 To install `lightchain` in your system just run following commands:
 ```
-export GIT_TERMINAL_PROMPT=1
 go get -u github.com/lightstreams-network/lightchain
 cd ${GOPATH}/src/github.com/lightstreams-network/lightchain
 make get_vendor_deps
@@ -23,31 +25,26 @@ To validate if you installation was done correctly, run the following command to
 ```
 lightchain version
 ```
-  
+
+It should output someething like this
+```
+Version: 0.9.1-alpha Sirius-Net
+```
+
 ## Create a Lightchain node
 
-Lightstreams provides a testnet called `Sirius` by default new created nodes are being hooked to this network and automatically synchronized. Currently lightstreams team is actively working on improving the network performance and stability therefore some issues might still occur which force us to restore blockchain. To check the current state of `Sirius` network we provide an [blockchain explorer](https://explorer.lightstreams.io/home) 
+Lightstreams provides a testnet called `sirius`. By default, all new created nodes get connected to this network and are automatically synchronized. We are actively working on improving the network performance and stability, therefore some issues might still occur which force us to restore blockchain. To check the current state of the `sirius` network, you can go to the [lightstreams blockchain explorer](https://explorer.lightstreams.io/home)
 
-We are working on launching the **Lightstream main network** which aims to provide a reliable and fast open blockchain. Stay tuned about our project's progress by reading our [blog](https://medium.com/lightstreams)
- 
+## About Lightstreams
+
+We are currently working hard to release the **Lightstream main network** which aims to provide a reliable and fast open blockchain. Stay tuned about our project's progress by reading [the lightstreams blog](https://medium.com/lightstreams)
+
 ### Node initialization
 
 To initialise a new blockchain you need to run `lightchain init` and  choose a local path where blockchain files are going to be stored.
 ```
 lightchain init --datadir "${HOME}/.lightchain"
 ```
-
-Request FREE tokens by posting in ...`@TODO`
-
-***Standalone node***
-
-Once this is done, your blockchain is ready to be launched. The created node is setup to connect to the lightstreams' test network (`Sirius`). If you prefer to create an isolated node for testing proposes, you can run the following command instead:
-```
-lightchain init --datadir "${HOME}/.lightchain" --standalone
-```
- 
-At the genesis block the ether account `0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e`
-has been initialized with _3M Photons_. Passphrase is `WelcomeToSirius`
 
 ### Node launch
 
@@ -56,41 +53,65 @@ To run a lightchain node you only need to run the following command:
 lightchain run --datadir "${HOME}/.lightchain"
 ```
 
-After running the command above (and only if you are not in `standalone` mode), it will start running the network synchronization which will take several minutes.
+After running the command above, it will start running the network synchronization which will take several minutes.
 
+#### Available flags
 
-***Available flags***
+When you run `lightchain run` or `lightchain run --help`, you will see a list of available flags:
+
 ```
---rpc                    Enable the HTTP-RPC server
---rpcaddr string         HTTP-RPC server listening interface (default "localhost")
---rpcapi string          API's offered over the HTTP-RPC interface
---rpcport int            HTTP-RPC server listening port (default 8545)
---tmt_p2p_port uint      Tendermint port used to achieve exchange messages across nodes (default 26656)
---tmt_proxy_port uint    Lightchain RPC port used to receive incoming messages from Tendermint (default 26658)
---tmt_rpc_port uint      Tendermint RPC port used to receive incoming messages from Lightchain (default 26657)
---ws                     Enable the WS-RPC server
---wsaddr string          WS-RPC server listening interface (default "localhost")
---wsport int             WS-RPC server listening port (default 8546)
+Launches lightchain node and all of its online services including blockchain (Geth) and the consensus (Tendermint).
+
+Usage:
+  lightchain run [flags]
+
+Flags:
+      --abci_protocol string   socket | grpc (default "socket")
+      --datadir string         Data directory for the databases and keystore (default "/home/a/lightchain")
+  -h, --help                   help for run
+      --lvl string             Level of logging (default "info")
+      --rpc                    Enable the HTTP-RPC server
+      --rpcaddr string         HTTP-RPC server listening interface (default "localhost")
+      --rpcapi string          API's offered over the HTTP-RPC interface
+      --rpcport int            HTTP-RPC server listening port (default 8545)
+      --tmt_p2p_port uint      Tendermint port used to achieve exchange messages across nodes (default 26656)
+      --tmt_proxy_port uint    Lightchain RPC port used to receive incoming messages from Tendermint (default 26658)
+      --tmt_rpc_port uint      Tendermint RPC port used to receive incoming messages from Lightchain (default 26657)
+      --ws                     Enable the WS-RPC server
+      --wsaddr string          WS-RPC server listening interface (default "localhost")
+      --wsport int             WS-RPC server listening port (default 8546)
+
 ```
+
+#### Run in Standalone mode
+
+Once this is done, your blockchain is ready to be launched. The created node is setup to connect to the lightstreams' test network (`Sirius`). If you prefer to create an isolated node for testing proposes, you can run the following command instead:
+
+```
+lightchain init --datadir "${HOME}/.lightchain" --standalone
+```
+
+At the genesis block the ether account `0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e`
+has been initialized with _3M Photons_. Passphrase is `WelcomeToSirius`
 
 ## Applications
 
 ### Leth
-Lightstreams implemented its first DApp running onto Lightchain blockchain
-[**Leth**](https://docs.lightstreams.network/01.getting-started/). 
+Lightstreams created a command line application called `leth` to run and manage a lightstreams node, as well as interact with the Lightstreams network
+ - [leth documentation](https://docs.lightstreams.network/getting-started/).
 
-Leth is application which intends to wrap Ethereum blockchain + IPFS into a very simple interface which can be used either by [HTTP Restful API](https://docs.lightstreams.network/api-docs/) or by [Interactive Command line client] (https://docs.lightstreams.network/04.cli-docs/leth/) 
+Leth wraps `geth` & `ipfs` into a simple, easy-to-use interface and which connects to the Lightstreams network. For convenience, we provide an [HTTP gateway API](https://docs.lightstreams.network/api-docs/) or you can also use the [command line client](https://docs.lightstreams.network/cli-docs/leth/)
 
 ## Docker
 In case you prefer to use Docker, follow the instructions below.
 
-First you create a new docker image, which will be tagged as `lightchain:latest`
+First, create a new docker image, which will be tagged as `lightchain:latest`
 ```
 make docker
 ```
 
-Once the above execution is completed you just need to run the following statement
-which will create your container with a running instance of lightchain 
+Once that is completed, you just need to run the following command
+which will create your container with a running instance of lightchain
 ```
 docker run -p 8545:8545 -p 26657:26657 -p 26656:26656 -it lightchain:latest
 ```
@@ -104,13 +125,11 @@ geth attach http://localhost:8545
 ```
 curl -X http://localhost:26657/status
 ```
-- `26656` required by the consensus engine (Tendermint) for p2p communications 
- 
+- `26656` required by the consensus engine (Tendermint) for p2p communications
 
 
-## Documentation
 
-***Project data structure***
+## Project data structure
 
 ```
 ├── consensus
@@ -136,10 +155,24 @@ curl -X http://localhost:26657/status
 
 Lightchain `datadir` is split into two main folder:
 1. **consensus**: contains all the information regarding consensus
-2. **database**: contains all files related to the Ethereum-compatible blockchain 
+2. **database**: contains all files related to the Ethereum-compatible blockchain
 
-***Wiki***
+## Wiki
 To know more about how Lightchain works and how Tendermint is integrated to perform the PoA, visit our repository [wiki](https://github.com/lightstreams-network/lightchain/wiki)
 
 ## Tests
-[Read how to run tests](truffle/Tests.md)
+[Read how to run tests](truffle/READNE.md)
+
+## Credit & Licenses
+
+- go-ethereum
+  - [source](https://github.com/ethereum/go-ethereum),[license](https://github.com/ethereum/go-ethereum/#license)
+- tendermint
+  - [source](https://github.com/tendermint/tendermint),[license](https://github.com/tendermint/tendermint/blob/master/LICENSE)
+
+## Contributors
+
+- [Lukáš Lukáč](https://github.com/EnchanterIO)
+- [Gabriel Garrido](https://github.com/ggarri)
+- [Andrew Zappella](https://github.com/azappella)
+- [Michael Smolenski](https://github.com/mikesmo)
