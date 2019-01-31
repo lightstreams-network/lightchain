@@ -56,17 +56,18 @@ func (n *Node) Start() error {
 }
 
 func (n *Node) Stop() error {
-	n.logger.Info("Stopping database node...")
-	err := n.dbNode.Stop()
-	if err != nil {
+	// IMPORTANT: We need to close consensus first so that node stops receiving new blocks
+	// before database is closed
+	n.logger.Info("Stopping consensus engine...")
+	if err := n.consensusNode.Stop(); err != nil {
 		return err
 	}
-
-	n.logger.Info("Stopping consensus node...")
-	n.consensusNode.Stop()
-	if err != nil {
+	n.logger.Info("Consensus node stopped")
+	
+	n.logger.Info("Stopping database engine...")
+	if err := n.dbNode.Stop(); err != nil {
 		return err
 	}
-
+	n.logger.Info("Database node stopped")
 	return nil
 }

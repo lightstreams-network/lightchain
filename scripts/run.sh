@@ -42,7 +42,11 @@ fi
 pushd "$ROOT_PATH"
 
 echo -e "Compiling latest version...."
-run "make build"
+if [ -n "${IS_DEBUG}" ]; then
+    run "make build-dev"
+else
+    run "make build"
+fi
 
 if [ -n "${CLEAN}" ]; then
 	echo -e "You are about to wipe out ${DATA_DIR} "

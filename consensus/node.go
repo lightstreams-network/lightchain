@@ -17,7 +17,8 @@ import (
 
 type Node struct {
 	tendermint *tmtNode.Node
-	nodeKey	   *tmtP2P.NodeKey
+	abci       tmtCommon.Service
+	nodeKey    *tmtP2P.NodeKey
 	cfg        *Config
 	logger     log.Logger
 }
@@ -38,6 +39,7 @@ func NewNode(cfg *Config) (*Node, error) {
 
 	return &Node{
 		nil,
+		nil,
 		nodeKey,
 		cfg,
 		consensusLogger,
@@ -57,21 +59,21 @@ func (n *Node) Start(ethRPCClient *ethRpc.Client, db *database.Database) error {
 		return err
 	}
 
-	n.logger.Debug("Creating tendermint server...")
+	n.logger.Debug("Creating abci server...")
 	proxyLAddr := fmt.Sprintf("tcp://0.0.0.0:%d", n.cfg.proxyListenPort)
-	abciSrv, err := tmtServer.NewServer(proxyLAddr, n.cfg.proxyProtocol, tendermintABCI)
+	n.abci, err = tmtServer.NewServer(proxyLAddr, n.cfg.proxyProtocol, tendermintABCI)
 	if err != nil {
 		return err
 	}
 
-	n.logger.Debug("Starting ABCI application server...")
-	abciSrv.SetLogger(log.NewLogger().With("module", "node-server"))
-	if err := abciSrv.Start(); err != nil {
+	n.logger.Info("Starting ABCI application server...")
+	n.abci.SetLogger(log.NewLogger().With("module", "node-server"))
+	if err := n.abci.Start(); err != nil {
 		return err
 	}
-	n.logger.Debug("Started ABCI application server")
+	n.logger.Info("ABCI application server started")
 
-	n.logger.Info("Creating tendermint node...")
+	n.logger.Debug("Creating tendermint node...")
 	tendermint, err := tmtNode.NewNode(
 		n.cfg.tendermintCfg,
 		privval.LoadOrGenFilePV(n.cfg.tendermintCfg.PrivValidatorKeyFile(), n.cfg.tendermintCfg.PrivValidatorStateFile()),
@@ -85,21 +87,36 @@ func (n *Node) Start(ethRPCClient *ethRpc.Client, db *database.Database) error {
 
 	if err != nil {
 		return err
-	} else {
-		n.tendermint = tendermint
 	}
 	
-	
+	n.tendermint = tendermint
 	n.logger.Info("Starting tendermint node...")
 	if err := n.tendermint.Start(); err != nil {
 		return err
 	}
-	n.logger.Info("Started tendermint node")
+	n.logger.Info("Tendermint node started")
 
-	n.logger.Info("Consensus node started", "nodeInfo", n.tendermint.Switch().NodeInfo())
+	n.logger.Debug("Consensus node started", "nodeInfo", n.tendermint.Switch().NodeInfo())
 	return nil
 }
 
 func (n *Node) Stop() error {
+	if n.tendermint.IsRunning() {
+		n.logger.Info("Stopping tendermint node...")
+		if err := n.tendermint.Stop(); err != nil {
+			return err
+		}
+		<-n.tendermint.Quit()
+		n.logger.Info("Tendermint node stopped")
+	}
+	
+	if n.abci.IsRunning() {
+		n.logger.Info("Stopping ABCI service...")
+		if err := n.abci.Stop(); err != nil {
+			return err
+		}
+		<-n.abci.Quit()
+		n.logger.Info("ABCI service stopped")
+	}
 	return nil
 }
