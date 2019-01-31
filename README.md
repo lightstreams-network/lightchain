@@ -53,7 +53,10 @@ To run a lightchain node you only need to run the following command:
 lightchain run --datadir "${HOME}/.lightchain"
 ```
 
-After running the command above, it will start running the network synchronization which will take several minutes.
+After you run the command above, the network synchronization will take several minutes. So grab a coffee and [request some test tokens](https://discuss.lightstreams.network/t/request-test-tokens/64) while you wait :)
+
+### Request test tokens
+Please sign up to the [Lightstreams Community Forum](https://discuss.lightstreams.network) and [follow the instructions in this thread](https://discuss.lightstreams.network/t/request-test-tokens/64)
 
 #### Available flags
 
