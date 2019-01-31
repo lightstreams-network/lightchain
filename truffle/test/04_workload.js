@@ -1,9 +1,5 @@
 /**
- * - Deploy a new smart contract
- * - Cannot call private method
- * - Payable methods receive funds correctly
- * - Only owner access to protected methods
- * - Test latest protection to popular attacks
+ * - Execute 100 transaction in parallel
  */
 
 const { convertFromWeiBnToPht, convertPhtToWeiBN, fetchTxReceipt, calculateGasCostBN, extractEnvAccountAndPwd } = require('./utils');
@@ -28,7 +24,9 @@ contract('Workload', async () => {
     await fetchTxReceipt(txReceiptId, 15);
   });
 
+  // This Test is wasting 0.231 PHT from faucet account per execution
   it("should return 100 tx receipts whose state is 0x1", async () => {
+    const weiBalancePreTxBN = await web3.eth.getBalance(ROOT_ACCOUNT);
     const weiAmountSentBN = convertPhtToWeiBN(0.1);
     const iterations = 100;
     const gasLimit = 21000;
@@ -57,18 +55,19 @@ contract('Workload', async () => {
       assert.equal(txReceipt.status, "0x1", "successful TX status expected");
     }
 
-    // Send back funds to faucet account less gas spent in txs
-    const usedGasCost = calculateGasCostBN(gasLimit * (iterations+1));
+    // Send back funds to faucet account less gas spent in send tx
     const txReceiptId = await web3.eth.sendTransaction({
       from: NEW_ACCOUNT_ADDR,
       to: ROOT_ACCOUNT,
-      value: weiAmountSentBN.mul(iterations).sub(usedGasCost),
+      value: weiAmountSentBN.mul(iterations).sub(calculateGasCostBN(gasLimit)),
       gas: gasLimit
     });
     
     const txReceipt = await fetchTxReceipt(txReceiptId, 15);
     assert.equal(txReceipt.status, "0x1", "successful TX status expected");
     
-    console.log(`Gas used in total: ${convertFromWeiBnToPht(usedGasCost)} PHT`);
+    const usedGasCost = calculateGasCostBN(gasLimit * (iterations + 1));
+    const weiBalancePostTxBN = await web3.eth.getBalance(ROOT_ACCOUNT);
+    assert.equal(weiBalancePostTxBN.toNumber(), weiBalancePreTxBN.sub(usedGasCost).toNumber(), 'from account balance is incorrect')
   });
 });
