@@ -8,7 +8,7 @@ We are currently working hard to release the **Lightstream main network** which 
 
 ## Documentation
 
-You can find more detailed documentation in the [lightchain CLI reference documentation](https://docs.ligthstreams.network/cli-docs/lightchain).
+You can find more detailed documentation in the [lightchain CLI reference documentation](https://docs.lightstreams.network/cli-docs/lightchain).
 
 ## Pre-requirements
 
@@ -37,7 +37,7 @@ Version: 0.9.1-alpha Sirius-Net
 
 ## Create a Lightstreams node
 
-Lightstreams provides a testnet called `sirius`. By default, all new created nodes get connected to this network and are automatically synchronized. We are actively working on improving the network performance and stability, therefore some issues might still occur which force us to restore blockchain. To check the current state of the `sirius` network, you can go to the [lightstreams block explorer](https://explorer.lightstreams.io/home)
+Lightstreams provides a testnet called `sirius`. By default, all new created nodes get connected to this network and are automatically synchronized. **Please note** that we are actively working on improving the performance and stability of the network, therefore some issues might still occur which force us to restore blockchain. 
 
 ### Node initialization
 
@@ -57,6 +57,9 @@ After you run the command above, the network synchronization will take several m
 
 ### Request test tokens
 Please sign up to the [Lightstreams Community Forum](https://discuss.lightstreams.network) and [follow the instructions in this thread](https://discuss.lightstreams.network/t/request-test-tokens/64)
+
+### Block explorer
+To check the current state of the `sirius` network, you can go to the [lightstreams block explorer](https://explorer.lightstreams.io/home)
 
 #### Available flags
 
@@ -94,8 +97,7 @@ Once this is done, your blockchain is ready to be launched. The created node is 
 lightchain init --datadir "${HOME}/.lightchain" --standalone
 ```
 
-At the genesis block the ether account `0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e`
-has been initialized with _3M Photons_. Passphrase is `WelcomeToSirius`
+At the genesis block, the ether account `0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e`has been initialized with _300M Photons_. Passphrase is `WelcomeToSirius`
 
 ## Applications
 
