@@ -35,7 +35,7 @@ It should output someething like this
 Version: 0.9.1-alpha Sirius-Net
 ```
 
-## Create a Lightchain node
+## Create a Lightstreams node
 
 Lightstreams provides a testnet called `sirius`. By default, all new created nodes get connected to this network and are automatically synchronized. We are actively working on improving the network performance and stability, therefore some issues might still occur which force us to restore blockchain. To check the current state of the `sirius` network, you can go to the [lightstreams blockchain explorer](https://explorer.lightstreams.io/home)
 
