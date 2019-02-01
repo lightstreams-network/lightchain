@@ -175,6 +175,9 @@ To know more about how Lightchain works and how Tendermint is integrated to perf
 - tendermint
   - [source](https://github.com/tendermint/tendermint),[license](https://github.com/tendermint/tendermint/blob/master/LICENSE)
 
+## Bugs, Issues, Questions
+If you find any bugs or simply have a question, please [write an issue](https://github.com/lightstreams-network/lightchain/issues) and we'll try and help as best we can.   
+
 ## Contributors
 
 - [Lukáš Lukáč](https://github.com/EnchanterIO), [Twitter](https://twitter.com/BlocksByLukas)
