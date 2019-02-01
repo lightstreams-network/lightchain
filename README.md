@@ -55,11 +55,11 @@ lightchain run --datadir "${HOME}/.lightchain"
 
 After you run the command above, the network synchronization will take several minutes. So grab a coffee and [request some test tokens](https://discuss.lightstreams.network/t/request-test-tokens/64) while you wait :)
 
-### Request test tokens
-Please sign up to the [Lightstreams Community Forum](https://discuss.lightstreams.network) and [follow the instructions in this thread](https://discuss.lightstreams.network/t/request-test-tokens/64)
+### Request Free Tokens
+Please sign up to the [Lightstreams Community Forum](https://discuss.lightstreams.network) and [follow the instructions in this thread](https://discuss.lightstreams.network/t/request-test-tokens/64) to obtain free tokens to use in our test network Sirius
 
 ### Block explorer
-To check the current state of the `sirius` network, you can go to the [lightstreams block explorer](https://explorer.lightstreams.io/home)
+To check the current state of the `sirius` network a validate the status of your transactions and wallet, you can go to the [lightstreams block explorer](https://explorer.sirius.lightstreams.io/home)
 
 #### Available flags
 
