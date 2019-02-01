@@ -177,7 +177,7 @@ To know more about how Lightchain works and how Tendermint is integrated to perf
 
 ## Contributors
 
-- [Lukáš Lukáč](https://github.com/EnchanterIO)
+- [Lukáš Lukáč](https://github.com/EnchanterIO), [Twitter](https://twitter.com/BlocksByLukas)
 - [Gabriel Garrido](https://github.com/ggarri)
 - [Andrew Zappella](https://github.com/azappella)
 - [Michael Smolenski](https://github.com/mikesmo)
