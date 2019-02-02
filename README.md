@@ -55,11 +55,11 @@ lightchain run --datadir "${HOME}/.lightchain"
 
 After you run the command above, the network synchronization will take several minutes. So grab a coffee and [request some test tokens](https://discuss.lightstreams.network/t/request-test-tokens/64) while you wait :)
 
-### Request Free Tokens
-Please sign up to the [Lightstreams Community Forum](https://discuss.lightstreams.network) and [follow the instructions in this thread](https://discuss.lightstreams.network/t/request-test-tokens/64) to obtain free tokens to use in our test network Sirius
+### Request free tokens
+Please sign up to the [Lightstreams Community Forum](https://discuss.lightstreams.network) and [follow the instructions in this thread](https://discuss.lightstreams.network/t/request-test-tokens/64) to obtain free tokens to use in our test network Sirius.
 
 ### Block explorer
-To check the current state of the `sirius` network a validate the status of your transactions and wallet, you can go to the [lightstreams block explorer](https://explorer.sirius.lightstreams.io/home)
+To see the current state of the `sirius` network and check the status of your transactions, you can go to the [lightstreams block explorer](https://explorer.sirius.lightstreams.io/home)
 
 #### Available flags
 
@@ -89,15 +89,14 @@ Flags:
 
 ```
 
-#### Run in Standalone mode
-
-Once this is done, your blockchain is ready to be launched. The created node is setup to connect to the lightstreams' test network (`Sirius`). If you prefer to create an isolated node for testing proposes, you can run the following command instead:
+#### Run in standalone mode
+Standalone mode allows you to create an isolated node for testing proposes. To do it, you can run the following command:
 
 ```
 lightchain init --datadir "${HOME}/.lightchain" --standalone
 ```
 
-At the genesis block, the ether account `0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e`has been initialized with _300M Photons_. Passphrase is `WelcomeToSirius`
+At the genesis block, the account `0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e`has been initialized with _300M Photons_. The passphrase is `WelcomeToSirius`
 
 ## Applications
 
