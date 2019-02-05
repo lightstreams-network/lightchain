@@ -21,10 +21,9 @@ func (db *Database) txBroadcastLoop() {
 	db.waitForTendermint()
 
 	for obj := range db.ethTxsCh {
-		log.Info("Captured NewTxsEvent from pool")
+		log.Debug("Captured NewTxsEvent from pool")
 
 		for _, tx := range obj.Txs {
-			log.Info("New TX", "data", tx.Hash().String())
 			if err := db.consAPI.BroadcastTx(*tx); err != nil {
 				log.Error("Error broadcasting tx", "err", err)
 			}

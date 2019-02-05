@@ -6,16 +6,14 @@ import (
 	"encoding/json"
 	"reflect"
 	"fmt"
-	
-	ethCore "github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/ethdb"
-	
-	"github.com/lightstreams-network/lightchain/log"
-	"github.com/lightstreams-network/lightchain/setup"
 	"io/ioutil"
+	"github.com/ethereum/go-ethereum/ethdb"
+	"github.com/lightstreams-network/lightchain/setup"
+	ethCore "github.com/ethereum/go-ethereum/core"
+	tmtLog "github.com/tendermint/tendermint/libs/log"
 )
 
-func Init(cfg Config, ntw setup.Network, logger log.Logger) error {
+func Init(cfg Config, ntw setup.Network, logger tmtLog.Logger) error {
 	keystoreDir := cfg.keystoreDir()
 	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
 		return err
@@ -104,7 +102,7 @@ func writeGenesisFile(genesisPath string, genesis *ethCore.Genesis) error {
 	return nil
 }
 
-func writeKeystoreFiles(logger log.Logger, keystoreDir string, keystoreFiles map[string][]byte) error {
+func writeKeystoreFiles(logger tmtLog.Logger, keystoreDir string, keystoreFiles map[string][]byte) error {
 	for filename, content := range keystoreFiles {
 		storeFileName := filepath.Join(keystoreDir, filename)
 		f, err := os.Create(storeFileName)

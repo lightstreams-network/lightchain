@@ -3,14 +3,13 @@ package database
 import (
 	"os"
 	"fmt"
-
-	ethNode "github.com/ethereum/go-ethereum/node"
-	ethRpc "github.com/ethereum/go-ethereum/rpc"
-
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/ethclient"
+	ethNode "github.com/ethereum/go-ethereum/node"
+	ethRpc "github.com/ethereum/go-ethereum/rpc"
 	conAPI "github.com/lightstreams-network/lightchain/consensus/api"
+	tmtLog "github.com/tendermint/tendermint/libs/log"
 )
 
 // Node is the main object.
@@ -19,13 +18,12 @@ type Node struct {
 	database  *Database
 	rpcClient *ethRpc.Client
 	cfg       *Config
-	logger    log.Logger
+	logger    tmtLog.Logger
 }
 
 // NewNode creates a new node.
 func NewNode(cfg *Config, consensusAPI conAPI.API) (*Node, error) {
-	logger := log.NewLogger()
-	logger.With("module", "database")
+	logger := log.NewLogger().With("module", "database")
 	
 	// @TODO Investigate why Genesis file is not automatically loaded
 	var err error
@@ -49,7 +47,7 @@ func NewNode(cfg *Config, consensusAPI conAPI.API) (*Node, error) {
 
 	logger.Debug("Binding ethereum events to rpc client...")
 	if err := ethereum.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {
-		logger.Info(fmt.Sprintf("Registering database..."))
+		logger.Debug(fmt.Sprintf("Registering database..."))
 
 		n.database, err = NewDatabase(ctx, &cfg.GethConfig.EthCfg, consensusAPI)
 		if err != nil {
@@ -61,7 +59,7 @@ func NewNode(cfg *Config, consensusAPI conAPI.API) (*Node, error) {
 		return &n, err
 	}
 	
-	return &n, nil // nolint: vet
+	return &n, nil
 }
 
 // Start starts base node and stop p2p server
@@ -116,18 +114,16 @@ func (n *Node) Database() *Database {
 }
 
 func registerEventHandlers(n *Node, events chan accounts.WalletEvent) error {
-	// Create an chain state reader for self-derivation
-	client, err := n.ethereum.Attach() // Ethereum RPC client
+	rpcClient, err := n.ethereum.Attach()
 	if err != nil {
-		n.logger.Error(fmt.Errorf("Failed to attach to self: %v", err).Error())
+		n.logger.Error(fmt.Errorf("failed to attach to self: %v", err).Error())
 		return err
 	}
-	stateReader := ethclient.NewClient(client)
+	stateReader := ethclient.NewClient(rpcClient)
 
-	// Open and self derive any wallets already attached
 	for _, wallet := range n.ethereum.AccountManager().Wallets() {
 		if err := wallet.Open(""); err != nil {
-			n.logger.Warn("Failed to open wallet", "url", wallet.URL(), "err", err)
+			n.logger.Error("Failed to open wallet", "url", wallet.URL(), "err", err)
 		} else {
 			wallet.SelfDerive(accounts.DefaultBaseDerivationPath, stateReader)
 		}
@@ -138,7 +134,7 @@ func registerEventHandlers(n *Node, events chan accounts.WalletEvent) error {
 		switch event.Kind {
 		case accounts.WalletArrived:
 			if err := event.Wallet.Open(""); err != nil {
-				n.logger.Warn("New wallet appeared, failed to open", "url", event.Wallet.URL(), "err", err)
+				n.logger.Error("New wallet appeared, failed to open", "url", event.Wallet.URL(), "err", err)
 			}
 		case accounts.WalletOpened:
 			status, _ := event.Wallet.Status()

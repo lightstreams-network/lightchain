@@ -7,14 +7,13 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/mitchellh/go-homedir"
 	"path"
-	
+	"github.com/lightstreams-network/lightchain/log"
+
 	ethLog "github.com/ethereum/go-ethereum/log"
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
-	
-	"github.com/lightstreams-network/lightchain/log"
 )
 
-var logger = log.NewLogger()
+var logger = log.NewLogger().With("module", "lightchain")
 
 var (
 	defaultHomeDir, _ = homedir.Dir()

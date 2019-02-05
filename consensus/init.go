@@ -2,18 +2,15 @@ package consensus
 
 import (
 	"fmt"
-	
 	"github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/p2p"
+	"github.com/lightstreams-network/lightchain/setup"
+	tmtLog "github.com/tendermint/tendermint/libs/log"
 	tmtCommon "github.com/tendermint/tendermint/libs/common"
 	tmtConfig "github.com/tendermint/tendermint/config"
-	
-	"github.com/lightstreams-network/lightchain/log"
-	"github.com/lightstreams-network/lightchain/setup"
 )
 
-
-func Init(cfg Config, ntw setup.Network, logger log.Logger) error {
+func Init(cfg Config, ntw setup.Network, logger tmtLog.Logger) error {
 	// This is a necessary evil because
 	// Tendermint is using panics instead of errors where they shouldn't...
 	defer recoverNodeInitPanic()
