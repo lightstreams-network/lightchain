@@ -18,7 +18,7 @@ module.exports = {
             host: "127.0.0.1",
             port: 8545,
             network_id: "162",
-            from: "0x61f3b85929c20980176d4a09771284625685c40e"
+            from: "0xd119b8b038d3a67d34ca1d46e1898881626a082b"
         },
         standalone: {
             host: "127.0.0.1",
