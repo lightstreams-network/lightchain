@@ -17,14 +17,17 @@ module.exports = {
         sirius: {
             host: "127.0.0.1",
             port: 8545,
-            network_id: "*",
+            network_id: "162",
             from: "0x61f3b85929c20980176d4a09771284625685c40e"
         },
         standalone: {
             host: "127.0.0.1",
             port: 8545,
-            network_id: "*",
+            network_id: "161",
             from: "0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e"
-        },
+        }
+    },
+    mocha: { 
+        enableTimeouts: false
     }
 };

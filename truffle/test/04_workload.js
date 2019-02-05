@@ -6,7 +6,7 @@ const { convertFromWeiBnToPht, convertPhtToWeiBN, fetchTxReceipt, calculateGasCo
 
 const HelloBlockchainWorld = artifacts.require("HelloBlockchainWorld");
 
-contract('Workload', async () => {
+describe('Workload', async () => {
   let ROOT_ACCOUNT = extractEnvAccountAndPwd(process.env.NETWORK).from;
   let NEW_ACCOUNT_ADDR;
   const NEW_ACCOUNT_PASS = "password";
