@@ -34,6 +34,7 @@ func NewNode(cfg *Config, consensusAPI conAPI.API) (*Node, error) {
 		return nil, err
 	}
 
+	cfg.GethConfig.EthCfg.NetworkId = cfg.GethConfig.EthCfg.Genesis.Config.ChainID.Uint64()
 	ethereum, err := ethNode.New(&cfg.GethConfig.NodeCfg)
 	if err != nil {
 		return nil, err
