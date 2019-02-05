@@ -10,7 +10,7 @@ const { convertPhtToWeiBN, fetchTxReceipt, calculateGasCostBN, extractEnvAccount
 
 const HelloBlockchainWorld = artifacts.require("HelloBlockchainWorld");
 
-contract('SmartContract', async () => {
+describe('SmartContract', async () => {
   let ROOT_ACCOUNT = extractEnvAccountAndPwd(process.env.NETWORK).from;
   let NEW_ACCOUNT_ADDR;
   const NEW_ACCOUNT_PASS = "password";

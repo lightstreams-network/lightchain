@@ -7,11 +7,11 @@
 
 const { isAccountLocked, convertFromWeiBnToPht, convertPhtToWeiBN, fetchTxReceipt, waitFor, extractEnvAccountAndPwd } = require('./utils');
 
-contract('WalletTest', async () => {
+describe('WalletTest', async () => {
   let ROOT_ACCOUNT = extractEnvAccountAndPwd(process.env.NETWORK).from;
   let NEW_ACCOUNT_ADDR;
   let NEW_ACCOUNT_PASS = "password";
-  
+
   it("should create a new account with balance 0 and locked", async () => {
     NEW_ACCOUNT_ADDR = await web3.personal.newAccount(NEW_ACCOUNT_PASS);
     const balanceWei = await web3.eth.getBalance(NEW_ACCOUNT_ADDR);
