@@ -5,19 +5,18 @@ import (
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/log"
 	conAPI "github.com/lightstreams-network/lightchain/consensus/api"
+	tmtLog "github.com/tendermint/tendermint/libs/log"
 )
 
 type Node struct {
 	dbNode        *database.Node
 	consensusNode *consensus.Node
-	logger        log.Logger
+	logger        tmtLog.Logger
 }
 
 // makeFullNode creates a full go-database node
 func NewNode(cfg *Config) (*Node, error) {
-	logger := log.NewLogger()
-	logger.With("module", "node")
-
+	logger := log.NewLogger().With("engine", "node")
 	logger.Debug("Initializing consensus node...")
 	consensusNode, err := consensus.NewNode(&cfg.consensusCfg)
 	if err != nil {

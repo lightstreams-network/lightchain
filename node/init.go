@@ -10,19 +10,18 @@ import (
 )
 
 func Init(cfg Config, ntw setup.Network) error {
-	var logger = log.NewLogger()
-	logger.With("module", "node")
+	logger := log.NewLogger().With("engine", "node")
 	logger.Info("Initializing lightchain node data dir...", "dir", cfg.DataDir)
 
 	if err := os.MkdirAll(cfg.DataDir, os.ModePerm); err != nil {
 		return err
 	}
 	
-	if err := consensus.Init(cfg.consensusCfg, ntw, logger); err != nil {
+	if err := consensus.Init(cfg.consensusCfg, ntw); err != nil {
 		return err
 	}
 
-	if err := database.Init(cfg.dbCfg, ntw, logger); err != nil {
+	if err := database.Init(cfg.dbCfg, ntw); err != nil {
 		return err
 	}
 

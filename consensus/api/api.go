@@ -5,6 +5,7 @@ import (
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	tmtTypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtRpcClient "github.com/tendermint/tendermint/rpc/lib/client"
+	tmtLog "github.com/tendermint/tendermint/libs/log"
 	"fmt"
 	"bytes"
 	"github.com/lightstreams-network/lightchain/log"
@@ -19,7 +20,7 @@ type API interface {
 
 type rpcApi struct {
 	client tmtRpcClient.HTTPClient
-	logger log.Logger
+	logger tmtLog.Logger
 }
 
 var _ API = &rpcApi{}
@@ -28,10 +29,7 @@ func NewRPCApi(rpcListenPort uint) API {
 	tendermintLAddr := fmt.Sprintf("tcp://127.0.0.1:%d", rpcListenPort)
 	client := tmtRpcClient.NewURIClient(tendermintLAddr)
 	tmtTypes.RegisterAmino(client.Codec())
-
-
-	logger := log.NewLogger()
-	logger.With("module", "consensus_api")
+	logger := log.NewLogger().With("module", "consensus_api")
 
 	return &rpcApi{client, logger}
 }
@@ -66,8 +64,6 @@ func (a *rpcApi) SyncProgress() (eth.SyncProgress, error) {
 }
 
 func (a *rpcApi) BroadcastTx(tx ethTypes.Transaction) error {
-	a.logger.Info("Broadcasting tx to Tendermint core via RPC API...")
-
 	syncInfo := new(tmtTypes.SyncInfo)
 	buf := new(bytes.Buffer)
 	if err := tx.EncodeRLP(buf); err != nil {

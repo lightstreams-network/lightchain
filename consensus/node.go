@@ -1,18 +1,19 @@
 package consensus
 
 import (
+	"fmt"
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/privval"
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/tendermint/tendermint/proxy"
 	"github.com/lightstreams-network/lightchain/database"
 
+	ethRpc "github.com/ethereum/go-ethereum/rpc"
+	tmtLog "github.com/tendermint/tendermint/libs/log"
 	tmtNode "github.com/tendermint/tendermint/node"
 	tmtP2P "github.com/tendermint/tendermint/p2p"
 	tmtCommon "github.com/tendermint/tendermint/libs/common"
 	tmtServer "github.com/tendermint/tendermint/abci/server"
-	ethRpc "github.com/ethereum/go-ethereum/rpc"
-	"fmt"
 )
 
 type Node struct {
@@ -20,16 +21,15 @@ type Node struct {
 	abci       tmtCommon.Service
 	nodeKey    *tmtP2P.NodeKey
 	cfg        *Config
-	logger     log.Logger
+	logger     tmtLog.Logger
 }
 
 func NewNode(cfg *Config) (*Node, error) {
-	consensusLogger := log.NewLogger()
-	consensusLogger.With("module", "consensus")
-	
+	logger := log.NewLogger().With("engine", "consensus")
+
 	nodeKeyFile := cfg.tendermintCfg.NodeKeyFile()
 	if ! tmtCommon.FileExists(nodeKeyFile) {
-		return nil, fmt.Errorf("Tendermint key file does not exists")
+		return nil, fmt.Errorf("tendermint key file does not exists")
 	}
 	
 	nodeKey, err := p2p.LoadOrGenNodeKey(nodeKeyFile)
@@ -42,13 +42,13 @@ func NewNode(cfg *Config) (*Node, error) {
 		nil,
 		nodeKey,
 		cfg,
-		consensusLogger,
+		logger,
 	}, nil
 }
 
 func (n *Node) Start(ethRPCClient *ethRpc.Client, db *database.Database) error {
 	n.logger.Debug("Creating tendermint ABCI application...")
-	tendermintABCI, err := NewTendermintABCI(db, ethRPCClient, n.logger)
+	tendermintABCI, err := NewTendermintABCI(db, ethRPCClient)
 	if err != nil {
 		return err
 	}
