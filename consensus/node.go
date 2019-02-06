@@ -25,7 +25,7 @@ type Node struct {
 }
 
 func NewNode(cfg *Config) (*Node, error) {
-	logger := log.NewLogger().With("module", "consensus")
+	logger := log.NewLogger().With("engine", "consensus")
 
 	nodeKeyFile := cfg.tendermintCfg.NodeKeyFile()
 	if ! tmtCommon.FileExists(nodeKeyFile) {

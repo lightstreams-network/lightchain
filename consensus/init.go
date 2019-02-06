@@ -5,12 +5,13 @@ import (
 	"github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/lightstreams-network/lightchain/setup"
-	tmtLog "github.com/tendermint/tendermint/libs/log"
 	tmtCommon "github.com/tendermint/tendermint/libs/common"
 	tmtConfig "github.com/tendermint/tendermint/config"
+	"github.com/lightstreams-network/lightchain/log"
 )
 
-func Init(cfg Config, ntw setup.Network, logger tmtLog.Logger) error {
+func Init(cfg Config, ntw setup.Network) error {
+	logger := log.NewLogger().With("engine", "consensus")
 	// This is a necessary evil because
 	// Tendermint is using panics instead of errors where they shouldn't...
 	defer recoverNodeInitPanic()

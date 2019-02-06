@@ -52,7 +52,7 @@ func NewTendermintABCI(db *database.Database, ethRPCClient *rpc.Client) (*Tender
 		getCurrentDBState: db.Ethereum().BlockChain().State,
 		getCurrentBlock:   db.Ethereum().BlockChain().CurrentBlock,
 		checkTxState:      txState.Copy(),
-		logger:            log.NewLogger().With("module", "ABCI"),
+		logger:            log.NewLogger().With("engine", "consensus", "module", "ABCI"),
 	}
 
 	return abci, nil
@@ -89,11 +89,13 @@ func (abci *TendermintABCI) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.Resp
 
 // SetOption sets a configuration option
 func (abci *TendermintABCI) SetOption(req tmtAbciTypes.RequestSetOption) tmtAbciTypes.ResponseSetOption {
+	abci.logger.Debug(fmt.Sprintf("Setting option key '%s' value '%s'", req.Key, req.Value))
 	return tmtAbciTypes.ResponseSetOption{Code: tmtAbciTypes.CodeTypeOK, Log: ""}
 }
 
 // InitChain initializes the validator set
 func (abci *TendermintABCI) InitChain(req tmtAbciTypes.RequestInitChain) tmtAbciTypes.ResponseInitChain {
+	abci.logger.Debug(fmt.Sprintf("Initializing chain with ID '%s'", req.ChainId))
 	return tmtAbciTypes.ResponseInitChain{}
 }
 
@@ -131,39 +133,42 @@ func (abci *TendermintABCI) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDeliv
 
 // BeginBlock starts a new Ethereum block
 func (abci *TendermintABCI) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAbciTypes.ResponseBeginBlock {
+	abci.logger.Debug(fmt.Sprintf("Beginning new block with hash '%s'", req.Hash))
 	abci.db.UpdateHeaderWithTimeInfo(&req.Header)
 	return tmtAbciTypes.ResponseBeginBlock{}
 }
 
 // EndBlock accumulates rewards for the validators and updates them
 func (abci *TendermintABCI) EndBlock(req tmtAbciTypes.RequestEndBlock) tmtAbciTypes.ResponseEndBlock {
+	abci.logger.Debug(fmt.Sprintf("Ending new block at height '%d'", req.Height))
 	return tmtAbciTypes.ResponseEndBlock{}
 }
 
 // Commits the block and returns a hash of the current state
 func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
+	rootHash := abci.getCurrentBlock().Root()
 	blockHash, err := abci.db.Commit(abci.Receiver())
 	if err != nil {
 		abci.logger.Error("Error getting latest database state", "err", err)
-		return tmtAbciTypes.ResponseCommit{}
+		return tmtAbciTypes.ResponseCommit{Data: rootHash.Bytes()}
 	}
+	nextRootHash := abci.getCurrentBlock().Root()
 
 	ethState, err := abci.getCurrentDBState()
 	if err != nil {
 		abci.logger.Error("Error getting latest state", "err", err)
-		return tmtAbciTypes.ResponseCommit{}
+		return tmtAbciTypes.ResponseCommit{Data: nextRootHash.Bytes()}
 	}
 
 	abci.logger.Info("Committing state", "blockHash", blockHash.Hex())
 
-	rootHash := abci.getCurrentBlock().Root()
 	abci.checkTxState = ethState.Copy()
 	if err != nil {
 		abci.logger.Error("Error committing latest state", "err", err)
-		return tmtAbciTypes.ResponseCommit{}
+		return tmtAbciTypes.ResponseCommit{Data: nextRootHash.Bytes()}
 	}
 
-	return tmtAbciTypes.ResponseCommit{Data: rootHash.Bytes()}
+	return tmtAbciTypes.ResponseCommit{Data: nextRootHash.Bytes()}
 }
 
 // Query queries the state of the TendermintABCI
@@ -191,6 +196,7 @@ func (abci *TendermintABCI) validateTx(tx *ethTypes.Transaction) tmtAbciTypes.Re
 	abci.logger.Info("Validating TX", "data", tx.Hash().String())
 
 	if tx.Size() > maxTransactionSize {
+	//if true {
 		abci.logger.Error(core.ErrOversizedData.Error())
 		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInternalError.Code), Log: core.ErrOversizedData.Error()}
 	}
@@ -271,9 +277,6 @@ func (abci *TendermintABCI) validateTx(tx *ethTypes.Transaction) tmtAbciTypes.Re
 	return tmtAbciTypes.ResponseCheckTx{Code: tmtAbciTypes.CodeTypeOK}
 }
 
-//-------------------------------------------------------
-// convenience methods for validators
-
 // Receiver returns the receiving address based on the selected strategy
 func (abci *TendermintABCI) Receiver() common.Address {
 	return common.Address{}
@@ -284,18 +287,8 @@ func (abci *TendermintABCI) CollectTx(tx *ethTypes.Transaction) {
 	abci.logger.Info("Collecting TX", "data", tx.Hash().String())
 }
 
-// @TODO (ggarri): Refactor next ugly parsing and name and review
-//func convertValidatorsToPointers(validators []tmtAbciTypes.Validator) []*tmtAbciTypes.Validator {
-//	validatorPointers := []*tmtAbciTypes.Validator{}
-//	for _, element := range validators {
-//		validatorPointers = append(validatorPointers, &element)
-//	}
-//
-//	return validatorPointers
-//}
-
 // RLP decode database transaction using go-database impl https://github.com/ethereum/go-ethereum/tree/v1.8.11/rlp
-// TODO (ggarri): Align implementation with https://drive.google.com/file/d/11xB9ilEysXTar3samVE5Zki-QfPqejYj/view
+// TODO: (ggarri): Align implementation with https://drive.google.com/file/d/11xB9ilEysXTar3samVE5Zki-QfPqejYj/view
 func decodeRLP(txBytes []byte) (*ethTypes.Transaction, error) {
 	tx := new(ethTypes.Transaction)
 	rlpStream := rlp.NewStream(bytes.NewBuffer(txBytes), 0)

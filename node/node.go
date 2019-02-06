@@ -16,7 +16,7 @@ type Node struct {
 
 // makeFullNode creates a full go-database node
 func NewNode(cfg *Config) (*Node, error) {
-	logger := log.NewLogger().With("module", "node")
+	logger := log.NewLogger().With("engine", "node")
 	logger.Debug("Initializing consensus node...")
 	consensusNode, err := consensus.NewNode(&cfg.consensusCfg)
 	if err != nil {

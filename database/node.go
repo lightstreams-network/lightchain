@@ -23,7 +23,7 @@ type Node struct {
 
 // NewNode creates a new node.
 func NewNode(cfg *Config, consensusAPI conAPI.API) (*Node, error) {
-	logger := log.NewLogger().With("module", "database")
+	logger := log.NewLogger().With("engine", "database")
 	
 	// @TODO Investigate why Genesis file is not automatically loaded
 	var err error

@@ -69,19 +69,19 @@ func (db *Database) Config() *eth.Config {
 
 // DeliverTx appends a transaction to the current block
 func (db *Database) DeliverTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
-	log.Info("Database::DeliverTx", "tx", tx.Hash().String())
+	log.Info("Delivering TX", "hash", tx.Hash().String())
 	return db.ethState.DeliverTx(tx)
 }
 
 // Commit finalises the current block
 func (db *Database) Commit(receiver common.Address) (common.Hash, error) {
-	log.Info("Database::Commit", "data", db.ethState.work)
+	log.Info("Committing block", "data", db.ethState.work)
 	return db.ethState.Commit(receiver)
 }
 
 // InitEthState initializes the EthState
 func (db *Database) InitEthState(receiver common.Address) error {
-	log.Info("Database::InitEthState", "data", receiver)
+	log.Debug("Initializing ETH state")
 	return db.ethState.ResetWorkState(receiver)
 }
 

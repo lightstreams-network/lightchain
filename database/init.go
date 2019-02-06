@@ -11,9 +11,11 @@ import (
 	"github.com/lightstreams-network/lightchain/setup"
 	ethCore "github.com/ethereum/go-ethereum/core"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
+	"github.com/lightstreams-network/lightchain/log"
 )
 
-func Init(cfg Config, ntw setup.Network, logger tmtLog.Logger) error {
+func Init(cfg Config, ntw setup.Network) error {
+	logger := log.NewLogger().With("engine", "database")
 	keystoreDir := cfg.keystoreDir()
 	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
 		return err
