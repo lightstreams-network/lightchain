@@ -30,7 +30,7 @@ To validate if you installation was done correctly, run the following command to
 lightchain version
 ```
 
-It should output someething like this
+It should output something like this
 ```
 Version: 0.9.1-alpha Sirius-Net
 ```
