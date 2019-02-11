@@ -77,7 +77,7 @@ func (abci *TendermintABCI) InitChain(req tmtAbciTypes.RequestInitChain) tmtAbci
 //		6. CheckTx (clean mempool from TXs not included in committed block)
 //
 // The header contains the height, timestamp, and more - it exactly matches the Tendermint block header.
-// The LastCommitInfo and ByzantineValidators can be used to determine rewards and punishments for the validators.
+// The `req.LastCommitInfo` and `req.ByzantineValidators` attributes can be used to determine rewards and punishments for the validators.
 //
 // Response:
 //		- Optional Key-Value tags for filtering and indexing
