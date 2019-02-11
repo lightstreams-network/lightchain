@@ -106,6 +106,8 @@ func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx
 		abci.checkTxState.AddBalance(*to, tx.Value())
 	}
 
+	abci.checkTxState.SetNonce(from, tx.Nonce() + 1)
+
 	abci.logger.Info("TX validated.", "hash", tx.Hash().String(), "state_nonce", abci.checkTxState.GetNonce(from))
 
 	return tmtAbciTypes.ResponseCheckTx{Code: tmtAbciTypes.CodeTypeOK}
