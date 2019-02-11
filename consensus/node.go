@@ -53,12 +53,6 @@ func (n *Node) Start(ethRPCClient *ethRpc.Client, db *database.Database) error {
 		return err
 	}
 
-	n.logger.Debug("Initializing consensus state...")
-	err = tendermintABCI.InitEthState()
-	if err != nil {
-		return err
-	}
-
 	n.logger.Debug("Creating abci server...")
 	proxyLAddr := fmt.Sprintf("tcp://0.0.0.0:%d", n.cfg.proxyListenPort)
 	n.abci, err = tmtServer.NewServer(proxyLAddr, n.cfg.proxyProtocol, tendermintABCI)

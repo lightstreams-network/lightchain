@@ -13,7 +13,7 @@ import (
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
 )
 
-var logger = log.NewLogger().With("module", "lightchain")
+var logger = log.NewLogger().With("engine", "lightchain")
 
 var (
 	defaultHomeDir, _ = homedir.Dir()

@@ -227,7 +227,7 @@ indexer = "kv"
 index_tags = ""
 
 # When set to true, tells indexer to index all tags (predefined tags:
-# "tx.hash", "tx.height" and all tags from DeliverTx responses).
+# "tx.hash", "tx.height" and all tags from ExecuteTx responses).
 #
 # Note this may be not desirable (see the comment above). IndexTags has a
 # precedence over IndexAllTags (i.e. when given both, IndexTags will be

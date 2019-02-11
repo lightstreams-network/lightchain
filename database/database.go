@@ -9,12 +9,14 @@ import (
 	"github.com/ethereum/go-ethereum/p2p"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/log"
-
 	"github.com/ethereum/go-ethereum/eth/downloader"
+	"fmt"
+
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
 	dbAPI "github.com/lightstreams-network/lightchain/database/api"
 	consensusAPI "github.com/lightstreams-network/lightchain/consensus/api"
+	tmtLog "github.com/tendermint/tendermint/libs/log"
 )
 
 // Database manages the underlying ethereum state for storage and processing
@@ -22,38 +24,34 @@ import (
 
 // Database handles the chain database and VM.
 type Database struct {
+	state *State
+
 	eth    *eth.Ethereum
 	ethCfg *eth.Config
-
 	ethTxSub event.Subscription
 	ethTxsCh chan core.NewTxsEvent
 
-	ethState *EthState
-
 	consAPI consensusAPI.API
+
+	logger tmtLog.Logger
 }
 
-func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensusAPI.API) (*Database, error) {
-	state := NewEthState()
-
+func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensusAPI.API, logger tmtLog.Logger) (*Database, error) {
 	ethereum, err := eth.New(ctx, ethCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	state.SetEthereum(ethereum)
-	state.SetEthConfig(ethCfg)
-
 	currentBlock := ethereum.BlockChain().CurrentBlock()
 	ethereum.EventMux().Post(core.ChainHeadEvent{currentBlock})
-
-	ethereum.BlockChain().SetValidator(NullBlockProcessor{})
+	ethereum.BlockChain().SetValidator(NullBlockValidator{})
 
 	db := &Database{
-		eth:      ethereum,
-		ethCfg:   ethCfg,
-		ethState: state,
-		consAPI:  consAPI,
+		eth:     ethereum,
+		ethCfg:  ethCfg,
+		state:   NewEthState(ethereum, ethCfg, logger),
+		consAPI: consAPI,
+		logger:  logger,
 	}
 
 	return db, nil
@@ -67,27 +65,30 @@ func (db *Database) Config() *eth.Config {
 	return db.ethCfg
 }
 
-// DeliverTx appends a transaction to the current block
-func (db *Database) DeliverTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
-	log.Info("Delivering TX", "hash", tx.Hash().String())
-	return db.ethState.DeliverTx(tx)
+// ExecuteTx appends a transaction to the current block.
+func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
+	db.logger.Info("Executing DB TX", "hash", tx.Hash().Hex(), "nonce", tx.Nonce())
+
+	return db.state.ExecuteTx(tx)
 }
 
-// Commit finalises the current block
-func (db *Database) Commit(receiver common.Address) (common.Hash, error) {
-	log.Info("Committing block", "data", db.ethState.work)
-	return db.ethState.Commit(receiver)
+// Persist finalises the current block.
+func (db *Database) Persist(coinbase common.Address) (common.Hash, error) {
+	log.Info("Persisting DB state", "data", db.state.bs)
+
+	return db.state.Persist(coinbase)
 }
 
-// InitEthState initializes the EthState
-func (db *Database) InitEthState(receiver common.Address) error {
-	log.Debug("Initializing ETH state")
-	return db.ethState.ResetWorkState(receiver)
+// ResetBlockState resets the block state.
+func (db *Database) ResetBlockState(coinbase common.Address) error {
+	log.Debug(fmt.Sprintf("Resetting ethereum DB state with coinbase addr '%s'", coinbase.Hex()))
+
+	return db.state.ResetBlockState(coinbase)
 }
 
-// UpdateHeaderWithTimeInfo uses the tendermint header to update the eth header
+// UpdateBlockState uses the tendermint header to update the eth header
 func (db *Database) UpdateHeaderWithTimeInfo(tmHeader *tmtAbciTypes.Header) {
-	db.ethState.UpdateHeaderWithTimeInfo(
+	db.state.UpdateBlockState(
 		db.eth.APIBackend.ChainConfig(),
 		uint64(tmHeader.Time.Unix()),
 		uint64(tmHeader.GetNumTxs()),
@@ -96,7 +97,7 @@ func (db *Database) UpdateHeaderWithTimeInfo(tmHeader *tmtAbciTypes.Header) {
 
 // GasLimit returns the maximum gas per block
 func (db *Database) GasLimit() uint64 {
-	return db.ethState.GasLimit().Gas()
+	return db.state.GasLimit().Gas()
 }
 
 // APIs returns the collection of Ethereum RPC services.

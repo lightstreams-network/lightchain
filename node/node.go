@@ -4,7 +4,7 @@ import (
 	"github.com/lightstreams-network/lightchain/database"
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/log"
-	conAPI "github.com/lightstreams-network/lightchain/consensus/api"
+	consAPI "github.com/lightstreams-network/lightchain/consensus/api"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
 )
 
@@ -23,10 +23,10 @@ func NewNode(cfg *Config) (*Node, error) {
 		return nil, err
 	}
 
-	conRPCAPI := conAPI.NewRPCApi(cfg.consensusCfg.RPCListenPort())
+	consRPCAPI := consAPI.NewRPCApi(cfg.consensusCfg.RPCListenPort())
 
 	logger.Debug("Initializing database node...")
-	dbNode, err := database.NewNode(&cfg.dbCfg, conRPCAPI)
+	dbNode, err := database.NewNode(&cfg.dbCfg, consRPCAPI)
 	if err != nil {
 		return nil, err
 	}
