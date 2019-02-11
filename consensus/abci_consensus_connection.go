@@ -71,7 +71,7 @@ func (abci *TendermintABCI) InitChain(req tmtAbciTypes.RequestInitChain) tmtAbci
 // Flow:
 //		1. BeginBlock <- ******
 //		2. CheckTx
-//	    3. ExecuteTx
+//	    3. DeliverTx
 //		4. EndBlock
 //		5. Commit
 //		6. CheckTx (clean mempool from TXs not included in committed block)
@@ -89,17 +89,17 @@ func (abci *TendermintABCI) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAb
 	return tmtAbciTypes.ResponseBeginBlock{}
 }
 
-// ExecuteTx executes the transaction against Ethereum block's work state.
+// DeliverTx executes the transaction against Ethereum block's work state.
 //
 // Flow:
 //		1. BeginBlock
 //		2. CheckTx
-//	    3. ExecuteTx <- ******
+//	    3. DeliverTx <- ******
 //		4. EndBlock
 //		5. Commit
 //		6. CheckTx (clean mempool from TXs not included in committed block)
 //
-// Tendermint runs CheckTx and ExecuteTx concurrently with each other,
+// Tendermint runs CheckTx and DeliverTx concurrently with each other,
 // though on distinct ABCI connections - the mempool connection and the consensus connection, respectively.
 //
 // Response:
@@ -134,7 +134,7 @@ func (abci *TendermintABCI) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDeliv
 // Flow:
 //		1. BeginBlock
 //		2. CheckTx
-//	    3. ExecuteTx
+//	    3. DeliverTx
 //		4. EndBlock <- ******
 //		5. Commit
 //		6. CheckTx (clean mempool from TXs not included in committed block)
@@ -159,7 +159,7 @@ func (abci *TendermintABCI) EndBlock(req tmtAbciTypes.RequestEndBlock) tmtAbciTy
 // Flow:
 //		1. BeginBlock
 //		2. CheckTx
-//	    3. ExecuteTx
+//	    3. DeliverTx
 //		4. EndBlock
 //		5. Commit <- ******
 //		6. CheckTx (clean mempool from TXs not included in committed block)

@@ -16,7 +16,7 @@ const maxTransactionSize = 32768
 // Flow:
 //		1. BeginBlock
 //		2. CheckTx <- ******
-//	    3. ExecuteTx
+//	    3. DeliverTx
 //		4. EndBlock
 //		5. Commit
 //		6. CheckTx <- ****** (clean mempool from TXs not included in committed block)
@@ -25,7 +25,7 @@ const maxTransactionSize = 32768
 // the transaction (like checking signatures and account balances), but need
 // not execute in full (like running a smart contract).
 //
-// Tendermint runs CheckTx and ExecuteTx concurrently with each other,
+// Tendermint runs CheckTx and DeliverTx concurrently with each other,
 // though on distinct ABCI connections - the mempool connection and the consensus connection, respectively.
 //
 // The application should maintain a separate state to support CheckTx.

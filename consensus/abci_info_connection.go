@@ -68,7 +68,7 @@ func (abci *TendermintABCI) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.Resp
 // SetOption sets non-consensus critical application specific options.
 //
 // E.g. Key="min-fee", Value="100fermion" could set the minimum fee required
-// for CheckTx (but not ExecuteTx - that would be consensus critical).
+// for CheckTx (but not DeliverTx - that would be consensus critical).
 func (abci *TendermintABCI) SetOption(req tmtAbciTypes.RequestSetOption) tmtAbciTypes.ResponseSetOption {
 	abci.logger.Debug(fmt.Sprintf("Setting option key '%s' value '%s'", req.Key, req.Value))
 
