@@ -11,18 +11,18 @@ import (
 	tmtLog "github.com/tendermint/tendermint/libs/log"
 )
 
-type InfoConnection struct {
+type infoConnection struct {
 	getCurrentBlock func() *ethTypes.Block
 	ethRPCClient    *ethRpc.Client
 	logger          tmtLog.Logger
 }
 
-func newInfoConnection(getCurrentBlock func() *ethTypes.Block, ethRPCClient *ethRpc.Client, logger tmtLog.Logger) *InfoConnection {
-	return &InfoConnection{getCurrentBlock, ethRPCClient, logger}
+func newInfoConnection(getCurrentBlock func() *ethTypes.Block, ethRPCClient *ethRpc.Client, logger tmtLog.Logger) *infoConnection {
+	return &infoConnection{getCurrentBlock, ethRPCClient, logger}
 }
 
 // Query for data from the application at current or past height.
-func (ic *InfoConnection) Query(query tmtAbciTypes.RequestQuery) tmtAbciTypes.ResponseQuery {
+func (ic *infoConnection) Query(query tmtAbciTypes.RequestQuery) tmtAbciTypes.ResponseQuery {
 	ic.logger.Info("Querying state", "data", query)
 
 	type jsonRequest struct {
@@ -54,7 +54,7 @@ func (ic *InfoConnection) Query(query tmtAbciTypes.RequestQuery) tmtAbciTypes.Re
 // Used to sync Tendermint with the application during a handshake that happens on startup.
 // Tendermint expects LastBlockAppHash and LastBlockHeight to be updated during Persist,
 // ensuring that Persist is never called twice for the same block height.
-func (ic *InfoConnection) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.ResponseInfo {
+func (ic *infoConnection) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.ResponseInfo {
 	currentBlock := ic.getCurrentBlock()
 	height := currentBlock.Number()
 	root := currentBlock.Root()
@@ -81,7 +81,7 @@ func (ic *InfoConnection) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.Respon
 //
 // E.g. Key="min-fee", Value="100fermion" could set the minimum fee required
 // for CheckTx (but not DeliverTx - that would be consensus critical).
-func (ic *InfoConnection) SetOption(req tmtAbciTypes.RequestSetOption) tmtAbciTypes.ResponseSetOption {
+func (ic *infoConnection) SetOption(req tmtAbciTypes.RequestSetOption) tmtAbciTypes.ResponseSetOption {
 	ic.logger.Debug(fmt.Sprintf("Setting option key '%s' value '%s'", req.Key, req.Value))
 
 	return tmtAbciTypes.ResponseSetOption{Code: tmtAbciTypes.CodeTypeOK, Log: ""}

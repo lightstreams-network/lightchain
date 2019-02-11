@@ -13,13 +13,13 @@ import (
 // maxTransactionSize is 32KB in order to prevent DOS attacks
 const maxTransactionSize = 32768
 
-type MempoolConnection struct {
+type mempoolConnection struct {
 	ethState *state.StateDB
 	logger   tmtLog.Logger
 }
 
-func newMempoolConnection(ethState *state.StateDB, logger tmtLog.Logger) *MempoolConnection {
-	return &MempoolConnection{ethState, logger}
+func newMempoolConnection(ethState *state.StateDB, logger tmtLog.Logger) *mempoolConnection {
+	return &mempoolConnection{ethState, logger}
 }
 
 // CheckTx validates a mempool transaction, prior to broadcasting or proposing.
@@ -39,7 +39,7 @@ func newMempoolConnection(ethState *state.StateDB, logger tmtLog.Logger) *Mempoo
 // Response:
 //		- Response code
 //		- Optional Key-Value tags for filtering and indexing
-func (mc *MempoolConnection) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx {
+func (mc *mempoolConnection) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx {
 	tx, err := decodeRLP(txBytes)
 	if err != nil {
 		mc.logger.Error("Received invalid transaction", "tx", tx.Hash().String())
@@ -113,6 +113,6 @@ func (mc *MempoolConnection) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckT
 }
 
 // The ethState of a mempool connection is reset after each ABCI application Commit.
-func (mc *MempoolConnection) replaceEthState(newEthState *state.StateDB) {
+func (mc *mempoolConnection) replaceEthState(newEthState *state.StateDB) {
 	mc.ethState = newEthState
 }

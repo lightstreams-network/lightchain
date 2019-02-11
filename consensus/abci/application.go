@@ -28,9 +28,9 @@ import (
 //
 // Full ABCI specs: https://tendermint.com/docs/spec/abci/abci.html
 type Application struct {
-	*ConsensusConnection
-	*MempoolConnection
-	*InfoConnection
+	*consensusConnection
+	*mempoolConnection
+	*infoConnection
 }
 
 var _ tmtAbciTypes.Application = &Application{}

@@ -13,7 +13,7 @@ import (
 	tmtLog "github.com/tendermint/tendermint/libs/log"
 )
 
-type ConsensusConnection struct {
+type consensusConnection struct {
 	db *database.Database
 
 	replaceTxState    func(*state.StateDB)
@@ -23,8 +23,8 @@ type ConsensusConnection struct {
 	logger tmtLog.Logger
 }
 
-func newConsensusConnection(db *database.Database, replaceTxState func(*state.StateDB), logger tmtLog.Logger) (*ConsensusConnection, error) {
-	return &ConsensusConnection{
+func newConsensusConnection(db *database.Database, replaceTxState func(*state.StateDB), logger tmtLog.Logger) (*consensusConnection, error) {
+	return &consensusConnection{
 		db,
 		replaceTxState,
 		db.Ethereum().BlockChain().State,
@@ -39,7 +39,7 @@ func newConsensusConnection(db *database.Database, replaceTxState func(*state.St
 //
 // Response:
 //     - If `ResponseInitChain.Validators` is empty, the initial validator set will be the `RequestInitChain.Validators`
-func (cc *ConsensusConnection) InitChain(req tmtAbciTypes.RequestInitChain) tmtAbciTypes.ResponseInitChain {
+func (cc *consensusConnection) InitChain(req tmtAbciTypes.RequestInitChain) tmtAbciTypes.ResponseInitChain {
 	cc.logger.Debug("Initializing chain", "chain_id", req.ChainId)
 
 	return tmtAbciTypes.ResponseInitChain{}
@@ -53,7 +53,7 @@ func (cc *ConsensusConnection) InitChain(req tmtAbciTypes.RequestInitChain) tmtA
 //
 // Response:
 //		- Optional Key-Value tags for filtering and indexing
-func (cc *ConsensusConnection) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAbciTypes.ResponseBeginBlock {
+func (cc *consensusConnection) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAbciTypes.ResponseBeginBlock {
 	cc.logger.Debug("Beginning new block", "hash", req.Hash)
 	cc.db.UpdateHeaderWithTimeInfo(&req.Header)
 
@@ -66,7 +66,7 @@ func (cc *ConsensusConnection) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tm
 //		- If the transaction is valid, returns CodeType.OK
 //		- Keys and values in Tags must be UTF-8 encoded strings
 // 		  E.g: ("account.owner": "Bob", "balance": "100.0", "time": "2018-01-02T12:30:00Z")
-func (cc *ConsensusConnection) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDeliverTx {
+func (cc *consensusConnection) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDeliverTx {
 	tx, err := decodeRLP(txBytes)
 	if err != nil {
 		cc.logger.Info("Received invalid transaction", "hash", tx, "err", err)
@@ -98,7 +98,7 @@ func (cc *ConsensusConnection) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDe
 //			- apply to the ValidatorsHash (and thus the validator set) for block H+2
 //			- apply to the RequestBeginBlock.LastCommitInfo (ie. the last validator set) for block H+3
 //		- Consensus params returned for block H apply for block H+1
-func (cc *ConsensusConnection) EndBlock(req tmtAbciTypes.RequestEndBlock) tmtAbciTypes.ResponseEndBlock {
+func (cc *consensusConnection) EndBlock(req tmtAbciTypes.RequestEndBlock) tmtAbciTypes.ResponseEndBlock {
 	cc.logger.Debug(fmt.Sprintf("Ending new block at height '%d'", req.Height))
 
 	return tmtAbciTypes.ResponseEndBlock{}
@@ -111,7 +111,7 @@ func (cc *ConsensusConnection) EndBlock(req tmtAbciTypes.RequestEndBlock) tmtAbc
 //	      It's critical that all application instances return the same hash.
 // 		  If not, they will not be able to agree on the next block,
 // 		  because the hash is included in the next block!
-func (cc *ConsensusConnection) Commit() tmtAbciTypes.ResponseCommit {
+func (cc *consensusConnection) Commit() tmtAbciTypes.ResponseCommit {
 	rootHash := cc.getCurrentBlock().Root()
 	blockHash, err := cc.db.Persist(cc.RewardReceiver())
 	if err != nil {
@@ -144,12 +144,12 @@ func (cc *ConsensusConnection) Commit() tmtAbciTypes.ResponseCommit {
 }
 
 // RewardReceiver returns the receiving address based on the selected strategy.
-func (cc *ConsensusConnection) RewardReceiver() common.Address {
+func (cc *consensusConnection) RewardReceiver() common.Address {
 	return common.Address{}
 }
 
 // ResetBlockState resets the block's processing state.
-func (cc *ConsensusConnection) ResetBlockState() error {
+func (cc *consensusConnection) ResetBlockState() error {
 	return cc.db.ResetBlockState(cc.RewardReceiver())
 }
 
