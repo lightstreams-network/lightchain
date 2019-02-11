@@ -7,6 +7,7 @@ import (
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/tendermint/tendermint/proxy"
 	"github.com/lightstreams-network/lightchain/database"
+	"github.com/lightstreams-network/lightchain/consensus/abci"
 
 	ethRpc "github.com/ethereum/go-ethereum/rpc"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
@@ -47,8 +48,8 @@ func NewNode(cfg *Config) (*Node, error) {
 }
 
 func (n *Node) Start(ethRPCClient *ethRpc.Client, db *database.Database) error {
-	n.logger.Debug("Creating tendermint ABCI application...")
-	tendermintABCI, err := NewTendermintABCI(db, ethRPCClient)
+	n.logger.Debug("Creating Tendermint ABCI application...")
+	tendermintABCI, err := abci.NewApplication(db, ethRPCClient)
 	if err != nil {
 		return err
 	}

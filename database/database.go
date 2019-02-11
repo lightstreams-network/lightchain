@@ -49,7 +49,7 @@ func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensus
 	db := &Database{
 		eth:     ethereum,
 		ethCfg:  ethCfg,
-		state:   NewEthState(ethereum, ethCfg, logger),
+		state:   NewState(ethereum, ethCfg, logger),
 		consAPI: consAPI,
 		logger:  logger,
 	}
@@ -74,7 +74,7 @@ func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDel
 
 // Persist finalises the current block.
 func (db *Database) Persist(coinbase common.Address) (common.Hash, error) {
-	log.Info("Persisting DB state", "data", db.state.bs)
+	log.Info("Persisting DB state", "data", db.state.blockState)
 
 	return db.state.Persist(coinbase)
 }

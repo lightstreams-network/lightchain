@@ -30,13 +30,13 @@ type State struct {
 	ethereum  *eth.Ethereum
 	ethConfig *eth.Config
 
-	mtx sync.Mutex
-	bs  blockState
+	mtx        sync.Mutex
+	blockState blockState
 
 	logger tmtLog.Logger
 }
 
-func NewEthState(ethereum *eth.Ethereum, ethCfg *eth.Config, logger tmtLog.Logger) *State {
+func NewState(ethereum *eth.Ethereum, ethCfg *eth.Config, logger tmtLog.Logger) *State {
 	return &State{
 		ethereum:  ethereum,
 		ethConfig: ethCfg,
@@ -54,7 +54,7 @@ func (s *State) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliver
 	bc := s.ethereum.BlockChain()
 	chainCfg := s.ethereum.APIBackend.ChainConfig()
 
-	return s.bs.execTx(bc, s.ethConfig, chainCfg, tx)
+	return s.blockState.execTx(bc, s.ethConfig, chainCfg, tx)
 }
 
 // Persist the application state to disk.
@@ -65,7 +65,7 @@ func (s *State) Persist(coinbase common.Address) (common.Hash, error) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	blockHash, err := s.bs.persist(s.ethereum.BlockChain(), s.ethereum.ChainDb())
+	blockHash, err := s.blockState.persist(s.ethereum.BlockChain(), s.ethereum.ChainDb())
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -89,11 +89,11 @@ func (s *State) UpdateBlockState(config *params.ChainConfig, parentTime uint64, 
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	s.bs.updateBlockState(config, parentTime, numTx)
+	s.blockState.updateBlockState(config, parentTime, numTx)
 }
 
 func (s *State) GasLimit() *core.GasPool {
-	return s.bs.gp
+	return s.blockState.gp
 }
 
 func (s *State) resetBlockState(coinbase common.Address) error {
@@ -106,7 +106,7 @@ func (s *State) resetBlockState(coinbase common.Address) error {
 	currentBlock := blockchain.CurrentBlock()
 	ethHeader := newBlockHeader(coinbase, currentBlock)
 
-	s.bs = blockState{
+	s.blockState = blockState{
 		header:       ethHeader,
 		parent:       currentBlock,
 		state:        bcState,

@@ -1,16 +1,29 @@
-package consensus
+package abci
 
 import (
 	"encoding/json"
-	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
-	abciTypes "github.com/lightstreams-network/lightchain/consensus/types"
 	"math/big"
 	"fmt"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	ethRpc "github.com/ethereum/go-ethereum/rpc"
+	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
+	abciTypes "github.com/lightstreams-network/lightchain/consensus/types"
+	tmtLog "github.com/tendermint/tendermint/libs/log"
 )
 
+type InfoConnection struct {
+	getCurrentBlock func() *ethTypes.Block
+	ethRPCClient    *ethRpc.Client
+	logger          tmtLog.Logger
+}
+
+func newInfoConnection(getCurrentBlock func() *ethTypes.Block, ethRPCClient *ethRpc.Client, logger tmtLog.Logger) *InfoConnection {
+	return &InfoConnection{getCurrentBlock, ethRPCClient, logger}
+}
+
 // Query for data from the application at current or past height.
-func (abci *TendermintABCI) Query(query tmtAbciTypes.RequestQuery) tmtAbciTypes.ResponseQuery {
-	abci.logger.Info("Querying state", "data", query)
+func (ic *InfoConnection) Query(query tmtAbciTypes.RequestQuery) tmtAbciTypes.ResponseQuery {
+	ic.logger.Info("Querying state", "data", query)
 
 	type jsonRequest struct {
 		Method string          `json:"method"`
@@ -24,7 +37,7 @@ func (abci *TendermintABCI) Query(query tmtAbciTypes.RequestQuery) tmtAbciTypes.
 	}
 
 	var result interface{}
-	if err := abci.ethRPCClient.Call(&result, in.Method, in.Params...); err != nil {
+	if err := ic.ethRPCClient.Call(&result, in.Method, in.Params...); err != nil {
 		return tmtAbciTypes.ResponseQuery{Code: uint32(abciTypes.ErrInternalError.Code), Log: err.Error()}
 	}
 
@@ -41,13 +54,12 @@ func (abci *TendermintABCI) Query(query tmtAbciTypes.RequestQuery) tmtAbciTypes.
 // Used to sync Tendermint with the application during a handshake that happens on startup.
 // Tendermint expects LastBlockAppHash and LastBlockHeight to be updated during Persist,
 // ensuring that Persist is never called twice for the same block height.
-func (abci *TendermintABCI) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.ResponseInfo {
-	blockchain := abci.db.Ethereum().BlockChain()
-	currentBlock := blockchain.CurrentBlock()
+func (ic *InfoConnection) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.ResponseInfo {
+	currentBlock := ic.getCurrentBlock()
 	height := currentBlock.Number()
 	root := currentBlock.Root()
 
-	abci.logger.Info("State info", "data", req, "height", height)
+	ic.logger.Info("State info", "data", req, "height", height)
 
 	// First boot-up
 	if height.Cmp(big.NewInt(0)) == 0 {
@@ -69,8 +81,8 @@ func (abci *TendermintABCI) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.Resp
 //
 // E.g. Key="min-fee", Value="100fermion" could set the minimum fee required
 // for CheckTx (but not DeliverTx - that would be consensus critical).
-func (abci *TendermintABCI) SetOption(req tmtAbciTypes.RequestSetOption) tmtAbciTypes.ResponseSetOption {
-	abci.logger.Debug(fmt.Sprintf("Setting option key '%s' value '%s'", req.Key, req.Value))
+func (ic *InfoConnection) SetOption(req tmtAbciTypes.RequestSetOption) tmtAbciTypes.ResponseSetOption {
+	ic.logger.Debug(fmt.Sprintf("Setting option key '%s' value '%s'", req.Key, req.Value))
 
 	return tmtAbciTypes.ResponseSetOption{Code: tmtAbciTypes.CodeTypeOK, Log: ""}
 }
