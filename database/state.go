@@ -11,6 +11,7 @@ import (
 
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
+	tmtLog "github.com/tendermint/tendermint/libs/log"
 )
 
 //----------------------------------------------------------------------
@@ -23,29 +24,24 @@ import (
 // so we don't even start the miner there, and instead manage the intermediate ethState from here.
 // In the same persist we also fire the TxPreEvent synchronously so the order is preserved,
 // instead of using a go-routine.
-
+//
+// TODO: Rewrite this description, it doesn't make sense and this "EthState" Struct is even more suspicious.
 type EthState struct {
 	ethereum  *eth.Ethereum
 	ethConfig *eth.Config
 
 	mtx        sync.Mutex
 	blockState blockState
+
+	logger tmtLog.Logger
 }
 
-// After NewEthState, call SetEthereum and SetEthConfig.
-func NewEthState() *EthState {
+func NewEthState(ethereum *eth.Ethereum, ethCfg *eth.Config, logger tmtLog.Logger) *EthState {
 	return &EthState{
-		ethereum:  nil, // set with SetEthereum
-		ethConfig: nil, // set with SetEthConfig
+		ethereum:  ethereum,
+		ethConfig: ethCfg,
+		logger: logger,
 	}
-}
-
-func (es *EthState) SetEthereum(ethereum *eth.Ethereum) {
-	es.ethereum = ethereum
-}
-
-func (es *EthState) SetEthConfig(ethConfig *eth.Config) {
-	es.ethConfig = ethConfig
 }
 
 // Execute the transaction.

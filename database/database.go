@@ -15,6 +15,7 @@ import (
 	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
 	dbAPI "github.com/lightstreams-network/lightchain/database/api"
 	consensusAPI "github.com/lightstreams-network/lightchain/consensus/api"
+	tmtLog "github.com/tendermint/tendermint/libs/log"
 )
 
 // Database manages the underlying ethereum state for storage and processing
@@ -33,16 +34,11 @@ type Database struct {
 	consAPI consensusAPI.API
 }
 
-func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensusAPI.API) (*Database, error) {
-	state := NewEthState()
-
+func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensusAPI.API, logger tmtLog.Logger) (*Database, error) {
 	ethereum, err := eth.New(ctx, ethCfg)
 	if err != nil {
 		return nil, err
 	}
-
-	state.SetEthereum(ethereum)
-	state.SetEthConfig(ethCfg)
 
 	currentBlock := ethereum.BlockChain().CurrentBlock()
 	ethereum.EventMux().Post(core.ChainHeadEvent{currentBlock})
@@ -52,7 +48,7 @@ func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensus
 	db := &Database{
 		eth:      ethereum,
 		ethCfg:   ethCfg,
-		ethState: state,
+		ethState: NewEthState(ethereum, ethCfg, logger),
 		consAPI:  consAPI,
 	}
 

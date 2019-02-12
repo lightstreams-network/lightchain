@@ -50,7 +50,7 @@ func NewNode(cfg *Config, consensusAPI conAPI.API) (*Node, error) {
 	if err := ethereum.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {
 		logger.Debug(fmt.Sprintf("Registering database..."))
 
-		n.database, err = NewDatabase(ctx, &cfg.GethConfig.EthCfg, consensusAPI)
+		n.database, err = NewDatabase(ctx, &cfg.GethConfig.EthCfg, consensusAPI, logger)
 		if err != nil {
 			return nil, err
 		}
