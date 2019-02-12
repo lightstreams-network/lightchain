@@ -55,6 +55,15 @@ lightchain run --datadir "${HOME}/.lightchain"
 
 After you run the command above, the network synchronization will take several minutes. So grab a coffee and [request some test tokens](https://discuss.lightstreams.network/t/request-test-tokens/64) while you wait :)
 
+### Node launch with RPC open
+
+*Note: running Lightchain node with RPC open can be dangerous due to same reasons like when using `Geth`!*
+
+To run a lightchain node with RPC open, you only need to append the RPC flags as in Geth, final command:
+```
+lightchain run --datadir "${HOME}/.lightchain" --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi eth,net,web3,personal,admin
+```
+
 ### Request free tokens
 Please sign up to the [Lightstreams Community Forum](https://discuss.lightstreams.network) and [follow the instructions in this thread](https://discuss.lightstreams.network/t/request-test-tokens/64) to obtain free tokens to use in our test network Sirius.
 
