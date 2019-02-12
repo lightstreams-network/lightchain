@@ -67,8 +67,8 @@ func (db *Database) Config() *eth.Config {
 	return db.ethCfg
 }
 
-// DeliverTx appends a transaction to the current block
-func (db *Database) DeliverTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
+// ExecuteTx appends a transaction to the current block
+func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
 	log.Info("Delivering TX", "hash", tx.Hash().String())
 	return db.ethState.DeliverTx(tx)
 }
@@ -79,9 +79,10 @@ func (db *Database) Commit(receiver common.Address) (common.Hash, error) {
 	return db.ethState.Commit(receiver)
 }
 
-// InitEthState initializes the EthState
-func (db *Database) InitEthState(receiver common.Address) error {
-	log.Debug("Initializing ETH state")
+// ResetBlockState resets the in-memory block's processing state.
+func (db *Database) ResetBlockState(receiver common.Address) error {
+	log.Debug("Resetting block state")
+
 	return db.ethState.ResetWorkState(receiver)
 }
 

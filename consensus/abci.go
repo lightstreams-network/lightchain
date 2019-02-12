@@ -18,16 +18,29 @@ import (
 	tmtLog "github.com/tendermint/tendermint/libs/log"
 )
 
-// format of query data
-type jsonRequest struct {
-	Method string          `json:"method"`
-	ID     json.RawMessage `json:"id,omitempty"`
-	Params []interface{}   `json:"params,omitempty"`
-}
-
 // maxTransactionSize is 32KB in order to prevent DOS attacks
 const maxTransactionSize = 32768
 
+// TendermintABCI is the main hook of application layer (blockchain) for connecting to consensus (Tendermint) using ABCI.
+//
+// Tendermint ABCI requires three connections to the application to handle the different message types.
+// Connections:
+//    Consensus Connection - InitChain, BeginBlock, DeliverTx, EndBlock, Commit
+//    Mempool Connection - CheckTx
+//    Info Connection - Info, SetOption, Query
+//
+// Flow:
+//		1. BeginBlock
+//		2. CheckTx
+//	    3. DeliverTx
+//		4. EndBlock
+//		5. Commit
+//		6. CheckTx (clean mempool from TXs not included in committed block)
+//
+// Tendermint runs CheckTx and DeliverTx concurrently with each other,
+// though on distinct ABCI connections - the mempool connection and the consensus connection.
+//
+// Full ABCI specs: https://tendermint.com/docs/spec/abci/abci.html
 type TendermintABCI struct {
 	db           *database.Database
 	checkTxState *state.StateDB
@@ -58,14 +71,234 @@ func NewTendermintABCI(db *database.Database, ethRPCClient *rpc.Client) (*Tender
 	return abci, nil
 }
 
-func (abci *TendermintABCI) InitEthState() error {
-	return abci.db.InitEthState(abci.Receiver())
+// InitChain is called upon genesis.
+//
+// Can be used to define validators set and consensus params on the application side.
+//
+// Response:
+//     - If `ResponseInitChain.Validators` is empty, the initial validator set will be the `RequestInitChain.Validators`
+func (abci *TendermintABCI) InitChain(req tmtAbciTypes.RequestInitChain) tmtAbciTypes.ResponseInitChain {
+	abci.logger.Debug("Initializing chain", "chain_id", req.ChainId)
+
+	return tmtAbciTypes.ResponseInitChain{}
+}
+
+// BeginBlock signals the beginning of a new block.
+//
+// The header contains the height, timestamp, and more - it exactly matches the Tendermint block header.
+// The `req.LastCommitInfo` and `req.ByzantineValidators` attributes can be used to determine rewards and punishments
+// for the validators.
+//
+// Response:
+//		- Optional Key-Value tags for filtering and indexing
+func (abci *TendermintABCI) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAbciTypes.ResponseBeginBlock {
+	abci.logger.Debug("Beginning new block", "hash", req.Hash)
+	abci.db.UpdateHeaderWithTimeInfo(&req.Header)
+
+	return tmtAbciTypes.ResponseBeginBlock{}
+}
+
+// CheckTx validates a mempool transaction, prior to broadcasting or proposing.
+//
+// CheckTx should perform stateful but light-weight checks of the validity of
+// the transaction (like checking signatures and account balances), but need
+// not execute in full (like running a smart contract).
+//
+// The application should maintain a separate state to support CheckTx.
+// This state can be reset to the latest committed state during Persist.
+// Before calling Persist, Tendermint will lock and flush the mempool, ensuring
+// that all existing CheckTx are responded to and no new ones can begin.
+// After Persist, the mempool will rerun CheckTx for all remaining transactions,
+// throwing out any that are no longer valid. Then the mempool will unlock
+// and start sending CheckTx again.
+//
+// Response:
+//		- Response code
+//		- Optional Key-Value tags for filtering and indexing
+func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx {
+	tx, err := decodeRLP(txBytes)
+	if err != nil {
+		abci.logger.Error("Received invalid transaction", "tx", tx.Hash().String())
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrEncodingError.Code), Log: err.Error()}
+	}
+
+	abci.logger.Info("Checking TX", "hash", tx.Hash().String(), "nonce", tx.Nonce(), "cost", tx.Cost())
+
+	if tx.Size() > maxTransactionSize {
+		abci.logger.Error(core.ErrOversizedData.Error())
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInternalError.Code), Log: core.ErrOversizedData.Error()}
+	}
+
+	var signer ethTypes.Signer = ethTypes.FrontierSigner{}
+	if tx.Protected() {
+		signer = ethTypes.NewEIP155Signer(tx.ChainId())
+	}
+
+	from, err := ethTypes.Sender(signer, tx)
+	if err != nil {
+		abci.logger.Error(core.ErrInvalidSender.Error())
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBaseInvalidSignature.Code), Log: core.ErrInvalidSender.Error()}
+	}
+
+	if tx.Value().Sign() < 0 {
+		abci.logger.Error(core.ErrNegativeValue.Error())
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBaseInvalidInput.Code), Log: core.ErrNegativeValue.Error()}
+	}
+
+	if !abci.checkTxState.Exist(from) {
+		abci.logger.Error(core.ErrInvalidSender.Error())
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBaseUnknownAddress.Code), Log: core.ErrInvalidSender.Error()}
+	}
+
+	if abci.checkTxState.GetNonce(from) != tx.Nonce() {
+		errMsg := fmt.Sprintf("Nonce not strictly increasing. Expected %d got %d", abci.checkTxState.GetNonce(from), tx.Nonce())
+		abci.logger.Error(errMsg)
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBadNonce.Code), Log: errMsg}
+	}
+
+	intrinsicGas, err := core.IntrinsicGas(tx.Data(), tx.To() == nil, true)
+	if err != nil {
+		abci.logger.Error(err.Error())
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInternalError.Code), Log: err.Error()}
+	}
+
+	if tx.Gas() < intrinsicGas {
+		abci.logger.Error("TX gas is lower than intrinsic gas", "tx_gas", tx.Gas(), "intrinsic_gas", intrinsicGas)
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInsufficientGas.Code), Log: err.Error()}
+	}
+
+	currentBalance := abci.checkTxState.GetBalance(from)
+	txCost := tx.Cost()
+	if currentBalance.Cmp(txCost) < 0 {
+		errMsg := fmt.Sprintf("Current balance: %s, TX cost: %s", currentBalance, tx.Cost())
+		abci.logger.Error(errMsg)
+		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInsufficientFunds.Code), Log: errMsg}
+	}
+
+	// Adjust From and To balances in order for the balance verification to be valid for next TX
+	abci.checkTxState.SubBalance(from, txCost)
+	if to := tx.To(); to != nil {
+		abci.checkTxState.AddBalance(*to, tx.Value())
+	}
+
+	abci.checkTxState.SetNonce(from, tx.Nonce() + 1)
+
+	abci.logger.Info("TX validated.", "hash", tx.Hash().String(), "state_nonce", abci.checkTxState.GetNonce(from))
+
+	return tmtAbciTypes.ResponseCheckTx{Code: tmtAbciTypes.CodeTypeOK}
+}
+
+// DeliverTx executes the transaction against Ethereum block's work state.
+//
+// Response:
+//		- If the transaction is valid, returns CodeType.OK
+//		- Keys and values in Tags must be UTF-8 encoded strings
+// 		  E.g: ("account.owner": "Bob", "balance": "100.0", "time": "2018-01-02T12:30:00Z")
+func (abci *TendermintABCI) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDeliverTx {
+	tx, err := decodeRLP(txBytes)
+	if err != nil {
+		abci.logger.Info("Received invalid transaction", "hash", tx, "err", err)
+		return tmtAbciTypes.ResponseDeliverTx{Code: uint32(abciTypes.ErrEncodingError.Code), Log: err.Error()}
+	}
+
+	abci.logger.Info("Delivering TX", "hash", tx.Hash().String(), "nonce", tx.Nonce(), "cost", tx.Cost(), "gas", tx.Gas(), "gas_price", tx.GasPrice())
+
+	res := abci.db.ExecuteTx(tx)
+	if res.IsErr() {
+		abci.logger.Error("Error delivering TX to DB", "hash", tx.Hash().String(), "err", res.Log)
+		return res
+	}
+
+	abci.logger.Info("TX delivered.", "tx", tx.Hash().String())
+
+	return tmtAbciTypes.ResponseDeliverTx{Code: tmtAbciTypes.CodeTypeOK}
+}
+
+// EndBlock signals the end of a block.
+//
+// An opportunity to propose changes to a validator set.
+//
+// Response:
+// 		- Validator updates returned for block H
+//			- apply to the NextValidatorsHash of block H+1
+//			- apply to the ValidatorsHash (and thus the validator set) for block H+2
+//			- apply to the RequestBeginBlock.LastCommitInfo (ie. the last validator set) for block H+3
+//		- Consensus params returned for block H apply for block H+1
+func (abci *TendermintABCI) EndBlock(req tmtAbciTypes.RequestEndBlock) tmtAbciTypes.ResponseEndBlock {
+	abci.logger.Debug(fmt.Sprintf("Ending new block at height '%d'", req.Height))
+
+	return tmtAbciTypes.ResponseEndBlock{}
+}
+
+// Commit persists the application state.
+//
+// Response:
+//		- Return a Merkle root hash of the application state.
+//	      It's critical that all application instances return the same hash. If not, they will not be able
+// 		  to agree on the next block, because the hash is included in the next block!
+func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
+	rootHash := abci.getCurrentBlock().Root()
+	blockHash, err := abci.db.Commit(abci.RewardReceiver())
+	if err != nil {
+		abci.logger.Error("Error getting latest database state", "err", err)
+		return tmtAbciTypes.ResponseCommit{Data: rootHash.Bytes()}
+	}
+	nextRootHash := abci.getCurrentBlock().Root()
+
+	ethState, err := abci.getCurrentDBState()
+	if err != nil {
+		abci.logger.Error("Error getting latest state", "err", err)
+		return tmtAbciTypes.ResponseCommit{Data: nextRootHash.Bytes()}
+	}
+
+	abci.logger.Info("Committing state", "blockHash", blockHash.Hex())
+
+	abci.checkTxState = ethState.Copy()
+
+	return tmtAbciTypes.ResponseCommit{Data: nextRootHash.Bytes()}
+}
+
+// ResetBlockState resets the in-memory block's processing state.
+func (abci *TendermintABCI) ResetBlockState() error {
+	return abci.db.ResetBlockState(abci.RewardReceiver())
+}
+
+// RewardReceiver returns the receiving address based on the selected strategy
+func (abci *TendermintABCI) RewardReceiver() common.Address {
+	return common.Address{}
+}
+
+// Query for data from the application at current or past height.
+func (abci *TendermintABCI) Query(query tmtAbciTypes.RequestQuery) tmtAbciTypes.ResponseQuery {
+	abci.logger.Info("Querying state", "data", query)
+
+	type jsonRequest struct {
+		Method string          `json:"method"`
+		ID     json.RawMessage `json:"id,omitempty"`
+		Params []interface{}   `json:"params,omitempty"`
+	}
+
+	var in jsonRequest
+	if err := json.Unmarshal(query.Data, &in); err != nil {
+		return tmtAbciTypes.ResponseQuery{Code: uint32(abciTypes.ErrEncodingError.Code), Log: err.Error()}
+	}
+
+	var result interface{}
+	if err := abci.ethRPCClient.Call(&result, in.Method, in.Params...); err != nil {
+		return tmtAbciTypes.ResponseQuery{Code: uint32(abciTypes.ErrInternalError.Code), Log: err.Error()}
+	}
+
+	resultBytes, err := json.Marshal(result)
+	if err != nil {
+		return tmtAbciTypes.ResponseQuery{Code: uint32(abciTypes.ErrInternalError.Code), Log: err.Error()}
+	}
+
+	return tmtAbciTypes.ResponseQuery{Code: tmtAbciTypes.CodeTypeOK, Value: resultBytes}
 }
 
 // Info returns information about the last height and app_hash to the tmtCfg engine
 func (abci *TendermintABCI) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.ResponseInfo {
-	blockchain := abci.db.Ethereum().BlockChain()
-	currentBlock := blockchain.CurrentBlock()
+	currentBlock := abci.getCurrentBlock()
 	height := currentBlock.Number()
 	root := currentBlock.Root()
 
@@ -87,204 +320,14 @@ func (abci *TendermintABCI) Info(req tmtAbciTypes.RequestInfo) tmtAbciTypes.Resp
 	}
 }
 
-// SetOption sets a configuration option
+// SetOption sets non-consensus critical application specific options.
+//
+// E.g. Key="min-fee", Value="100fermion" could set the minimum fee required
+// for CheckTx (but not DeliverTx - that would be consensus critical).
 func (abci *TendermintABCI) SetOption(req tmtAbciTypes.RequestSetOption) tmtAbciTypes.ResponseSetOption {
 	abci.logger.Debug(fmt.Sprintf("Setting option key '%s' value '%s'", req.Key, req.Value))
+
 	return tmtAbciTypes.ResponseSetOption{Code: tmtAbciTypes.CodeTypeOK, Log: ""}
-}
-
-// InitChain initializes the validator set
-func (abci *TendermintABCI) InitChain(req tmtAbciTypes.RequestInitChain) tmtAbciTypes.ResponseInitChain {
-	abci.logger.Debug(fmt.Sprintf("Initializing chain with ID '%s'", req.ChainId))
-	return tmtAbciTypes.ResponseInitChain{}
-}
-
-// CheckTx checks a transaction is valid but does not mutate the state
-func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx {
-	tx, err := decodeRLP(txBytes)
-	if err != nil {
-		abci.logger.Error("Received invalid transaction", "tx", tx.Hash().String())
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrEncodingError.Code), Log: err.Error()}
-	}
-
-	return abci.validateTx(tx)
-}
-
-// DeliverTx executes a transaction against the latest state
-func (abci *TendermintABCI) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDeliverTx {
-	tx, err := decodeRLP(txBytes)
-	if err != nil {
-		abci.logger.Info("Received invalid transaction", "tx", tx, "err", err)
-		return tmtAbciTypes.ResponseDeliverTx{Code: uint32(abciTypes.ErrEncodingError.Code), Log: err.Error()}
-	}
-
-	res := abci.db.DeliverTx(tx)
-	if res.IsErr() {
-		abci.logger.Error("DeliverTx: Error delivering tx to database db", "tx", tx.Hash().String(), "err", err)
-		return res
-	}
-
-	abci.CollectTx(tx)
-
-	abci.logger.Info("TX delivered.", "tx", tx.Hash().String())
-
-	return tmtAbciTypes.ResponseDeliverTx{Code: tmtAbciTypes.CodeTypeOK}
-}
-
-// BeginBlock starts a new Ethereum block
-func (abci *TendermintABCI) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAbciTypes.ResponseBeginBlock {
-	abci.logger.Debug(fmt.Sprintf("Beginning new block with hash '%s'", req.Hash))
-	abci.db.UpdateHeaderWithTimeInfo(&req.Header)
-	return tmtAbciTypes.ResponseBeginBlock{}
-}
-
-// EndBlock accumulates rewards for the validators and updates them
-func (abci *TendermintABCI) EndBlock(req tmtAbciTypes.RequestEndBlock) tmtAbciTypes.ResponseEndBlock {
-	abci.logger.Debug(fmt.Sprintf("Ending new block at height '%d'", req.Height))
-	return tmtAbciTypes.ResponseEndBlock{}
-}
-
-// Commits the block and returns a hash of the current state
-func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
-	rootHash := abci.getCurrentBlock().Root()
-	blockHash, err := abci.db.Commit(abci.Receiver())
-	if err != nil {
-		abci.logger.Error("Error getting latest database state", "err", err)
-		return tmtAbciTypes.ResponseCommit{Data: rootHash.Bytes()}
-	}
-	nextRootHash := abci.getCurrentBlock().Root()
-
-	ethState, err := abci.getCurrentDBState()
-	if err != nil {
-		abci.logger.Error("Error getting latest state", "err", err)
-		return tmtAbciTypes.ResponseCommit{Data: nextRootHash.Bytes()}
-	}
-
-	abci.logger.Info("Committing state", "blockHash", blockHash.Hex())
-
-	abci.checkTxState = ethState.Copy()
-	if err != nil {
-		abci.logger.Error("Error committing latest state", "err", err)
-		return tmtAbciTypes.ResponseCommit{Data: nextRootHash.Bytes()}
-	}
-
-	return tmtAbciTypes.ResponseCommit{Data: nextRootHash.Bytes()}
-}
-
-// Query queries the state of the TendermintABCI
-func (abci *TendermintABCI) Query(query tmtAbciTypes.RequestQuery) tmtAbciTypes.ResponseQuery {
-	abci.logger.Info("Querying state", "data", query)
-	var in jsonRequest
-	if err := json.Unmarshal(query.Data, &in); err != nil {
-		return tmtAbciTypes.ResponseQuery{Code: uint32(abciTypes.ErrEncodingError.Code), Log: err.Error()}
-	}
-	var result interface{}
-	if err := abci.ethRPCClient.Call(&result, in.Method, in.Params...); err != nil {
-		return tmtAbciTypes.ResponseQuery{Code: uint32(abciTypes.ErrInternalError.Code), Log: err.Error()}
-	}
-	resultBytes, err := json.Marshal(result)
-	if err != nil {
-		return tmtAbciTypes.ResponseQuery{Code: uint32(abciTypes.ErrInternalError.Code), Log: err.Error()}
-	}
-
-	return tmtAbciTypes.ResponseQuery{Code: tmtAbciTypes.CodeTypeOK, Value: resultBytes}
-}
-
-// validateTx checks the validity of a tx against the blockchain's current state.
-// it duplicates the logic in database's tx_pool
-func (abci *TendermintABCI) validateTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseCheckTx {
-	abci.logger.Info("Validating TX", "data", tx.Hash().String())
-
-	if tx.Size() > maxTransactionSize {
-	//if true {
-		abci.logger.Error(core.ErrOversizedData.Error())
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInternalError.Code), Log: core.ErrOversizedData.Error()}
-	}
-
-	var signer ethTypes.Signer = ethTypes.FrontierSigner{}
-	if tx.Protected() {
-		signer = ethTypes.NewEIP155Signer(tx.ChainId())
-	}
-
-	// Make sure the transaction is signed properly
-	from, err := ethTypes.Sender(signer, tx)
-	if err != nil {
-		abci.logger.Error(core.ErrInvalidSender.Error())
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBaseInvalidSignature.Code), Log: core.ErrInvalidSender.Error()}
-	}
-
-	// Transactions can't be negative. This may never happen using RLP decoded
-	// transactions but may occur if you create a transaction using the RPC.
-	if tx.Value().Sign() < 0 {
-		abci.logger.Error(core.ErrNegativeValue.Error())
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBaseInvalidInput.Code), Log: core.ErrNegativeValue.Error()}
-	}
-
-	currentState := abci.checkTxState
-
-	if !currentState.Exist(from) {
-		abci.logger.Error(core.ErrInvalidSender.Error())
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBaseUnknownAddress.Code), Log: core.ErrInvalidSender.Error()}
-	}
-
-	gasLimit := abci.db.GasLimit()
-	if gasLimit < 0 {
-		abci.logger.Error(core.ErrGasLimitReached.Error())
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInternalError.Code), Log: core.ErrGasLimitReached.Error()}
-	}
-
-	nonce := currentState.GetNonce(from)
-	if nonce != tx.Nonce() {
-		errMsg := fmt.Sprintf("Nonce not strictly increasing. Expected %d got %d", nonce, tx.Nonce())
-		abci.logger.Error(errMsg)
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBadNonce.Code), Log: errMsg}
-	}
-
-	currentBalance := currentState.GetBalance(from)
-	txCost := tx.Cost()
-	if currentBalance.Cmp(txCost) < 0 {
-		errMsg := fmt.Sprintf("Current balance: %s, tx cost: %s", currentBalance, tx.Cost())
-		abci.logger.Error(errMsg)
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInsufficientFunds.Code), Log: errMsg}
-	}
-
-	intrGas, err := core.IntrinsicGas(tx.Data(), tx.To() == nil, true) // homestead == true
-	if intrGas < 0 {
-		abci.logger.Error(core.ErrIntrinsicGas.Error())
-		return tmtAbciTypes.ResponseCheckTx{
-			Code: uint32(abciTypes.ErrBaseInsufficientFees.Code),
-			Log: core.ErrIntrinsicGas.Error(),
-		}
-	}
-	if err != nil {
-		abci.logger.Error(err.Error())
-		return tmtAbciTypes.ResponseCheckTx{
-			Code: uint32(abciTypes.ErrInternalError.Code),
-			Log: err.Error(),
-		}
-	}
-
-	currentState.SubBalance(from, txCost)
-
-	if to := tx.To(); to != nil {
-		currentState.AddBalance(*to, tx.Value())
-	}
-	newAccountNonce := tx.Nonce() + 1
-	currentState.SetNonce(from, newAccountNonce)
-
-	abci.logger.Info("TX validated.", "tx", tx.Hash().String(), "cost", txCost.String(), "nonce", newAccountNonce)
-
-	return tmtAbciTypes.ResponseCheckTx{Code: tmtAbciTypes.CodeTypeOK}
-}
-
-// Receiver returns the receiving address based on the selected strategy
-func (abci *TendermintABCI) Receiver() common.Address {
-	return common.Address{}
-}
-
-// CollectTx invokes CollectTx on the strategy
-func (abci *TendermintABCI) CollectTx(tx *ethTypes.Transaction) {
-	abci.logger.Info("Collecting TX", "data", tx.Hash().String())
 }
 
 // RLP decode database transaction using go-database impl https://github.com/ethereum/go-ethereum/tree/v1.8.11/rlp
