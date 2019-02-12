@@ -75,7 +75,7 @@ func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDel
 
 // Commit finalises the current block
 func (db *Database) Commit(receiver common.Address) (common.Hash, error) {
-	log.Info("Committing block", "data", db.ethState.work)
+	log.Info("Committing block", "data", db.ethState.blockState)
 	return db.ethState.Commit(receiver)
 }
 
