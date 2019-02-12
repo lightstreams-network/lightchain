@@ -54,7 +54,7 @@ func (n *Node) Start(ethRPCClient *ethRpc.Client, db *database.Database) error {
 	}
 
 	n.logger.Debug("Initializing consensus state...")
-	err = tendermintABCI.InitEthState()
+	err = tendermintABCI.ResetBlockState()
 	if err != nil {
 		return err
 	}

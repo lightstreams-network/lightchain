@@ -8,6 +8,7 @@ var (
 	ErrBadNonce          = NewError(CodeType_BadNonce, "Error bad nonce")
 	ErrUnauthorized      = NewError(CodeType_Unauthorized, "Unauthorized")
 	ErrInsufficientFunds = NewError(CodeType_InsufficientFunds, "Insufficient funds")
+	ErrInsufficientGas   = NewError(CodeType_InsufficientGas, "Insufficient gas, lower than intristic gas")
 	ErrUnknownRequest    = NewError(CodeType_UnknownRequest, "Unknown request")
 
 	ErrBaseInsufficientFees     = NewError(CodeType_BaseInsufficientFees, "Error (base) insufficient fees")
