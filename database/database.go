@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/p2p"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/log"
-
 	"github.com/ethereum/go-ethereum/eth/downloader"
+
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
 	dbAPI "github.com/lightstreams-network/lightchain/database/api"
@@ -73,22 +73,22 @@ func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDel
 	return db.ethState.ExecuteTx(tx)
 }
 
-// Commit finalises the current block
-func (db *Database) Commit(receiver common.Address) (common.Hash, error) {
-	log.Info("Committing block", "data", db.ethState.blockState)
+// Persist finalises the current block and writes it to disk.
+func (db *Database) Persist(receiver common.Address) (common.Hash, error) {
+	log.Info("Persisting DB state", "data", db.ethState.blockState)
 
 	return db.ethState.Persist(receiver)
 }
 
 // ResetBlockState resets the in-memory block's processing state.
 func (db *Database) ResetBlockState(receiver common.Address) error {
-	log.Debug("Resetting block state")
+	log.Debug("Resetting ethereum DB state", "receiver", receiver.Hex())
 
 	return db.ethState.ResetBlockState(receiver)
 }
 
-// UpdateBlockState uses the tendermint header to update the eth header
-func (db *Database) UpdateHeaderWithTimeInfo(tmHeader *tmtAbciTypes.Header) {
+// UpdateBlockState uses the tendermint header to update the eth header.
+func (db *Database) UpdateBlockState(tmHeader *tmtAbciTypes.Header) {
 	db.ethState.UpdateBlockState(
 		db.eth.APIBackend.ChainConfig(),
 		uint64(tmHeader.Time.Unix()),
@@ -96,7 +96,7 @@ func (db *Database) UpdateHeaderWithTimeInfo(tmHeader *tmtAbciTypes.Header) {
 	)
 }
 
-// GasLimit returns the maximum gas per block
+// GasLimit returns the maximum gas per block.
 func (db *Database) GasLimit() uint64 {
 	return db.ethState.GasLimit().Gas()
 }
