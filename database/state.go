@@ -44,8 +44,10 @@ func NewEthState(ethereum *eth.Ethereum, ethCfg *eth.Config, logger tmtLog.Logge
 	}
 }
 
-// Execute the transaction.
-func (es *EthState) DeliverTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
+// Executes TX against the eth blockchain state.
+//
+// The changes happen only inside of the Eth state, not disk!
+func (es *EthState) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
 	es.mtx.Lock()
 	defer es.mtx.Unlock()
 
@@ -55,8 +57,11 @@ func (es *EthState) DeliverTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDel
 	return es.blockState.execTx(bc, es.ethConfig, chainCfg, blockHash, tx)
 }
 
-// Commit and reset the blockState.
-func (es *EthState) Commit(receiver common.Address) (common.Hash, error) {
+// Persist the application state to disk.
+//
+// Persist is called after all TXs are executed against the application state.
+// Triggered by ABCI::Commit(), to persist changes introduced in latest block.
+func (es *EthState) Persist(receiver common.Address) (common.Hash, error) {
 	es.mtx.Lock()
 	defer es.mtx.Unlock()
 
@@ -65,7 +70,7 @@ func (es *EthState) Commit(receiver common.Address) (common.Hash, error) {
 		return common.Hash{}, err
 	}
 
-	err = es.resetWorkState(receiver)
+	err = es.resetBlockState(receiver)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -73,14 +78,14 @@ func (es *EthState) Commit(receiver common.Address) (common.Hash, error) {
 	return blockHash, err
 }
 
-func (es *EthState) ResetWorkState(receiver common.Address) error {
+func (es *EthState) ResetBlockState(receiver common.Address) error {
 	es.mtx.Lock()
 	defer es.mtx.Unlock()
 
-	return es.resetWorkState(receiver)
+	return es.resetBlockState(receiver)
 }
 
-func (es *EthState) resetWorkState(receiver common.Address) error {
+func (es *EthState) resetBlockState(receiver common.Address) error {
 	blockchain := es.ethereum.BlockChain()
 	bcState, err := blockchain.State()
 	if err != nil {
@@ -101,9 +106,7 @@ func (es *EthState) resetWorkState(receiver common.Address) error {
 	return nil
 }
 
-func (es *EthState) UpdateHeaderWithTimeInfo(
-	config *params.ChainConfig, parentTime uint64, numTx uint64) {
-
+func (es *EthState) UpdateBlockState(config *params.ChainConfig, parentTime uint64, numTx uint64) {
 	es.mtx.Lock()
 	defer es.mtx.Unlock()
 
@@ -114,11 +117,9 @@ func (es *EthState) GasLimit() *core.GasPool {
 	return es.blockState.gp
 }
 
-//----------------------------------------------------------------------
-// Implements: miner.Pending API (our custom patch to go-eth)
-
+// Implements: miner.Pending API (our custom patch to go-eth).
+//
 // Return a new block and a copy of the ethState from the latest blockState.
-// #unstable
 func (es *EthState) Pending() (*ethTypes.Block, *state.StateDB) {
 	es.mtx.Lock()
 	defer es.mtx.Unlock()
@@ -131,7 +132,6 @@ func (es *EthState) Pending() (*ethTypes.Block, *state.StateDB) {
 	), es.blockState.state.Copy()
 }
 
-// Create a new block header from the previous block.
 func newBlockHeader(receiver common.Address, prevBlock *ethTypes.Block) *ethTypes.Header {
 	return &ethTypes.Header{
 		Number:     prevBlock.Number().Add(prevBlock.Number(), big.NewInt(1)),
