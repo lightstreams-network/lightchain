@@ -32,6 +32,8 @@ type Database struct {
 	ethState *EthState
 
 	consAPI consensusAPI.API
+
+	logger tmtLog.Logger
 }
 
 func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensusAPI.API, logger tmtLog.Logger) (*Database, error) {
@@ -50,6 +52,7 @@ func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensus
 		ethCfg:   ethCfg,
 		ethState: NewEthState(ethereum, ethCfg, logger),
 		consAPI:  consAPI,
+		logger:   logger,
 	}
 
 	return db, nil
@@ -63,28 +66,30 @@ func (db *Database) Config() *eth.Config {
 	return db.ethCfg
 }
 
-// ExecuteTx appends a transaction to the current block
+// ExecuteTx appends a transaction to the current block.
 func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
-	log.Info("Delivering TX", "hash", tx.Hash().String())
-	return db.ethState.DeliverTx(tx)
+	db.logger.Info("Executing DB TX", "hash", tx.Hash().Hex(), "nonce", tx.Nonce())
+
+	return db.ethState.ExecuteTx(tx)
 }
 
 // Commit finalises the current block
 func (db *Database) Commit(receiver common.Address) (common.Hash, error) {
 	log.Info("Committing block", "data", db.ethState.blockState)
-	return db.ethState.Commit(receiver)
+
+	return db.ethState.Persist(receiver)
 }
 
 // ResetBlockState resets the in-memory block's processing state.
 func (db *Database) ResetBlockState(receiver common.Address) error {
 	log.Debug("Resetting block state")
 
-	return db.ethState.ResetWorkState(receiver)
+	return db.ethState.ResetBlockState(receiver)
 }
 
-// UpdateHeaderWithTimeInfo uses the tendermint header to update the eth header
+// UpdateBlockState uses the tendermint header to update the eth header
 func (db *Database) UpdateHeaderWithTimeInfo(tmHeader *tmtAbciTypes.Header) {
-	db.ethState.UpdateHeaderWithTimeInfo(
+	db.ethState.UpdateBlockState(
 		db.eth.APIBackend.ChainConfig(),
 		uint64(tmHeader.Time.Unix()),
 		uint64(tmHeader.GetNumTxs()),
