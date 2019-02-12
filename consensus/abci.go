@@ -93,7 +93,7 @@ func (abci *TendermintABCI) InitChain(req tmtAbciTypes.RequestInitChain) tmtAbci
 //		- Optional Key-Value tags for filtering and indexing
 func (abci *TendermintABCI) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAbciTypes.ResponseBeginBlock {
 	abci.logger.Debug("Beginning new block", "hash", req.Hash)
-	abci.db.UpdateHeaderWithTimeInfo(&req.Header)
+	abci.db.UpdateBlockState(&req.Header)
 
 	return tmtAbciTypes.ResponseBeginBlock{}
 }
@@ -238,7 +238,7 @@ func (abci *TendermintABCI) EndBlock(req tmtAbciTypes.RequestEndBlock) tmtAbciTy
 // 		  to agree on the next block, because the hash is included in the next block!
 func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
 	rootHash := abci.getCurrentBlock().Root()
-	blockHash, err := abci.db.Commit(abci.RewardReceiver())
+	blockHash, err := abci.db.Persist(abci.RewardReceiver())
 	if err != nil {
 		abci.logger.Error("Error getting latest database state", "err", err)
 		return tmtAbciTypes.ResponseCommit{Data: rootHash.Bytes()}

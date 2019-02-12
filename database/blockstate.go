@@ -97,9 +97,7 @@ func (bs *blockState) persist(bc *core.BlockChain, db ethdb.Database) (common.Ha
 	return blockHash, err
 }
 
-func (bs *blockState) updateBlockState(
-	config *params.ChainConfig, parentTime uint64, numTx uint64) {
-
+func (bs *blockState) updateBlockState(config *params.ChainConfig, parentTime uint64, numTx uint64) {
 	parentHeader := bs.parent.Header()
 	bs.header.Time = new(big.Int).SetUint64(parentTime)
 	bs.header.Difficulty = ethash.CalcDifficulty(config, parentTime, parentHeader)
