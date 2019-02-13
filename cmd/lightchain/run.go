@@ -14,6 +14,7 @@ import (
 	"github.com/lightstreams-network/lightchain/database"
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/tendermint/tendermint/libs/common"
+	"github.com/lightstreams-network/lightchain/prometheus"
 )
 
 const (
@@ -45,6 +46,10 @@ var (
 		Value: "socket",
 		Usage: "socket | grpc",
 	}
+	PrometheusFlag = cli.BoolFlag{
+		Name:  "prometheus",
+		Usage: "Enable prometheus metrics exporter",
+	}
 )
 
 func runCmd() *cobra.Command {
@@ -69,6 +74,7 @@ func runCmd() *cobra.Command {
 			p2pListenPort, _ := cmd.Flags().GetUint(ConsensusP2PListenPortFlag.GetName())
 			proxyListenPort, _ := cmd.Flags().GetUint(ConsensusProxyListenPortFlag.GetName())
 			proxyProtocol, _ := cmd.Flags().GetString(ConsensusProxyProtocolFlag.GetName())
+			prometheusEnabled, _ := cmd.Flags().GetBool(PrometheusFlag.GetName())
 			databaseDataDir := filepath.Join(dataDir, database.DataDirPath)
 
 			consensusCfg := consensus.NewConfig(
@@ -87,7 +93,9 @@ func runCmd() *cobra.Command {
 				os.Exit(1)
 			}
 			
-			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg)
+			prometheusCfg := prometheus.NewConfig(prometheusEnabled, prometheus.DefaultPrometheusAddr, prometheus.DefaultPrometheusNamespace)
+			
+			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg)
 
 			lightChainNode, err := node.NewNode(&nodeCfg)
 			if err != nil {
@@ -115,6 +123,7 @@ func runCmd() *cobra.Command {
 	addDefaultFlags(runCmd)
 	addConsensusFlags(runCmd)
 	addEthNodeFlags(runCmd)
+	runCmd.Flags().Bool(PrometheusFlag.GetName(), false, PrometheusFlag.Usage)
 
 	return runCmd
 }

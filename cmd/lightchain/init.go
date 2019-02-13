@@ -14,6 +14,7 @@ import (
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/lightstreams-network/lightchain/setup"
+	"github.com/lightstreams-network/lightchain/prometheus"
 )
 
 var (
@@ -91,9 +92,9 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
-
-	nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg)
-
+	
+	prometheusCfg := prometheus.NewConfig(false, prometheus.DefaultPrometheusAddr, prometheus.DefaultPrometheusNamespace)
+	nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg)
 	if err := node.Init(nodeCfg, network); err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)

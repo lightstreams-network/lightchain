@@ -31,11 +31,17 @@ type Database struct {
 	ethState *EthState
 
 	consAPI consensusAPI.API
-
 	logger tmtLog.Logger
+	metrics *Metrics
 }
 
-func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensusAPI.API, logger tmtLog.Logger) (*Database, error) {
+func NewDatabase(ctx *node.ServiceContext,
+	ethCfg *eth.Config,
+	consAPI consensusAPI.API,
+	logger tmtLog.Logger,
+	metrics *Metrics,
+) (*Database, error) {
+
 	ethereum, err := eth.New(ctx, ethCfg)
 	if err != nil {
 		return nil, err
@@ -52,6 +58,7 @@ func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensus
 		ethState: NewEthState(ethereum, ethCfg, logger),
 		consAPI:  consAPI,
 		logger:   logger,
+		metrics:  metrics,
 	}
 
 	return db, nil
@@ -75,14 +82,13 @@ func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDel
 // Persist finalises the current block and writes it to disk.
 func (db *Database) Persist(receiver common.Address) (common.Hash, error) {
 	db.logger.Info("Persisting DB state", "data", db.ethState.blockState)
-
+	db.metrics.Height.Set(float64(db.ethState.blockState.header.Number.Uint64()))
 	return db.ethState.Persist(receiver)
 }
 
 // ResetBlockState resets the in-memory block's processing state.
 func (db *Database) ResetBlockState(receiver common.Address) error {
 	db.logger.Debug("Resetting ethereum DB state", "receiver", receiver.Hex())
-
 	return db.ethState.ResetBlockState(receiver)
 }
 
