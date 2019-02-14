@@ -15,37 +15,67 @@ const (
 
 // Metrics contains metrics exposed by this package.
 type Metrics struct {
-	// Height of the chain.
-	Height metrics.Gauge
-	NodeTxsTotalCounter metrics.Counter
+	// ChaindbHeight of the chain.
+	ChaindbHeight       metrics.Gauge
+	ChaindbNonce        metrics.Gauge
+	BroadcastedTxsTotal metrics.Counter
+	PersistedTxsTotal   metrics.Counter
+	ExecutedTxsTotal    metrics.Counter
 }
 
 func PrometheusMetrics(registry *prometheus.Registry, namespace string, labelsAndValues ...string) *Metrics {
-	HeightMetric := NewGaugeMetric(registry, prometheus.GaugeOpts{
+	ChaindbHeight := NewGaugeMetric(registry, prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: MetricsSubsystem,
-		Name:      "height",
-		Help:      "Height of the chain.",
+		Name:      "chaindb_height",
+		Help:      "Height of the chaindb.",
 	}, labelsAndValues...)
-	
-	NodeTxsTotalCounter := NewCounterMetric(registry, prometheus.CounterOpts{
+
+	ChaindbNonce := NewGaugeMetric(registry, prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: MetricsSubsystem,
-		Name:      "node_txs_total_counter",
-		Help:      "Local captured txs.",
+		Name:      "chaindb_nonce",
+		Help:      "Nonce of the chaindb",
+	}, labelsAndValues...)
+
+	BroadcastedTxTotal := NewCounterMetric(registry, prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: MetricsSubsystem,
+		Name:      "broadcasted_txs_total_counter",
+		Help:      "Broadcasted txs total.",
+	}, labelsAndValues...)
+
+	PersistedTxsTotal := NewCounterMetric(registry, prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: MetricsSubsystem,
+		Name:      "persisted_txs_total_counter",
+		Help:      "Persisted txs total",
+	}, labelsAndValues...)
+
+	ExecutedTxsTotal := NewCounterMetric(registry, prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: MetricsSubsystem,
+		Name:      "executed_txs_total_counter",
+		Help:      "Executed txs total.",
 	}, labelsAndValues...)
 
 	return &Metrics{
-		Height: HeightMetric,
-		NodeTxsTotalCounter: NodeTxsTotalCounter,
+		ChaindbHeight:       ChaindbHeight,
+		ChaindbNonce:        ChaindbNonce,
+		BroadcastedTxsTotal: BroadcastedTxTotal,
+		PersistedTxsTotal:   PersistedTxsTotal,
+		ExecutedTxsTotal:    ExecutedTxsTotal,
 	}
 }
 
 // NopMetrics returns no-op Metrics.
 func NopMetrics() *Metrics {
 	return &Metrics{
-		Height: discard.NewGauge(),
-		NodeTxsTotalCounter: discard.NewCounter(),
+		ChaindbHeight:       discard.NewGauge(),
+		ChaindbNonce:        discard.NewGauge(),
+		BroadcastedTxsTotal: discard.NewCounter(),
+		PersistedTxsTotal:   discard.NewCounter(),
+		ExecutedTxsTotal:    discard.NewCounter(),
 	}
 }
 

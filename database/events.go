@@ -16,13 +16,13 @@ const (
 func (db *Database) txBroadcastLoop() {
 	db.ethTxsCh = make(chan core.NewTxsEvent, txChanSize)
 	db.ethTxSub = db.eth.TxPool().SubscribeNewTxsEvent(db.ethTxsCh)
-	db.metrics.NodeTxsTotalCounter.Add(0)
+	db.metrics.BroadcastedTxsTotal.Add(0)
 	
 	db.waitForTendermint()
 
 	for obj := range db.ethTxsCh {
 		db.logger.Debug("Captured NewTxsEvent from pool")
-		db.metrics.NodeTxsTotalCounter.Add(1)
+		db.metrics.BroadcastedTxsTotal.Add(1)
 		for _, tx := range obj.Txs {
 			if err := db.consAPI.BroadcastTx(*tx); err != nil {
 				db.logger.Error("Error broadcasting tx", "err", err)

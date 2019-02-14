@@ -75,14 +75,16 @@ func (db *Database) Config() *eth.Config {
 // ExecuteTx appends a transaction to the current block.
 func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
 	db.logger.Info("Executing DB TX", "hash", tx.Hash().Hex(), "nonce", tx.Nonce())
-
+	db.metrics.ExecutedTxsTotal.Add(1)
+	db.metrics.ChaindbNonce.Set(float64(tx.Nonce()))
 	return db.ethState.ExecuteTx(tx)
 }
 
 // Persist finalises the current block and writes it to disk.
 func (db *Database) Persist(receiver common.Address) (common.Hash, error) {
 	db.logger.Info("Persisting DB state", "data", db.ethState.blockState)
-	db.metrics.Height.Set(float64(db.ethState.blockState.header.Number.Uint64()))
+	db.metrics.PersistedTxsTotal.Add(float64(len(db.ethState.blockState.transactions)))
+	db.metrics.ChaindbHeight.Set(float64(db.ethState.blockState.header.Number.Uint64()))
 	return db.ethState.Persist(receiver)
 }
 
@@ -94,6 +96,7 @@ func (db *Database) ResetBlockState(receiver common.Address) error {
 
 // UpdateBlockState uses the tendermint header to update the eth header.
 func (db *Database) UpdateBlockState(tmHeader *tmtAbciTypes.Header) {
+	db.logger.Debug("Updated ethereum DB state")
 	db.ethState.UpdateBlockState(
 		db.eth.APIBackend.ChainConfig(),
 		uint64(tmHeader.Time.Unix()),
