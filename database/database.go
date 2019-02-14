@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/node"
 	"github.com/ethereum/go-ethereum/p2p"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/eth/downloader"
 
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
@@ -75,14 +74,14 @@ func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDel
 
 // Persist finalises the current block and writes it to disk.
 func (db *Database) Persist(receiver common.Address) (common.Hash, error) {
-	log.Info("Persisting DB state", "data", db.ethState.blockState)
+	db.logger.Info("Persisting DB state", "data", db.ethState.blockState)
 
 	return db.ethState.Persist(receiver)
 }
 
 // ResetBlockState resets the in-memory block's processing state.
 func (db *Database) ResetBlockState(receiver common.Address) error {
-	log.Debug("Resetting ethereum DB state", "receiver", receiver.Hex())
+	db.logger.Debug("Resetting ethereum DB state", "receiver", receiver.Hex())
 
 	return db.ethState.ResetBlockState(receiver)
 }

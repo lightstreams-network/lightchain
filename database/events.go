@@ -2,7 +2,6 @@ package database
 
 import (
 	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/log"
 	"time"
 
 )
@@ -21,11 +20,11 @@ func (db *Database) txBroadcastLoop() {
 	db.waitForTendermint()
 
 	for obj := range db.ethTxsCh {
-		log.Debug("Captured NewTxsEvent from pool")
+		db.logger.Debug("Captured NewTxsEvent from pool")
 
 		for _, tx := range obj.Txs {
 			if err := db.consAPI.BroadcastTx(*tx); err != nil {
-				log.Error("Error broadcasting tx", "err", err)
+				db.logger.Error("Error broadcasting tx", "err", err)
 			}
 		}
 	}
@@ -39,9 +38,9 @@ func (db *Database) waitForTendermint() {
 			break
 		}
 
-		log.Info("Waiting for tendermint endpoint to start", "err", err, "result", status)
+		db.logger.Info("Waiting for tendermint endpoint to start", "err", err, "result", status)
 		time.Sleep(time.Second * 3)
 	}
 
-	log.Info("Lightchain DB successfully connected to the Tendermint HTTP service.", "info", "Success")
+	db.logger.Info("Lightchain DB successfully connected to the Tendermint HTTP service.", "info", "Success")
 }
