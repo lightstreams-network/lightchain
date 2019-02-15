@@ -7,9 +7,10 @@ import (
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/database"
 	"github.com/lightstreams-network/lightchain/setup"
+	"github.com/lightstreams-network/lightchain/tracer/dbtracy"
 )
 
-func Init(cfg Config, ntw setup.Network) error {
+func Init(cfg Config, ntw setup.Network, dbTracer dbtracy.Tracer) error {
 	logger := log.NewLogger().With("engine", "node")
 	logger.Info("Initializing lightchain node data dir...", "dir", cfg.DataDir)
 
@@ -21,7 +22,7 @@ func Init(cfg Config, ntw setup.Network) error {
 		return err
 	}
 
-	if err := database.Init(cfg.dbCfg, ntw); err != nil {
+	if err := database.Init(cfg.dbCfg, ntw, dbTracer); err != nil {
 		return err
 	}
 

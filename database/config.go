@@ -99,7 +99,7 @@ func (c Config) keystoreDir() string {
 	return filepath.Join(c.DataDir, KeystorePath)
 }
 
-func (c Config) chainDbDir() string {
+func (c Config) ChainDbDir() string {
 	return filepath.Join(c.DataDir, ChainDbPath)
 }
 
