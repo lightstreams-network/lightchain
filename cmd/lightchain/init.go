@@ -14,8 +14,9 @@ import (
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/lightstreams-network/lightchain/setup"
+	"github.com/lightstreams-network/lightchain/tracer/dbtracy"
+	"github.com/ethereum/go-ethereum/common"
 )
-
 
 var (
 	StandAloneNetFlag = cli.BoolFlag{
@@ -42,11 +43,13 @@ func initCmd() *cobra.Command {
 	addDefaultFlags(initCmd)
 	initCmd.Flags().Bool(StandAloneNetFlag.Name, false, DataDirFlag.Usage)
 	initCmd.Flags().Bool(SiriusNetFlag.Name, false, SiriusNetFlag.Usage)
+	initCmd.Flags().Bool(TraceFlag.Name, false, TraceFlag.Usage)
+	initCmd.Flags().String(TraceLogFlag.Name, filepath.Join(os.TempDir(), "tracer.log"), TraceLogFlag.Usage)
+
 	return initCmd
 }
 
 func initCmdRun(cmd *cobra.Command, args []string) {
-	var network setup.Network;
 	lvlStr, _ := cmd.Flags().GetString(LogLvlFlag.Name)
 	if lvl, err := ethLog.LvlFromString(lvlStr); err == nil {
 		log.SetupLogger(lvl)
@@ -55,17 +58,29 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 	dataDir, _ := cmd.Flags().GetString(DataDirFlag.Name)
 	useStandAloneNet, _ := cmd.Flags().GetBool(StandAloneNetFlag.Name)
 	useSiriusNet, _ := cmd.Flags().GetBool(SiriusNetFlag.Name)
-	
+	shouldTrace, _ := cmd.Flags().GetBool(TraceFlag.Name)
+	traceLogFilePath, _ := cmd.Flags().GetString(TraceLogFlag.Name)
+
+	if shouldTrace {
+		logger.Info("|--------")
+		logger.Info("| Danger: Tracing enabled is not recommended in production!")
+		logger.Info(fmt.Sprintf("| Tracing output is configured to be persisted at %v", traceLogFilePath))
+		logger.Info("|--------")
+	}
+
+	var network setup.Network
 	if useStandAloneNet && useSiriusNet {
-		logger.Error(fmt.Errorf("Multiple network selected: %s, %s", setup.SiriusNetwork, setup.StandaloneNetwork).Error())
+		logger.Error(fmt.Errorf("multiple networks selected: %s, %s", setup.SiriusNetwork, setup.StandaloneNetwork).Error())
 		os.Exit(1)
-	} else if (useStandAloneNet) {
+	} else if useStandAloneNet {
 		network = setup.StandaloneNetwork
-	} else if (useSiriusNet) {
+	} else if useSiriusNet {
 		network = setup.SiriusNetwork
 	} else {
 		network = setup.SiriusNetwork
 	}
+
+	dbDataDir := filepath.Join(dataDir, database.DataDirPath)
 	
 	consensusCfg := consensus.NewConfig(
 		filepath.Join(dataDir, consensus.DataDirName),
@@ -74,18 +89,26 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 		TendermintP2PListenPort,
 		TendermintProxyProtocol,
 	)
-	
-	dbDataDir := filepath.Join(dataDir, database.DataDirPath)
-	ctx := newNodeClientCtx(dbDataDir, cmd)
 
-	dbCfg, err := database.NewConfig(dbDataDir, ctx)
+	dbCfg, err := database.NewConfig(dbDataDir, newNodeClientCtx(dbDataDir, cmd))
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
 
 	nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg)
-	if err := node.Init(nodeCfg, network); err != nil {
+
+	if common.FileExist(traceLogFilePath) {
+		os.Remove(traceLogFilePath)
+	}
+
+	dbTracer, err := dbtracy.New(shouldTrace, nodeCfg.DbChainDir(), traceLogFilePath)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
+	if err := node.Init(nodeCfg, network, dbTracer); err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}

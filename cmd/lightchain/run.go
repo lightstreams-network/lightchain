@@ -101,7 +101,7 @@ func runCmd() *cobra.Command {
 			
 			common.TrapSignal(func() {
 				if err := lightChainNode.Stop(); err != nil {
-					logger.Error(fmt.Errorf("error stopping Tendermint service. %v", err).Error())
+					logger.Error(fmt.Errorf("error stopping lightchain node. %v", err).Error())
 				}
 				os.Exit(1)
 			})

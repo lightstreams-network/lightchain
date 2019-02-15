@@ -174,7 +174,11 @@ Lightchain `datadir` is split into two main folder:
 To know more about how Lightchain works and how Tendermint is integrated to perform the PoA, visit our repository [wiki](https://github.com/lightstreams-network/lightchain/wiki)
 
 ## Tests
-[Read how to run tests](truffle/README.md)
+### Running Web3 tests verifying blockchain functionalities
+[Read how to run Web3 tests](truffle/README.md)
+
+### Running Lightchain Tracer asserting blockchain internals, state, DB
+[Read how to run the Tracer](TRACER.md)
 
 ## Credit & Licenses
 

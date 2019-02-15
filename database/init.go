@@ -12,9 +12,10 @@ import (
 	ethCore "github.com/ethereum/go-ethereum/core"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
 	"github.com/lightstreams-network/lightchain/log"
+	"github.com/lightstreams-network/lightchain/tracer/dbtracy"
 )
 
-func Init(cfg Config, ntw setup.Network) error {
+func Init(cfg Config, ntw setup.Network, dbTracer dbtracy.Tracer) error {
 	logger := log.NewLogger().With("engine", "database")
 	keystoreDir := cfg.keystoreDir()
 	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
@@ -60,14 +61,22 @@ func Init(cfg Config, ntw setup.Network) error {
 	}
 	logger.Info("Generated genesis block", "path", cfg.genesisPath())
 
-	chainDataDir := cfg.chainDbDir()
-	chainDb, err := ethdb.NewLDBDatabase(chainDataDir, 0, 0)
+	chainDb, err := ethdb.NewLDBDatabase(cfg.ChainDbDir(), 0, 0)
+	if err != nil {
+		err = fmt.Errorf("failed to open LDBD DB: %v", err)
+		return err
+	}
+
 	_, hash, err := ethCore.SetupGenesisBlock(chainDb, genesis)
 	if err != nil {
 		err = fmt.Errorf("failed to write genesis block: %v", err)
 		return err
 	}
-	logger.Info("Successfully wrote genesis block and/or chain rule set", "hash", hash)
+	chainDb.Close()
+
+	logger.Info("Successfully persisted genesis block!", "hash", hash)
+
+	dbTracer.AssertPersistedGenesisBlock(*genesis)
 	
 	return nil
 }

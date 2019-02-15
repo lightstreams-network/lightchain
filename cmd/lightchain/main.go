@@ -29,6 +29,16 @@ var (
 		Usage: "Level of logging",
 		Value: ethLog.LvlInfo.String(),
 	}
+
+	TraceFlag = cli.BoolFlag{
+		Name:  "trace",
+		Usage: "Whenever to be asserting and reporting blockchain state in real-time (testing, debugging purposes)",
+	}
+
+	TraceLogFlag = cli.BoolFlag{
+		Name:  "tracelog",
+		Usage: "The filepath to a log file where all tracing output will be persisted",
+	}
 )
 
 func main() {

@@ -30,6 +30,10 @@
   branch = "master"
   name = "github.com/mitchellh/go-homedir"
 
+[[constraint]]
+  name = "go.uber.org/zap"
+  version = "1.8.0"
+
 [prune]
   non-go = true
   go-tests = true
