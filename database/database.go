@@ -31,7 +31,7 @@ type Database struct {
 	ethState *EthState
 
 	consAPI consensusAPI.API
-	logger tmtLog.Logger
+	logger  tmtLog.Logger
 	metrics *Metrics
 }
 
@@ -74,9 +74,11 @@ func (db *Database) Config() *eth.Config {
 
 // ExecuteTx appends a transaction to the current block.
 func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
-	db.logger.Info("Executing DB TX", "hash", tx.Hash().Hex(), "nonce", tx.Nonce())
 	db.metrics.ExecutedTxsTotal.Add(1)
-	db.metrics.ChaindbNonce.Set(float64(tx.Nonce()))
+	db.logger.Info("Executing DB TX", "hash", tx.Hash().Hex(), "nonce", tx.Nonce())
+	db.metrics.TxsCostTotal.Add(float64(tx.Cost().Uint64()))
+	db.metrics.TxsGasTotal.Add(float64(tx.Gas() * tx.GasPrice().Uint64()))
+	db.metrics.TxsSizeTotal.Add(float64(tx.Size()))
 	return db.ethState.ExecuteTx(tx)
 }
 
@@ -89,7 +91,7 @@ func (db *Database) Persist(receiver common.Address) (common.Hash, error) {
 }
 
 // ResetBlockState resets the in-memory block's processing state.
-func (db *Database) ResetBlockState(receiver common.Address) error {
+func (db *Database) ResetBlockState(receiver common.Address) error { 
 	db.logger.Debug("Resetting ethereum DB state", "receiver", receiver.Hex())
 	return db.ethState.ResetBlockState(receiver)
 }

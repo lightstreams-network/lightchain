@@ -17,11 +17,12 @@ import (
 
 var (
 	DataDirPath = "database"
-	
+	NodeName = "lightchain"
 	// IMPORTANT: Following three values needs to correspond to the internal values used by go-ethereum
 	KeystorePath = "keystore"
 	ChainDbPath = "chaindata" // it needs to match to the value passed at go-ethereum/eth/backend.go:CreateDB()
 	GenesisPath = "genesis.json"
+	GethIpcFile = "geth.ipc"
 	
 	blankGenesis = new(ethCore.Genesis)
 	errBlankGenesis = errors.New("could not parse a valid/non-blank Genesis")
@@ -86,14 +87,18 @@ func NewConfig(dataDir string, shouldTrace bool, tracerLogFilePath string, ctx *
 // DefaultEthNodeConfig returns the default configuration for a go-ethereum ethereum
 func DefaultEthNodeConfig(dataDir string) ethNode.Config {
 	cfg := ethNode.DefaultConfig
-	cfg.Name = "lightchain"
+	cfg.Name = NodeName
 	cfg.Version = params.Version
 	cfg.HTTPModules = append(cfg.HTTPModules, "eth")
 	cfg.WSModules = append(cfg.WSModules, "eth")
-	cfg.IPCPath = "geth.ipc"
+	cfg.IPCPath = GethIpcFile
 	cfg.DataDir = dataDir
 
 	return cfg
+}
+
+func (c Config) GethIpcPath() string {
+	return filepath.Join(c.DataDir, GethIpcFile)
 }
 
 func (c Config) keystoreDir() string {

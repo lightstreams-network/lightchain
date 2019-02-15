@@ -1,22 +1,31 @@
 package prometheus
 
 import (
-	db "github.com/lightstreams-network/lightchain/database"
 	"github.com/prometheus/client_golang/prometheus"
+
+	db "github.com/lightstreams-network/lightchain/database"
+	"github.com/lightstreams-network/lightchain/consensus"
+	ethMetrics "github.com/lightstreams-network/lightchain/metrics/ethereum"
 )
 
 type MetricsProvider struct {
-	Database *db.Metrics	
+	Database  *db.Metrics
+	Consensus *consensus.Metrics
+	EthMetrics   *ethMetrics.Metrics
 }
 
-func NewMetricsProvider(registry *prometheus.Registry, namespace string) MetricsProvider {
-	return MetricsProvider {
-		Database: db.PrometheusMetrics(registry, namespace),
+func NewMetricsProvider(registry *prometheus.Registry, namespace string, gethIpcPath string) MetricsProvider {
+	return MetricsProvider{
+		Database:   db.TrackedMetrics(registry, namespace),
+		Consensus:  consensus.TrackedMetrics(registry, namespace),
+		EthMetrics: ethMetrics.TrackedMetrics(gethIpcPath, registry, namespace),
 	}
 }
 
-func NewNopMetricsProvider() MetricsProvider {
+func NewNullMetricsProvider() MetricsProvider {
 	return MetricsProvider{
-		Database: db.NopMetrics(),
+		Database:   db.TrackedNullMetrics(),
+		Consensus:  consensus.TrackedNullMetrics(),
+		EthMetrics: ethMetrics.TrackedNullMetrics(),
 	}
 }

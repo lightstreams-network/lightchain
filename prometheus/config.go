@@ -5,9 +5,10 @@ import (
 )
 
 type Config struct {
-	enabled   bool
-	http      HttpConfig
-	namespace string
+	enabled    bool
+	http       HttpConfig
+	namespace  string
+	ethDialUrl string
 }
 
 type HttpConfig struct {
@@ -17,14 +18,15 @@ type HttpConfig struct {
 }
 
 var (
-	DefaultPrometheusAddr = ":26661"
+	DefaultPrometheusAddr      = ":26661"
 	DefaultPrometheusNamespace = "lightchain"
 )
 
-func NewConfig(enabled bool, addr string, namespace string) Config {
+func NewConfig(enabled bool, addr string, namespace string, ethDialUrl string) Config {
 	return Config{
-		enabled: enabled,
-		namespace: namespace,
+		enabled:    enabled,
+		namespace:  namespace,
+		ethDialUrl: ethDialUrl,
 		http: HttpConfig{
 			Addr:         addr,
 			ReadTimeout:  30 * time.Second,

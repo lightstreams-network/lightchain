@@ -55,6 +55,7 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 	dataDir, _ := cmd.Flags().GetString(DataDirFlag.Name)
 	useStandAloneNet, _ := cmd.Flags().GetBool(StandAloneNetFlag.Name)
 	useSiriusNet, _ := cmd.Flags().GetBool(SiriusNetFlag.Name)
+
 	shouldTrace, _ := cmd.Flags().GetBool(TraceFlag.Name)
 	traceLogFilePath, _ := cmd.Flags().GetString(TraceLogFlag.Name)
 
@@ -77,8 +78,8 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 		network = setup.SiriusNetwork
 	}
 
+
 	dbDataDir := filepath.Join(dataDir, database.DataDirPath)
-	
 	consensusCfg := consensus.NewConfig(
 		filepath.Join(dataDir, consensus.DataDirName),
 		TendermintRpcListenPort,
@@ -87,19 +88,26 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 		TendermintProxyProtocol,
 	)
 
+	dbDataDir := filepath.Join(dataDir, database.DataDirPath)
+	ctx := newNodeClientCtx(dbDataDir, cmd)
+
 	dbCfg, err := database.NewConfig(dbDataDir, shouldTrace, traceLogFilePath, newNodeClientCtx(dbDataDir, cmd))
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
 	
-	prometheusCfg := prometheus.NewConfig(false, prometheus.DefaultPrometheusAddr, prometheus.DefaultPrometheusNamespace)
+	prometheusCfg := prometheus.NewConfig(false,
+		prometheus.DefaultPrometheusAddr,
+		prometheus.DefaultPrometheusNamespace,
+		dbCfg.GethIpcPath())
+
 	nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg)
 	if err := node.Init(nodeCfg, network); err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
-	
+
 	logger.Info(fmt.Sprintf("Lightchain node successfully initialized into '%s'!", dataDir))
 	os.Exit(0)
 }

@@ -26,9 +26,9 @@ func NewNode(cfg Config) *Node {
 	registry := prometheus.NewPedanticRegistry()
 	
 	if cfg.enabled {
-		metricsProvider = NewMetricsProvider(registry, cfg.namespace)
+		metricsProvider = NewMetricsProvider(registry, cfg.namespace, cfg.ethDialUrl)
 	} else {
-		metricsProvider = NewNopMetricsProvider()
+		metricsProvider = NewNullMetricsProvider()
 	}
 
 	return &Node{

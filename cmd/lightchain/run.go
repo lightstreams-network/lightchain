@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"os"
 	"gopkg.in/urfave/cli.v1"
-	
+
 	ethLog "github.com/ethereum/go-ethereum/log"
-	
+
 	"github.com/lightstreams-network/lightchain/node"
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/database"
@@ -64,7 +64,7 @@ func runCmd() *cobra.Command {
 			if lvl, err := ethLog.LvlFromString(lvlStr); err == nil {
 				log.SetupLogger(lvl)
 			}
-			
+
 			logger.Info("Launching Lightchain node...")
 
 			dataDir, _ := cmd.Flags().GetString(DataDirFlag.GetName())
@@ -74,7 +74,7 @@ func runCmd() *cobra.Command {
 			p2pListenPort, _ := cmd.Flags().GetUint(ConsensusP2PListenPortFlag.GetName())
 			proxyListenPort, _ := cmd.Flags().GetUint(ConsensusProxyListenPortFlag.GetName())
 			proxyProtocol, _ := cmd.Flags().GetString(ConsensusProxyProtocolFlag.GetName())
-			prometheusEnabled, _ := cmd.Flags().GetBool(PrometheusFlag.GetName())
+			enablePrometheus, _ := cmd.Flags().GetBool(PrometheusFlag.GetName())
 			databaseDataDir := filepath.Join(dataDir, database.DataDirPath)
 
 			consensusCfg := consensus.NewConfig(
@@ -84,7 +84,7 @@ func runCmd() *cobra.Command {
 				proxyListenPort,
 				proxyProtocol,
 			)
-			
+
 			// Fake cli.context required by Ethereum node
 			ctx := newNodeClientCtx(databaseDataDir, cmd)
 			dbCfg, err := database.NewConfig(databaseDataDir, shouldTrace, traceLogFilePath, ctx)
@@ -92,9 +92,12 @@ func runCmd() *cobra.Command {
 				logger.Error(fmt.Errorf("database node config could not be created: %v", err).Error())
 				os.Exit(1)
 			}
-			
-			prometheusCfg := prometheus.NewConfig(prometheusEnabled, prometheus.DefaultPrometheusAddr, prometheus.DefaultPrometheusNamespace)
-			
+
+			prometheusCfg := prometheus.NewConfig(enablePrometheus,
+				prometheus.DefaultPrometheusAddr,
+				prometheus.DefaultPrometheusNamespace,
+				dbCfg.GethIpcPath())
+
 			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg)
 
 			lightChainNode, err := node.NewNode(&nodeCfg)
@@ -102,13 +105,13 @@ func runCmd() *cobra.Command {
 				logger.Error(fmt.Errorf("lightchain node could not be instantiated: %v", err).Error())
 				os.Exit(1)
 			}
-			
+
 			logger.Debug("Starting lightchain node...")
 			if err := lightChainNode.Start(); err != nil {
 				logger.Error(fmt.Errorf("lightchain node could not be started: %v", err).Error())
 				os.Exit(1)
 			}
-			
+
 			common.TrapSignal(func() {
 				if err := lightChainNode.Stop(); err != nil {
 					logger.Error(fmt.Errorf("error stopping lightchain node. %v", err).Error())
@@ -135,4 +138,3 @@ func addConsensusFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint(ConsensusProxyListenPortFlag.GetName(), ConsensusProxyListenPortFlag.Value, ConsensusProxyListenPortFlag.Usage)
 	cmd.Flags().String(ConsensusProxyProtocolFlag.GetName(), ConsensusProxyProtocolFlag.Value, ConsensusProxyProtocolFlag.Usage)
 }
-

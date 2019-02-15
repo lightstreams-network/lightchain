@@ -4,7 +4,7 @@ This is the official Lightstreams implementation of a proof-of-authority (PoA) b
 
 ## About Lightstreams
 
-We are currently working hard to release the **Lightstream main network** which aims to provide a fast, privacy-enabled, content-sharing blockchain. Stay tuned about our project's progress by reading [the lightstreams blog](https://medium.com/lightstreams) or by checking out the [Lightstreams' website](https://www.lightstreams.network).
+We are currently working hard to release the **Lightstreams main network** which aims to provide a fast, privacy-enabled, content-sharing blockchain. Stay tuned about our project's progress by reading [the lightstreams blog](https://medium.com/lightstreams) or by checking out the [Lightstreams' website](https://www.lightstreams.network).
 
 ## Documentation
 
@@ -84,6 +84,7 @@ Flags:
       --abci_protocol string   socket | grpc (default "socket")
       --datadir string         Data directory for the databases and keystore (default "/home/a/lightchain")
   -h, --help                   help for run
+      --prometheus             Enable prometheus metrics exporter
       --lvl string             Level of logging (default "info")
       --rpc                    Enable the HTTP-RPC server
       --rpcaddr string         HTTP-RPC server listening interface (default "localhost")
@@ -106,6 +107,56 @@ lightchain init --datadir "${HOME}/.lightchain" --standalone
 ```
 
 At the genesis block, the account `0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e`has been initialized with _300M Photons_. The passphrase is `WelcomeToSirius`
+
+## Metrics
+### Prometheus Exporter
+
+Lightchain node ingrate prometheus to track and export inner metrics
+regarding the execution of the current node. To enable the prometheus exporter
+you need to include `--prometheus` flag during the initialization of the node
+``
+lightchain run --datadir ${LIGHTCHAIN_DATA_DIR} --prometheus
+``
+
+Then you can access to executed prometheus exported at 
+[`http://localhost:26661/metrics`](http://localhost:26661/metrics)
+
+**Sample output**
+```
+...
+# HELP lightchain_consensus_check_txs_total_counter Checked txs total
+# TYPE lightchain_consensus_check_txs_total_counter counter
+lightchain_consensus_check_txs_total_counter{module="abci"} 26
+# HELP lightchain_consensus_commit_block_total_counter Commited txs total
+# TYPE lightchain_consensus_commit_block_total_counter counter
+lightchain_consensus_commit_block_total_counter{module="abci"} 64
+# HELP lightchain_consensus_deliver_txs_total_counter Delivered txs total
+# TYPE lightchain_consensus_deliver_txs_total_counter counter
+lightchain_consensus_deliver_txs_total_counter{module="abci"} 25
+# HELP lightchain_database_broadcasted_txs_total_counter Broadcasted txs total.
+# TYPE lightchain_database_broadcasted_txs_total_counter counter
+lightchain_database_broadcasted_txs_total_counter 26
+...
+```
+
+### Tendermint Prometheus Exporter
+If you want to also launch a prometheus exporter for tendermint service
+you need to enable it in `{DATADIR}/consensus/config/config.tolm`:
+```
+##### instrumentation configuration options #####
+[instrumentation]
+
+# When true, Prometheus metrics are served under /metrics on
+# PrometheusListenAddr.
+# Check out the documentation for the list of available metrics.
+prometheus = true
+
+# Address to listen for Prometheus collector(s) connections
+prometheus_listen_addr = ":26660"
+...
+```
+In this case the `tendermint` prometheus exported is going to be exposed over:
+[`http://locahost:26660/metrics`](http://locahost:26660/metrics)
 
 ## Applications
 

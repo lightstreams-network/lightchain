@@ -22,9 +22,10 @@ type Node struct {
 	nodeKey    *tmtP2P.NodeKey
 	cfg        *Config
 	logger     tmtLog.Logger
+	metrics *Metrics
 }
 
-func NewNode(cfg *Config) (*Node, error) {
+func NewNode(cfg *Config, metrics *Metrics) (*Node, error) {
 	logger := log.NewLogger().With("engine", "consensus")
 
 	nodeKeyFile := cfg.tendermintCfg.NodeKeyFile()
@@ -43,12 +44,13 @@ func NewNode(cfg *Config) (*Node, error) {
 		nodeKey,
 		cfg,
 		logger,
+		metrics,
 	}, nil
 }
 
 func (n *Node) Start(ethRPCClient *ethRpc.Client, db *database.Database) error {
 	n.logger.Debug("Creating tendermint ABCI application...")
-	tendermintABCI, err := NewTendermintABCI(db, ethRPCClient)
+	tendermintABCI, err := NewTendermintABCI(db, ethRPCClient, n.metrics)
 	if err != nil {
 		return err
 	}

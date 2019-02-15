@@ -24,7 +24,7 @@ func NewNode(cfg *Config) (*Node, error) {
 	prometheusNode := prometheus.NewNode(cfg.prometheusCfg)
 	
 	logger.Debug("Initializing consensus node...")
-	consensusNode, err := consensus.NewNode(&cfg.consensusCfg)
+	consensusNode, err := consensus.NewNode(&cfg.consensusCfg, prometheusNode.MetricProvider().Consensus)
 	if err != nil {
 		return nil, err
 	}
