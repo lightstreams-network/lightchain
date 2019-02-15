@@ -13,14 +13,15 @@ You can find more detailed documentation in the [lightchain CLI reference docume
 ## Pre-requirements
 
 - Go >= 1.10
-- deps
+- dep (Go dependence manager) [Installation guide](https://golang.github.io/dep/docs/installation.html)
 
 ## Installation
 
 To install `lightchain` in your system just run following commands:
 ```
-go get -u github.com/lightstreams-network/lightchain
-cd ${GOPATH}/src/github.com/lightstreams-network/lightchain
+cd ${GOPATH}/src/github.com/lightstreams-network
+git clone https://github.com/lightstreams-network/lightchain.git ./lightchain
+cd ./lightchain
 make get_vendor_deps
 make install
 ```
