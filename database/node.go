@@ -19,13 +19,13 @@ type Node struct {
 	rpcClient *ethRpc.Client
 	cfg       *Config
 	logger    tmtLog.Logger
-	metrics *Metrics
+	metrics   *Metrics
 }
 
 // NewNode creates a new node.
 func NewNode(cfg *Config, consensusAPI conAPI.API, metrics *Metrics) (*Node, error) {
 	logger := log.NewLogger().With("engine", "database")
-	
+
 	// @TODO Investigate why Genesis file is not automatically loaded
 	var err error
 	cfg.GethCfg.EthCfg.Genesis, err = readGenesisFile(cfg.genesisPath())
@@ -61,7 +61,7 @@ func NewNode(cfg *Config, consensusAPI conAPI.API, metrics *Metrics) (*Node, err
 	}); err != nil {
 		return &n, err
 	}
-	
+
 	return &n, nil
 }
 

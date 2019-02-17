@@ -3,7 +3,7 @@ package database
 import (
 	
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/lightstreams-network/lightchain/metrics"
+	"github.com/lightstreams-network/lightchain/prometheus/metrics"
 )
 
 const (
@@ -16,9 +16,9 @@ type Metrics struct {
 	BroadcastedTxsTotal metrics.Counter
 	PersistedTxsTotal   metrics.Counter
 	ExecutedTxsTotal    metrics.Counter
-	TxsSizeTotal       metrics.Gauge
-	TxsCostTotal       metrics.Gauge
-	TxsGasTotal        metrics.Gauge
+	TxsSizeTotal        metrics.Gauge
+	TxsCostTotal        metrics.Gauge
+	TxsGasTotal         metrics.Gauge
 }
 
 func TrackedMetrics(registry *prometheus.Registry, namespace string, labelsAndValues ...string) *Metrics {
@@ -82,15 +82,16 @@ func TrackedMetrics(registry *prometheus.Registry, namespace string, labelsAndVa
 	}
 }
 
-// NopMetrics returns no-op Metrics.
+// NopMetrics returns no-op metrics.
 func TrackedNullMetrics() *Metrics {
 	return &Metrics{
 		ChaindbHeight:       metrics.NewGaugeDiscard(),
 		BroadcastedTxsTotal: metrics.NewCounterDiscard(),
 		PersistedTxsTotal:   metrics.NewCounterDiscard(),
 		ExecutedTxsTotal:    metrics.NewCounterDiscard(),
-		TxsSizeTotal:       metrics.NewGaugeDiscard(),
-		TxsCostTotal:       metrics.NewGaugeDiscard(),
-		TxsGasTotal:        metrics.NewGaugeDiscard(),
+		TxsSizeTotal:        metrics.NewGaugeDiscard(),
+		TxsCostTotal:        metrics.NewGaugeDiscard(),
+		TxsGasTotal:         metrics.NewGaugeDiscard(),
 	}
 }
+

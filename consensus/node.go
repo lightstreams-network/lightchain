@@ -22,7 +22,7 @@ type Node struct {
 	nodeKey    *tmtP2P.NodeKey
 	cfg        *Config
 	logger     tmtLog.Logger
-	metrics *Metrics
+	metrics    *Metrics
 }
 
 func NewNode(cfg *Config, metrics *Metrics) (*Node, error) {
@@ -32,7 +32,7 @@ func NewNode(cfg *Config, metrics *Metrics) (*Node, error) {
 	if ! tmtCommon.FileExists(nodeKeyFile) {
 		return nil, fmt.Errorf("tendermint key file does not exists")
 	}
-	
+
 	nodeKey, err := p2p.LoadOrGenNodeKey(nodeKeyFile)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func (n *Node) Start(ethRPCClient *ethRpc.Client, db *database.Database) error {
 	if err != nil {
 		return err
 	}
-	
+
 	n.tendermint = tendermint
 	n.logger.Info("Starting tendermint node...")
 	if err := n.tendermint.Start(); err != nil {
@@ -111,7 +111,7 @@ func (n *Node) Stop() error {
 		<-n.tendermint.Quit()
 		n.logger.Info("Tendermint node stopped")
 	}
-	
+
 	if n.abci.IsRunning() {
 		n.logger.Info("Stopping ABCI service...")
 		if err := n.abci.Stop(); err != nil {

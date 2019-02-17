@@ -2,12 +2,12 @@ package consensus
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/lightstreams-network/lightchain/metrics"
+	"github.com/lightstreams-network/lightchain/prometheus/metrics"
 )
 
 const (
-	// MetricsSubsystem is a subsystem shared by all metrics exposed by this package.
-	MetricsSubsystem = "consensus"
+	// metricsSubsystem is a subsystem shared by all metrics exposed by this package.
+	metricsSubsystem = "consensus"
 )
 
 var (
@@ -28,42 +28,42 @@ func TrackedMetrics(registry *prometheus.Registry, namespace string, labelsAndVa
 
 	checkTxsTotal := metrics.NewCounterMetric(registry, prometheus.CounterOpts{
 		Namespace: namespace,
-		Subsystem: MetricsSubsystem,
+		Subsystem: metricsSubsystem,
 		Name:      "check_txs_total_counter",
 		Help:      "Checked txs total",
 	}, append(labelsAndValues, ModuleAbciLabelAndValues...)...)
 
 	checkErrTxsTotal := metrics.NewCounterSetMetric(registry, prometheus.CounterOpts{
 		Namespace: namespace,
-		Subsystem: MetricsSubsystem,
+		Subsystem: metricsSubsystem,
 		Name:      "check_err_txs_total_counter",
 		Help:      "Checked error txs total.",
 	}, []string{"error_code"}, append(labelsAndValues, ModuleAbciLabelAndValues...)...)
 
 	deliverTxsTotal := metrics.NewCounterMetric(registry, prometheus.CounterOpts{
 		Namespace: namespace,
-		Subsystem: MetricsSubsystem,
+		Subsystem: metricsSubsystem,
 		Name:      "deliver_txs_total_counter",
 		Help:      "Delivered txs total",
 	}, append(labelsAndValues, ModuleAbciLabelAndValues...)...)
 
 	deliverErrTxsTotal := metrics.NewCounterSetMetric(registry, prometheus.CounterOpts{
 		Namespace: namespace,
-		Subsystem: MetricsSubsystem,
+		Subsystem: metricsSubsystem,
 		Name:      "deliver_err_txs_total_counter",
 		Help:      "Delivered error txs total.",
 	}, []string{"error_code"}, append(labelsAndValues, ModuleAbciLabelAndValues...)...)
 
 	commitBlockTotal := metrics.NewCounterMetric(registry, prometheus.CounterOpts{
 		Namespace: namespace,
-		Subsystem: MetricsSubsystem,
+		Subsystem: metricsSubsystem,
 		Name:      "commit_block_total_counter",
 		Help:      "Commited txs total",
 	}, append(labelsAndValues, ModuleAbciLabelAndValues...)...)
 
 	commitErrBlockTotal := metrics.NewCounterSetMetric(registry, prometheus.CounterOpts{
 		Namespace: namespace,
-		Subsystem: MetricsSubsystem,
+		Subsystem: metricsSubsystem,
 		Name:      "commit_err_block_total_counter",
 		Help:      "Commited error txs total.",
 	}, []string{"error_code"}, append(labelsAndValues, ModuleAbciLabelAndValues...)...)

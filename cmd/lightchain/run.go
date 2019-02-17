@@ -93,7 +93,8 @@ func runCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			prometheusCfg := prometheus.NewConfig(enablePrometheus,
+			prometheusCfg := prometheus.NewConfig(
+				enablePrometheus,
 				prometheus.DefaultPrometheusAddr,
 				prometheus.DefaultPrometheusNamespace,
 				dbCfg.GethIpcPath())

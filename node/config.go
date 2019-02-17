@@ -13,11 +13,7 @@ type Config struct {
 	prometheusCfg prometheus.Config
 }
 
-func NewConfig(dataDir string,
-	consensusCfg consensus.Config,
-	dbCfg database.Config,
-	prometheusCfg prometheus.Config,
-) Config {
+func NewConfig(dataDir string, consensusCfg consensus.Config, dbCfg database.Config, prometheusCfg prometheus.Config) Config {
 	return Config {
 		dataDir,
 		consensusCfg,

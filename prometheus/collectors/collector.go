@@ -1,4 +1,4 @@
-package collector
+package collectors
 
 import (
 	"log"
@@ -11,27 +11,31 @@ var (
 	EthereumMetricsSubsystem = "ethereum"
 )
 
-type Metrics struct {
+type Collectors struct {
 	EthPendingBlockTransactions *EthPendingBlockTransactions
 	EthSyncing                  *EthSyncing
+	EthGenesisBalance           *EthGenesisBalance
 }
 
-func TrackedMetrics(ethDialUrl string, registry *prometheus.Registry, namespace string) *Metrics {
+func EthCollectors(ethDialUrl string, registry *prometheus.Registry, namespace string) *Collectors {
 	colEthPendingBlockTransactions := NewEthPendingBlockTransactions(ethDialUrl, namespace)
 	colEthSyncing := NewEthSyncing(ethDialUrl, namespace)
+	colEthGenesisBalance := NewEthGenesisBalance(ethDialUrl, namespace)
 
 	registry.Register(colEthPendingBlockTransactions)
 	registry.Register(colEthSyncing)
+	registry.Register(colEthGenesisBalance)
 
-	return &Metrics{
+	return &Collectors{
 		EthPendingBlockTransactions: colEthPendingBlockTransactions,
 		EthSyncing:                  colEthSyncing,
+		EthGenesisBalance:           colEthGenesisBalance,
 	}
 }
 
 // NopMetrics returns no-op 
-func TrackedNullMetrics() *Metrics {
-	return &Metrics{}
+func EthNullCollectors() *Collectors {
+	return &Collectors{}
 }
 
 // Dial connects to network and returns directly the official ETH connected Client.

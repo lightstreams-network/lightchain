@@ -79,7 +79,6 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 	}
 
 
-	dbDataDir := filepath.Join(dataDir, database.DataDirPath)
 	consensusCfg := consensus.NewConfig(
 		filepath.Join(dataDir, consensus.DataDirName),
 		TendermintRpcListenPort,
@@ -89,8 +88,6 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 	)
 
 	dbDataDir := filepath.Join(dataDir, database.DataDirPath)
-	ctx := newNodeClientCtx(dbDataDir, cmd)
-
 	dbCfg, err := database.NewConfig(dbDataDir, shouldTrace, traceLogFilePath, newNodeClientCtx(dbDataDir, cmd))
 	if err != nil {
 		logger.Error(err.Error())

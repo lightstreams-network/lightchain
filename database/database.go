@@ -1,6 +1,8 @@
 package database
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/eth"
@@ -15,6 +17,8 @@ import (
 	dbAPI "github.com/lightstreams-network/lightchain/database/api"
 	consensusAPI "github.com/lightstreams-network/lightchain/consensus/api"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
+	
+	"github.com/lightstreams-network/lightchain/prometheus/metrics"
 )
 
 // Database manages the underlying ethereum state for storage and processing
@@ -41,7 +45,6 @@ func NewDatabase(ctx *node.ServiceContext,
 	logger tmtLog.Logger,
 	metrics *Metrics,
 ) (*Database, error) {
-
 	ethereum, err := eth.New(ctx, ethCfg)
 	if err != nil {
 		return nil, err
@@ -76,8 +79,14 @@ func (db *Database) Config() *eth.Config {
 func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
 	db.metrics.ExecutedTxsTotal.Add(1)
 	db.logger.Info("Executing DB TX", "hash", tx.Hash().Hex(), "nonce", tx.Nonce())
-	db.metrics.TxsCostTotal.Add(float64(tx.Cost().Uint64()))
-	db.metrics.TxsGasTotal.Add(float64(tx.Gas() * tx.GasPrice().Uint64()))
+	
+	txCost, _ := metrics.Web3FromWei(tx.Cost()).Float64()
+	db.metrics.TxsCostTotal.Add(txCost)
+	
+	txGasWei := new(big.Int).Mul(big.NewInt(int64(tx.Gas())), tx.GasPrice())
+	txGas, _ := metrics.Web3FromWei(txGasWei).Float64()
+	db.metrics.TxsGasTotal.Add(txGas)
+
 	db.metrics.TxsSizeTotal.Add(float64(tx.Size()))
 	return db.ethState.ExecuteTx(tx)
 }
