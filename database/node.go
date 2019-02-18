@@ -27,13 +27,13 @@ func NewNode(cfg *Config, consensusAPI conAPI.API) (*Node, error) {
 	
 	// @TODO Investigate why Genesis file is not automatically loaded
 	var err error
-	cfg.GethConfig.EthCfg.Genesis, err = readGenesisFile(cfg.genesisPath())
+	cfg.GethCfg.EthCfg.Genesis, err = readGenesisFile(cfg.genesisPath())
 	if err != nil {
 		return nil, err
 	}
 
-	cfg.GethConfig.EthCfg.NetworkId = cfg.GethConfig.EthCfg.Genesis.Config.ChainID.Uint64()
-	ethereum, err := ethNode.New(&cfg.GethConfig.NodeCfg)
+	cfg.GethCfg.EthCfg.NetworkId = cfg.GethCfg.EthCfg.Genesis.Config.ChainID.Uint64()
+	ethereum, err := ethNode.New(&cfg.GethCfg.NodeCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func NewNode(cfg *Config, consensusAPI conAPI.API) (*Node, error) {
 	if err := ethereum.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {
 		logger.Debug(fmt.Sprintf("Registering database..."))
 
-		n.database, err = NewDatabase(ctx, &cfg.GethConfig.EthCfg, consensusAPI, logger)
+		n.database, err = NewDatabase(ctx, &cfg.GethCfg.EthCfg, consensusAPI, logger)
 		if err != nil {
 			return nil, err
 		}

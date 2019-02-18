@@ -8,6 +8,7 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"path"
 	"github.com/lightstreams-network/lightchain/log"
+	"path/filepath"
 
 	ethLog "github.com/ethereum/go-ethereum/log"
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
@@ -72,6 +73,9 @@ func LightchainCmd() *cobra.Command {
 func addDefaultFlags(cmd *cobra.Command) {
 	cmd.Flags().String(DataDirFlag.Name, DataDirFlag.Value.Value, DataDirFlag.Usage)
 	cmd.Flags().String(LogLvlFlag.Name, LogLvlFlag.Value, LogLvlFlag.Usage)
+
+	cmd.Flags().Bool(TraceFlag.Name, false, TraceFlag.Usage)
+	cmd.Flags().String(TraceLogFlag.Name, filepath.Join(os.TempDir(), "tracer.log"), TraceLogFlag.Usage)
 
 	cmd.MarkFlagRequired(DataDirFlag.Name)	
 }

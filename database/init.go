@@ -9,13 +9,12 @@ import (
 	"io/ioutil"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/lightstreams-network/lightchain/setup"
+	"github.com/lightstreams-network/lightchain/log"
 	ethCore "github.com/ethereum/go-ethereum/core"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
-	"github.com/lightstreams-network/lightchain/log"
-	"github.com/lightstreams-network/lightchain/tracer/dbtracy"
 )
 
-func Init(cfg Config, ntw setup.Network, dbTracer dbtracy.Tracer) error {
+func Init(cfg Config, ntw setup.Network) error {
 	logger := log.NewLogger().With("engine", "database")
 	keystoreDir := cfg.keystoreDir()
 	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
@@ -76,7 +75,13 @@ func Init(cfg Config, ntw setup.Network, dbTracer dbtracy.Tracer) error {
 
 	logger.Info("Successfully persisted genesis block!", "hash", hash)
 
-	dbTracer.AssertPersistedGenesisBlock(*genesis)
+	tracer, err := newTracer(cfg.tracerCfg, cfg.ChainDbDir())
+	if err != nil {
+		err = fmt.Errorf("failed to construct DB tracer: %v", err)
+		return err
+	}
+
+	tracer.AssertPersistedGenesisBlock(*genesis)
 	
 	return nil
 }
