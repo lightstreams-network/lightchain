@@ -14,7 +14,6 @@ import (
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/lightstreams-network/lightchain/setup"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 var (
@@ -94,10 +93,6 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 	}
 
 	nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg)
-
-	if common.FileExist(traceLogFilePath) {
-		os.Remove(traceLogFilePath)
-	}
 
 	if err := node.Init(nodeCfg, network); err != nil {
 		logger.Error(err.Error())
