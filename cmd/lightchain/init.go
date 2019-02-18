@@ -14,7 +14,6 @@ import (
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/lightstreams-network/lightchain/setup"
-	"github.com/lightstreams-network/lightchain/tracer/dbtracy"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -43,8 +42,6 @@ func initCmd() *cobra.Command {
 	addDefaultFlags(initCmd)
 	initCmd.Flags().Bool(StandAloneNetFlag.Name, false, DataDirFlag.Usage)
 	initCmd.Flags().Bool(SiriusNetFlag.Name, false, SiriusNetFlag.Usage)
-	initCmd.Flags().Bool(TraceFlag.Name, false, TraceFlag.Usage)
-	initCmd.Flags().String(TraceLogFlag.Name, filepath.Join(os.TempDir(), "tracer.log"), TraceLogFlag.Usage)
 
 	return initCmd
 }
@@ -90,7 +87,7 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 		TendermintProxyProtocol,
 	)
 
-	dbCfg, err := database.NewConfig(dbDataDir, newNodeClientCtx(dbDataDir, cmd))
+	dbCfg, err := database.NewConfig(dbDataDir, shouldTrace, traceLogFilePath, newNodeClientCtx(dbDataDir, cmd))
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
@@ -102,13 +99,7 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 		os.Remove(traceLogFilePath)
 	}
 
-	dbTracer, err := dbtracy.New(shouldTrace, nodeCfg.DbChainDir(), traceLogFilePath)
-	if err != nil {
-		logger.Error(err.Error())
-		os.Exit(1)
-	}
-
-	if err := node.Init(nodeCfg, network, dbTracer); err != nil {
+	if err := node.Init(nodeCfg, network); err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
