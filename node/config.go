@@ -18,7 +18,3 @@ func NewConfig(dataDir string, consensusCfg consensus.Config, dbCfg database.Con
 		dbCfg,
 	}
 }
-
-func (c Config) DbChainDir() string {
-	return c.dbCfg.ChainDbDir()
-}
