@@ -85,16 +85,18 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 		TendermintProxyListenPort,
 		TendermintP2PListenPort,
 		TendermintProxyProtocol,
+		false,
 	)
 
 	dbDataDir := filepath.Join(dataDir, database.DataDirPath)
-	dbCfg, err := database.NewConfig(dbDataDir, shouldTrace, traceLogFilePath, newNodeClientCtx(dbDataDir, cmd))
+	dbCfg, err := database.NewConfig(dbDataDir, shouldTrace, traceLogFilePath, false, newNodeClientCtx(dbDataDir, cmd))
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
 	
-	prometheusCfg := prometheus.NewConfig(false,
+	prometheusCfg := prometheus.NewConfig(
+		false,
 		prometheus.DefaultPrometheusAddr,
 		prometheus.DefaultPrometheusNamespace,
 		dbCfg.GethIpcPath())

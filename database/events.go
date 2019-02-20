@@ -16,7 +16,6 @@ const (
 func (db *Database) txBroadcastLoop() {
 	db.ethTxsCh = make(chan core.NewTxsEvent, txChanSize)
 	db.ethTxSub = db.eth.TxPool().SubscribeNewTxsEvent(db.ethTxsCh)
-	db.metrics.BroadcastedTxsTotal.Add(0)
 	
 	db.waitForTendermint()
 

@@ -1,9 +1,11 @@
 package collectors
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
 	"context"
 	"fmt"
+	
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type EthSyncing struct {
@@ -15,7 +17,7 @@ func NewEthSyncing(ethDialUrl string, namespace string) *EthSyncing {
 	return &EthSyncing{
 		ethDialUrl: ethDialUrl,
 		desc: prometheus.NewDesc(
-			fmt.Sprintf("%s_%s_eth_syncing", namespace, EthereumMetricsSubsystem),
+			fmt.Sprintf("%s_%s_eth_syncing", namespace, ethereumMetricsSubsystem),
 			"the blockchain is syncing",
 			nil,
 			nil,
@@ -28,7 +30,7 @@ func (collector *EthSyncing) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (collector *EthSyncing) Collect(ch chan<- prometheus.Metric) {
-	ethClient, err := newEthClient(collector.ethDialUrl)
+	ethClient, err := ethclient.Dial(collector.ethDialUrl)
 	if err != nil {
 		ch <- prometheus.NewInvalidMetric(collector.desc, err)
 	}

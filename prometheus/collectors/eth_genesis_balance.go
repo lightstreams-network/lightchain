@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lightstreams-network/lightchain/prometheus/metrics"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/lightstreams-network/lightchain/prometheus/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/ethereum/go-ethereum/common"
-
 )
 
 type EthGenesisBalance struct {
@@ -26,9 +26,9 @@ func NewEthGenesisBalance(ethDialUrl string, namespace string) *EthGenesisBalanc
 	return &EthGenesisBalance{
 		ethDialUrl: ethDialUrl,
 		desc: prometheus.NewDesc(
-			fmt.Sprintf("%s_%s_eth_genesis_balance", namespace, EthereumMetricsSubsystem),
-			"the blockchain is syncing",
-			[]string{"balance"},
+			fmt.Sprintf("%s_%s_eth_wallet_balance", namespace, ethereumMetricsSubsystem),
+			"the balance of ethereum accounts",
+			[]string{"account"},
 			nil,
 		),
 	}
@@ -39,7 +39,7 @@ func (collector *EthGenesisBalance) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (collector *EthGenesisBalance) Collect(ch chan<- prometheus.Metric) {
-	ethClient, err := newEthClient(collector.ethDialUrl)
+	ethClient, err := ethclient.Dial(collector.ethDialUrl)
 	if err != nil {
 		ch <- prometheus.NewInvalidMetric(collector.desc, err)
 	}
@@ -49,9 +49,8 @@ func (collector *EthGenesisBalance) Collect(ch chan<- prometheus.Metric) {
 		if err != nil {
 			ch <- prometheus.NewInvalidMetric(collector.desc, err)
 		} else {
-			phtBalance, _ := metrics.Web3FromWei(balance).Float64()
-			ch <- prometheus.MustNewConstMetric(collector.desc, prometheus.GaugeValue,
-				phtBalance, acc)
+			phtBalance, _ := utils.Web3FromWei(balance).Float64()
+			ch <- prometheus.MustNewConstMetric(collector.desc, prometheus.GaugeValue, phtBalance, acc)
 		}
 	}
 }

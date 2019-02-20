@@ -10,6 +10,8 @@ import (
 	ethRpc "github.com/ethereum/go-ethereum/rpc"
 	conAPI "github.com/lightstreams-network/lightchain/consensus/api"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/lightstreams-network/lightchain/database/metrics"
 )
 
 // Node is the main object.
@@ -19,11 +21,10 @@ type Node struct {
 	rpcClient *ethRpc.Client
 	cfg       *Config
 	logger    tmtLog.Logger
-	metrics   *Metrics
 }
 
 // NewNode creates a new node.
-func NewNode(cfg *Config, consensusAPI conAPI.API, metrics *Metrics) (*Node, error) {
+func NewNode(cfg *Config, consensusAPI conAPI.API, registry *prometheus.Registry) (*Node, error) {
 	logger := log.NewLogger().With("engine", "database")
 
 	// @TODO Investigate why Genesis file is not automatically loaded
@@ -38,6 +39,13 @@ func NewNode(cfg *Config, consensusAPI conAPI.API, metrics *Metrics) (*Node, err
 	if err != nil {
 		return nil, err
 	}
+	
+	var trackedMetrics metrics.Metrics
+	if cfg.metrics {
+		trackedMetrics = metrics.NewMetrics(registry)
+	} else {
+		trackedMetrics = metrics.NewNullMetrics()
+	}
 
 	n := Node{
 		ethereum,
@@ -45,14 +53,13 @@ func NewNode(cfg *Config, consensusAPI conAPI.API, metrics *Metrics) (*Node, err
 		nil,
 		cfg,
 		logger,
-		metrics,
 	}
 
 	logger.Debug("Binding ethereum events to rpc client...")
 	if err := ethereum.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {
 		logger.Debug(fmt.Sprintf("Registering database..."))
 
-		n.database, err = NewDatabase(ctx, &cfg.GethCfg.EthCfg, consensusAPI, logger, metrics)
+		n.database, err = NewDatabase(ctx, &cfg.GethCfg.EthCfg, consensusAPI, logger, trackedMetrics)
 		if err != nil {
 			return nil, err
 		}

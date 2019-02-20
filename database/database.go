@@ -18,7 +18,8 @@ import (
 	consensusAPI "github.com/lightstreams-network/lightchain/consensus/api"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
 	
-	"github.com/lightstreams-network/lightchain/prometheus/metrics"
+	"github.com/lightstreams-network/lightchain/database/metrics"
+	"github.com/lightstreams-network/lightchain/prometheus/utils"
 )
 
 // Database manages the underlying ethereum state for storage and processing
@@ -36,15 +37,10 @@ type Database struct {
 
 	consAPI consensusAPI.API
 	logger  tmtLog.Logger
-	metrics *Metrics
+	metrics metrics.Metrics
 }
 
-func NewDatabase(ctx *node.ServiceContext,
-	ethCfg *eth.Config,
-	consAPI consensusAPI.API,
-	logger tmtLog.Logger,
-	metrics *Metrics,
-) (*Database, error) {
+func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensusAPI.API, logger tmtLog.Logger, metrics metrics.Metrics) (*Database, error) {
 	ethereum, err := eth.New(ctx, ethCfg)
 	if err != nil {
 		return nil, err
@@ -80,11 +76,11 @@ func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDel
 	db.metrics.ExecutedTxsTotal.Add(1)
 	db.logger.Info("Executing DB TX", "hash", tx.Hash().Hex(), "nonce", tx.Nonce())
 	
-	txCost, _ := metrics.Web3FromWei(tx.Cost()).Float64()
+	txCost, _ := utils.Web3FromWei(tx.Cost()).Float64()
 	db.metrics.TxsCostTotal.Add(txCost)
 	
 	txGasWei := new(big.Int).Mul(big.NewInt(int64(tx.Gas())), tx.GasPrice())
-	txGas, _ := metrics.Web3FromWei(txGasWei).Float64()
+	txGas, _ := utils.Web3FromWei(txGasWei).Float64()
 	db.metrics.TxsGasTotal.Add(txGas)
 
 	db.metrics.TxsSizeTotal.Add(float64(tx.Size()))
@@ -107,7 +103,7 @@ func (db *Database) ResetBlockState(receiver common.Address) error {
 
 // UpdateBlockState uses the tendermint header to update the eth header.
 func (db *Database) UpdateBlockState(tmHeader *tmtAbciTypes.Header) {
-	db.logger.Debug("Updated ethereum DB state")
+	db.logger.Debug("Updating ethereum DB state")
 	db.ethState.UpdateBlockState(
 		db.eth.APIBackend.ChainConfig(),
 		uint64(tmHeader.Time.Unix()),

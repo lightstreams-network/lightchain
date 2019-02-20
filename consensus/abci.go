@@ -16,6 +16,7 @@ import (
 	abciTypes "github.com/lightstreams-network/lightchain/consensus/types"
 	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
+	"github.com/lightstreams-network/lightchain/consensus/metrics"
 )
 
 // maxTransactionSize is 32KB in order to prevent DOS attacks
@@ -46,7 +47,7 @@ type TendermintABCI struct {
 	checkTxState *state.StateDB
 	ethRPCClient *rpc.Client
 	logger       tmtLog.Logger
-	metrics      *Metrics
+	metrics      metrics.Metrics
 
 	getCurrentDBState func() (*state.StateDB, error)
 	getCurrentBlock   func() *ethTypes.Block
@@ -54,7 +55,7 @@ type TendermintABCI struct {
 
 var _ tmtAbciTypes.Application = &TendermintABCI{}
 
-func NewTendermintABCI(db *database.Database, ethRPCClient *rpc.Client, metrics *Metrics) (*TendermintABCI, error) {
+func NewTendermintABCI(db *database.Database, ethRPCClient *rpc.Client, metrics metrics.Metrics) (*TendermintABCI, error) {
 	txState, err := db.Ethereum().BlockChain().State()
 	if err != nil {
 		return nil, err

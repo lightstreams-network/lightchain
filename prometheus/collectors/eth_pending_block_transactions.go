@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"context"
 	"fmt"
@@ -15,7 +16,7 @@ func NewEthPendingBlockTransactions(ethDialUrl string, namespace string) *EthPen
 	return &EthPendingBlockTransactions{
 		ethDialUrl: ethDialUrl,
 		desc: prometheus.NewDesc(
-			fmt.Sprintf("%s_%s_eth_pending_block_transactions", namespace, EthereumMetricsSubsystem),
+			fmt.Sprintf("%s_%s_eth_pending_block_transactions", namespace, ethereumMetricsSubsystem),
 			"the number of transactions in a pending block",
 			nil,
 			nil,
@@ -28,7 +29,7 @@ func (collector *EthPendingBlockTransactions) Describe(ch chan<- *prometheus.Des
 }
 
 func (collector *EthPendingBlockTransactions) Collect(ch chan<- prometheus.Metric) {
-	ethClient, err := newEthClient(collector.ethDialUrl)
+	ethClient, err := ethclient.Dial(collector.ethDialUrl)
 	if err != nil {
 		ch <- prometheus.NewInvalidMetric(collector.desc, err)
 		return

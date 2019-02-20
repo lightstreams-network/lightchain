@@ -19,6 +19,7 @@ You can find more detailed documentation in the [lightchain CLI reference docume
 
 To install `lightchain` in your system just run following commands:
 ```
+mkdir -p ${GOPATH}/src/github.com/lightstreams-network
 cd ${GOPATH}/src/github.com/lightstreams-network
 git clone https://github.com/lightstreams-network/lightchain.git ./lightchain
 cd ./lightchain
@@ -44,14 +45,14 @@ Lightstreams provides a testnet called `sirius`. By default, all new created nod
 
 To initialise a new blockchain you need to run `lightchain init` and  choose a local path where blockchain files are going to be stored.
 ```
-lightchain init --datadir "${HOME}/.lightchain"
+lightchain init --datadir="${HOME}/.lightchain"
 ```
 
 ### Node launch
 
 To run a lightchain node you only need to run the following command:
 ```
-lightchain run --datadir "${HOME}/.lightchain"
+lightchain run --datadir="${HOME}/.lightchain"
 ```
 
 After you run the command above, the network synchronization will take several minutes. So grab a coffee and [request some test tokens](https://discuss.lightstreams.network/t/request-test-tokens/64) while you wait :)
@@ -62,7 +63,7 @@ After you run the command above, the network synchronization will take several m
 
 To run a lightchain node with RPC open, you only need to append the RPC flags as in Geth, final command:
 ```
-lightchain run --datadir "${HOME}/.lightchain" --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi eth,net,web3,personal,admin
+lightchain run --datadir="${HOME}/.lightchain" --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi eth,net,web3,personal,admin
 ```
 
 ### Request free tokens
@@ -104,60 +105,13 @@ Flags:
 Standalone mode allows you to create an isolated node for testing proposes. To do it, you can run the following command:
 
 ```
-lightchain init --datadir "${HOME}/.lightchain" --standalone
+lightchain init --datadir="${HOME}/.lightchain" --standalone
 ```
 
 At the genesis block, the account `0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e`has been initialized with _300M Photons_. The passphrase is `WelcomeToSirius`
 
 ## Metrics
-### Prometheus Exporter
-
-Lightchain node ingrate prometheus to track and export inner metrics
-regarding the execution of the current node. To enable the prometheus exporter
-you need to include `--prometheus` flag during the initialization of the node
-``
-lightchain run --datadir ${LIGHTCHAIN_DATA_DIR} --prometheus
-``
-
-Then you can access to executed prometheus exported at 
-[`http://localhost:26661/metrics`](http://localhost:26661/metrics)
-
-**Sample output**
-```
-...
-# HELP lightchain_consensus_check_txs_total_counter Checked txs total
-# TYPE lightchain_consensus_check_txs_total_counter counter
-lightchain_consensus_check_txs_total_counter{module="abci"} 26
-# HELP lightchain_consensus_commit_block_total_counter Commited txs total
-# TYPE lightchain_consensus_commit_block_total_counter counter
-lightchain_consensus_commit_block_total_counter{module="abci"} 64
-# HELP lightchain_consensus_deliver_txs_total_counter Delivered txs total
-# TYPE lightchain_consensus_deliver_txs_total_counter counter
-lightchain_consensus_deliver_txs_total_counter{module="abci"} 25
-# HELP lightchain_database_broadcasted_txs_total_counter Broadcasted txs total.
-# TYPE lightchain_database_broadcasted_txs_total_counter counter
-lightchain_database_broadcasted_txs_total_counter 26
-...
-```
-
-### Tendermint Prometheus Exporter
-If you want to also launch a prometheus exporter for tendermint service
-you need to enable it in `{DATADIR}/consensus/config/config.tolm`:
-```
-##### instrumentation configuration options #####
-[instrumentation]
-
-# When true, Prometheus metrics are served under /metrics on
-# PrometheusListenAddr.
-# Check out the documentation for the list of available metrics.
-prometheus = true
-
-# Address to listen for Prometheus collector(s) connections
-prometheus_listen_addr = ":26660"
-...
-```
-In this case the `tendermint` prometheus exported is going to be exposed over:
-[`http://locahost:26660/metrics`](http://locahost:26660/metrics)
+[Read how to run metrics explorer](METRICS.md)
 
 ## Applications
 

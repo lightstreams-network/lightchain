@@ -10,6 +10,7 @@ import (
 )
 
 type Node struct {
+	cfg            *Config
 	dbNode         *database.Node
 	consensusNode  *consensus.Node
 	prometheusNode *prometheus.Node
@@ -19,25 +20,25 @@ type Node struct {
 // makeFullNode creates a full go-database node
 func NewNode(cfg *Config) (*Node, error) {
 	logger := log.NewLogger().With("engine", "node")
-	
+
 	logger.Debug("Initializing prometheus node...")
 	prometheusNode := prometheus.NewNode(cfg.prometheusCfg)
-	
+
 	logger.Debug("Initializing consensus node...")
-	consensusNode, err := consensus.NewNode(&cfg.consensusCfg, prometheusNode.MetricProvider().Consensus)
+	consensusNode, err := consensus.NewNode(&cfg.consensusCfg, prometheusNode.Registry())
 	if err != nil {
 		return nil, err
 	}
 
 	conRPCAPI := conAPI.NewRPCApi(cfg.consensusCfg.RPCListenPort())
-
 	logger.Debug("Initializing database node...")
-	dbNode, err := database.NewNode(&cfg.dbCfg, conRPCAPI, prometheusNode.MetricProvider().Database)
+	dbNode, err := database.NewNode(&cfg.dbCfg, conRPCAPI, prometheusNode.Registry())
 	if err != nil {
 		return nil, err
 	}
 
 	return &Node{
+		cfg,
 		dbNode,
 		consensusNode,
 		prometheusNode,
@@ -57,9 +58,9 @@ func (n *Node) Start() error {
 	if err := n.consensusNode.Start(n.dbNode.RpcClient(), n.dbNode.Database()); err != nil {
 		return err
 	}
-	
+
 	n.logger.Info("Starting prometheus service...")
-	if err := n.prometheusNode.Start(); err != nil {
+	if err := n.prometheusNode.Start(n.cfg.dbCfg.GethIpcPath()); err != nil {
 		return err
 	}
 
@@ -80,7 +81,7 @@ func (n *Node) Stop() error {
 		return err
 	}
 	n.logger.Info("Database node stopped")
-	
+
 	n.logger.Info("Stopping prometheus service...")
 	if err := n.prometheusNode.Stop(); err != nil {
 		return err

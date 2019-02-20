@@ -83,11 +83,12 @@ func runCmd() *cobra.Command {
 				p2pListenPort,
 				proxyListenPort,
 				proxyProtocol,
+				enablePrometheus,
 			)
 
 			// Fake cli.context required by Ethereum node
 			ctx := newNodeClientCtx(databaseDataDir, cmd)
-			dbCfg, err := database.NewConfig(databaseDataDir, shouldTrace, traceLogFilePath, ctx)
+			dbCfg, err := database.NewConfig(databaseDataDir, shouldTrace, traceLogFilePath, enablePrometheus, ctx)
 			if err != nil {
 				logger.Error(fmt.Errorf("database node config could not be created: %v", err).Error())
 				os.Exit(1)

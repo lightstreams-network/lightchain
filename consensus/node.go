@@ -14,6 +14,8 @@ import (
 	tmtP2P "github.com/tendermint/tendermint/p2p"
 	tmtCommon "github.com/tendermint/tendermint/libs/common"
 	tmtServer "github.com/tendermint/tendermint/abci/server"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/lightstreams-network/lightchain/consensus/metrics"
 )
 
 type Node struct {
@@ -22,10 +24,10 @@ type Node struct {
 	nodeKey    *tmtP2P.NodeKey
 	cfg        *Config
 	logger     tmtLog.Logger
-	metrics    *Metrics
+	metrics    metrics.Metrics
 }
 
-func NewNode(cfg *Config, metrics *Metrics) (*Node, error) {
+func NewNode(cfg *Config, registry *prometheus.Registry) (*Node, error) {
 	logger := log.NewLogger().With("engine", "consensus")
 
 	nodeKeyFile := cfg.tendermintCfg.NodeKeyFile()
@@ -37,14 +39,21 @@ func NewNode(cfg *Config, metrics *Metrics) (*Node, error) {
 	if err != nil {
 		return nil, err
 	}
+	
+	var trackedMetrics metrics.Metrics
+	if cfg.metrics {
+		trackedMetrics = metrics.NewMetrics(registry)
+	} else {
+		trackedMetrics = metrics.NewNullMetrics()
+	}
 
-	return &Node{
+	return &Node {
 		nil,
 		nil,
 		nodeKey,
 		cfg,
 		logger,
-		metrics,
+		trackedMetrics,
 	}, nil
 }
 

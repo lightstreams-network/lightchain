@@ -8,13 +8,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/lightstreams-network/lightchain/prometheus/collectors"
 	lcLog "github.com/lightstreams-network/lightchain/log"
 )
 
 type Node struct {
 	cfg             Config
 	httpSrv         *http.Server
-	metricsProvider MetricsProvider
 	registry        *prometheus.Registry
 	logger          tmtLog.Logger
 }
@@ -22,25 +22,21 @@ type Node struct {
 func NewNode(cfg Config) *Node {
 	logger := lcLog.NewLogger().With("service", "prometheus")
 
-	var metricsProvider MetricsProvider
 	registry := prometheus.NewPedanticRegistry()
-	
-	if cfg.enabled {
-		metricsProvider = NewMetricsProvider(registry, cfg.namespace, cfg.ethDialUrl)
-	} else {
-		metricsProvider = NewNullMetricsProvider()
-	}
 
 	return &Node{
 		cfg:             cfg,
 		httpSrv:         nil,
-		metricsProvider: metricsProvider,
 		logger:          logger,
 		registry:        registry,
 	}
 }
 
-func (n *Node) Start() error {
+func (n *Node) Registry() *prometheus.Registry {
+	return n.registry
+}
+
+func (n *Node) Start(gethIpcPath string) error {
 	if ! n.cfg.enabled {
 		n.logger.Info("Ignored initialization of prometheus service")
 		return nil
@@ -56,6 +52,7 @@ func (n *Node) Start() error {
 		WriteTimeout: n.cfg.http.WriteTimeout,
 	}
 
+	collectors.NewCollectors(n.registry, gethIpcPath)
 	n.logger.Info("Prometheus endpoint opened", "addr", n.cfg.http.Addr)
 	if err := n.httpSrv.ListenAndServe(); err != nil {
 		return err
@@ -76,14 +73,3 @@ func (n *Node) Stop() error {
 
 	return nil
 }
-
-func (n *Node) MetricProvider() MetricsProvider {
-	return n.metricsProvider
-}
-
-//func (n *Node) MetricsHandler() http.Handler {
-//	return promhttp.HandlerFor(n.registry, promhttp.HandlerOpts{
-//		ErrorLog:      log.New(os.Stderr, log.Prefix(), log.Flags()),
-//		ErrorHandling: promhttp.ContinueOnError,
-//	})
-//}
