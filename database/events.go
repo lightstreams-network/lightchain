@@ -21,10 +21,12 @@ func (db *Database) txBroadcastLoop() {
 
 	for obj := range db.ethTxsCh {
 		db.logger.Debug("Captured NewTxsEvent from pool")
-		db.metrics.BroadcastedTxsTotal.Add(1)
 		for _, tx := range obj.Txs {
 			if err := db.consAPI.BroadcastTx(*tx); err != nil {
+				db.metrics.BroadcastedErrTxsTotal.Add(1, err.Error())
 				db.logger.Error("Error broadcasting tx", "err", err)
+			} else {
+				db.metrics.BroadcastedTxsTotal.Add(1)
 			}
 		}
 	}
