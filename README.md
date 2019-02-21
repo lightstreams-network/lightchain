@@ -4,7 +4,7 @@ This is the official Lightstreams implementation of a proof-of-authority (PoA) b
 
 ## About Lightstreams
 
-We are currently working hard to release the **Lightstream main network** which aims to provide a fast, privacy-enabled, content-sharing blockchain. Stay tuned about our project's progress by reading [the lightstreams blog](https://medium.com/lightstreams) or by checking out the [Lightstreams' website](https://www.lightstreams.network).
+We are currently working hard to release the **Lightstreams main network** which aims to provide a fast, privacy-enabled, content-sharing blockchain. Stay tuned about our project's progress by reading [the lightstreams blog](https://medium.com/lightstreams) or by checking out the [Lightstreams' website](https://www.lightstreams.network).
 
 ## Documentation
 
@@ -13,14 +13,16 @@ You can find more detailed documentation in the [lightchain CLI reference docume
 ## Pre-requirements
 
 - Go >= 1.10
-- deps
+- dep (Go dependence manager) [Installation guide](https://golang.github.io/dep/docs/installation.html)
 
 ## Installation
 
 To install `lightchain` in your system just run following commands:
 ```
-go get -u github.com/lightstreams-network/lightchain
-cd ${GOPATH}/src/github.com/lightstreams-network/lightchain
+mkdir -p ${GOPATH}/src/github.com/lightstreams-network
+cd ${GOPATH}/src/github.com/lightstreams-network
+git clone https://github.com/lightstreams-network/lightchain.git ./lightchain
+cd ./lightchain
 make get_vendor_deps
 make install
 ```
@@ -43,14 +45,14 @@ Lightstreams provides a testnet called `sirius`. By default, all new created nod
 
 To initialise a new blockchain you need to run `lightchain init` and  choose a local path where blockchain files are going to be stored.
 ```
-lightchain init --datadir "${HOME}/.lightchain"
+lightchain init --datadir="${HOME}/.lightchain"
 ```
 
 ### Node launch
 
 To run a lightchain node you only need to run the following command:
 ```
-lightchain run --datadir "${HOME}/.lightchain"
+lightchain run --datadir="${HOME}/.lightchain"
 ```
 
 After you run the command above, the network synchronization will take several minutes. So grab a coffee and [request some test tokens](https://discuss.lightstreams.network/t/request-test-tokens/64) while you wait :)
@@ -61,7 +63,7 @@ After you run the command above, the network synchronization will take several m
 
 To run a lightchain node with RPC open, you only need to append the RPC flags as in Geth, final command:
 ```
-lightchain run --datadir "${HOME}/.lightchain" --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi eth,net,web3,personal,admin
+lightchain run --datadir="${HOME}/.lightchain" --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi eth,net,web3,personal,admin
 ```
 
 ### Request free tokens
@@ -84,6 +86,7 @@ Flags:
       --abci_protocol string   socket | grpc (default "socket")
       --datadir string         Data directory for the databases and keystore (default "/home/a/lightchain")
   -h, --help                   help for run
+      --prometheus             Enable prometheus metrics exporter
       --lvl string             Level of logging (default "info")
       --rpc                    Enable the HTTP-RPC server
       --rpcaddr string         HTTP-RPC server listening interface (default "localhost")
@@ -102,10 +105,13 @@ Flags:
 Standalone mode allows you to create an isolated node for testing proposes. To do it, you can run the following command:
 
 ```
-lightchain init --datadir "${HOME}/.lightchain" --standalone
+lightchain init --datadir="${HOME}/.lightchain" --standalone
 ```
 
 At the genesis block, the account `0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e`has been initialized with _300M Photons_. The passphrase is `WelcomeToSirius`
+
+## Metrics
+[Read how to run metrics explorer](METRICS.md)
 
 ## Applications
 

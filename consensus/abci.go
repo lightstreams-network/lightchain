@@ -16,6 +16,7 @@ import (
 	abciTypes "github.com/lightstreams-network/lightchain/consensus/types"
 	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
+	"github.com/lightstreams-network/lightchain/consensus/metrics"
 )
 
 // maxTransactionSize is 32KB in order to prevent DOS attacks
@@ -46,6 +47,7 @@ type TendermintABCI struct {
 	checkTxState *state.StateDB
 	ethRPCClient *rpc.Client
 	logger       tmtLog.Logger
+	metrics      metrics.Metrics
 
 	getCurrentDBState func() (*state.StateDB, error)
 	getCurrentBlock   func() *ethTypes.Block
@@ -53,7 +55,7 @@ type TendermintABCI struct {
 
 var _ tmtAbciTypes.Application = &TendermintABCI{}
 
-func NewTendermintABCI(db *database.Database, ethRPCClient *rpc.Client) (*TendermintABCI, error) {
+func NewTendermintABCI(db *database.Database, ethRPCClient *rpc.Client, metrics metrics.Metrics) (*TendermintABCI, error) {
 	txState, err := db.Ethereum().BlockChain().State()
 	if err != nil {
 		return nil, err
@@ -66,6 +68,7 @@ func NewTendermintABCI(db *database.Database, ethRPCClient *rpc.Client) (*Tender
 		getCurrentBlock:   db.Ethereum().BlockChain().CurrentBlock,
 		checkTxState:      txState.Copy(),
 		logger:            log.NewLogger().With("engine", "consensus", "module", "ABCI"),
+		metrics:           metrics,
 	}
 
 	return abci, nil
@@ -116,9 +119,12 @@ func (abci *TendermintABCI) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAb
 //		- Response code
 //		- Optional Key-Value tags for filtering and indexing
 func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx {
+	abci.metrics.CheckTxsTotal.Add(1)
+	
 	tx, err := decodeRLP(txBytes)
 	if err != nil {
 		abci.logger.Error("Received invalid transaction", "tx", tx.Hash().String())
+		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrEncodingError.Code))
 		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrEncodingError.Code), Log: err.Error()}
 	}
 
@@ -126,6 +132,7 @@ func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx
 
 	if tx.Size() > maxTransactionSize {
 		abci.logger.Error(core.ErrOversizedData.Error())
+		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrInternalError.Code))
 		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInternalError.Code), Log: core.ErrOversizedData.Error()}
 	}
 
@@ -137,33 +144,39 @@ func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx
 	from, err := ethTypes.Sender(signer, tx)
 	if err != nil {
 		abci.logger.Error(core.ErrInvalidSender.Error())
+		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrBaseInvalidSignature.Code))
 		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBaseInvalidSignature.Code), Log: core.ErrInvalidSender.Error()}
 	}
 
 	if tx.Value().Sign() < 0 {
 		abci.logger.Error(core.ErrNegativeValue.Error())
+		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrBaseInvalidInput.Code))
 		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBaseInvalidInput.Code), Log: core.ErrNegativeValue.Error()}
 	}
 
 	if !abci.checkTxState.Exist(from) {
 		abci.logger.Error(core.ErrInvalidSender.Error())
+		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrBaseUnknownAddress.Code))
 		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBaseUnknownAddress.Code), Log: core.ErrInvalidSender.Error()}
 	}
 
 	if abci.checkTxState.GetNonce(from) != tx.Nonce() {
 		errMsg := fmt.Sprintf("Nonce not strictly increasing. Expected %d got %d", abci.checkTxState.GetNonce(from), tx.Nonce())
 		abci.logger.Error(errMsg)
+		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrBadNonce.Code))
 		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBadNonce.Code), Log: errMsg}
 	}
 
 	intrinsicGas, err := core.IntrinsicGas(tx.Data(), tx.To() == nil, true)
 	if err != nil {
 		abci.logger.Error(err.Error())
+		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrInternalError.Code))
 		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInternalError.Code), Log: err.Error()}
 	}
 
 	if tx.Gas() < intrinsicGas {
 		abci.logger.Error("TX gas is lower than intrinsic gas", "tx_gas", tx.Gas(), "intrinsic_gas", intrinsicGas)
+		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrInsufficientGas.Code))
 		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInsufficientGas.Code), Log: err.Error()}
 	}
 
@@ -172,6 +185,7 @@ func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx
 	if currentBalance.Cmp(txCost) < 0 {
 		errMsg := fmt.Sprintf("Current balance: %s, TX cost: %s", currentBalance, tx.Cost())
 		abci.logger.Error(errMsg)
+		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrInsufficientFunds.Code))
 		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInsufficientFunds.Code), Log: errMsg}
 	}
 
@@ -195,8 +209,10 @@ func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx
 //		- Keys and values in Tags must be UTF-8 encoded strings
 // 		  E.g: ("account.owner": "Bob", "balance": "100.0", "time": "2018-01-02T12:30:00Z")
 func (abci *TendermintABCI) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDeliverTx {
+	abci.metrics.DeliverTxsTotal.Add(1)
 	tx, err := decodeRLP(txBytes)
 	if err != nil {
+		abci.metrics.DeliverErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrEncodingError.Code))
 		abci.logger.Info("Received invalid transaction", "hash", tx, "err", err)
 		return tmtAbciTypes.ResponseDeliverTx{Code: uint32(abciTypes.ErrEncodingError.Code), Log: err.Error()}
 	}
@@ -205,6 +221,7 @@ func (abci *TendermintABCI) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDeliv
 
 	res := abci.db.ExecuteTx(tx)
 	if res.IsErr() {
+		abci.metrics.DeliverErrTxsTotal.Add(1, fmt.Sprint(res.Code))
 		abci.logger.Error("Error delivering TX to DB", "hash", tx.Hash().String(), "err", res.Log)
 		return res
 	}
@@ -237,9 +254,11 @@ func (abci *TendermintABCI) EndBlock(req tmtAbciTypes.RequestEndBlock) tmtAbciTy
 //	      It's critical that all application instances return the same hash. If not, they will not be able
 // 		  to agree on the next block, because the hash is included in the next block!
 func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
+	abci.metrics.CommitBlockTotal.Add(1)
 	rootHash := abci.getCurrentBlock().Root()
 	blockHash, err := abci.db.Persist(abci.RewardReceiver())
 	if err != nil {
+		abci.metrics.CommitErrBlockTotal.Add(1, "ErrGettingLastState")
 		abci.logger.Error("Error getting latest database state", "err", err)
 		return tmtAbciTypes.ResponseCommit{Data: rootHash.Bytes()}
 	}
@@ -247,7 +266,8 @@ func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
 
 	ethState, err := abci.getCurrentDBState()
 	if err != nil {
-		abci.logger.Error("Error getting latest state", "err", err)
+		abci.metrics.CommitErrBlockTotal.Add(1, "ErrGettingNextLastState")
+		abci.logger.Error("Error getting next latest state", "err", err)
 		return tmtAbciTypes.ResponseCommit{Data: nextRootHash.Bytes()}
 	}
 

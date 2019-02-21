@@ -3,37 +3,45 @@ package node
 import (
 	"github.com/lightstreams-network/lightchain/database"
 	"github.com/lightstreams-network/lightchain/consensus"
+	"github.com/lightstreams-network/lightchain/prometheus"
 	"github.com/lightstreams-network/lightchain/log"
 	conAPI "github.com/lightstreams-network/lightchain/consensus/api"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
 )
 
 type Node struct {
-	dbNode        *database.Node
-	consensusNode *consensus.Node
-	logger        tmtLog.Logger
+	cfg            *Config
+	dbNode         *database.Node
+	consensusNode  *consensus.Node
+	prometheusNode *prometheus.Node
+	logger         tmtLog.Logger
 }
 
 // makeFullNode creates a full go-database node
 func NewNode(cfg *Config) (*Node, error) {
 	logger := log.NewLogger().With("engine", "node")
+
+	logger.Debug("Initializing prometheus node...")
+	prometheusNode := prometheus.NewNode(cfg.prometheusCfg)
+
 	logger.Debug("Initializing consensus node...")
-	consensusNode, err := consensus.NewNode(&cfg.consensusCfg)
+	consensusNode, err := consensus.NewNode(&cfg.consensusCfg, prometheusNode.Registry())
 	if err != nil {
 		return nil, err
 	}
 
 	conRPCAPI := conAPI.NewRPCApi(cfg.consensusCfg.RPCListenPort())
-
 	logger.Debug("Initializing database node...")
-	dbNode, err := database.NewNode(&cfg.dbCfg, conRPCAPI)
+	dbNode, err := database.NewNode(&cfg.dbCfg, conRPCAPI, prometheusNode.Registry())
 	if err != nil {
 		return nil, err
 	}
 
 	return &Node{
+		cfg,
 		dbNode,
 		consensusNode,
+		prometheusNode,
 		logger,
 	}, nil
 }
@@ -45,9 +53,14 @@ func (n *Node) Start() error {
 	if err := n.dbNode.Start(); err != nil {
 		return err
 	}
-	
+
 	n.logger.Info("Starting consensus engine...")
 	if err := n.consensusNode.Start(n.dbNode.RpcClient(), n.dbNode.Database()); err != nil {
+		return err
+	}
+
+	n.logger.Info("Starting prometheus service...")
+	if err := n.prometheusNode.Start(); err != nil {
 		return err
 	}
 
@@ -62,11 +75,18 @@ func (n *Node) Stop() error {
 		return err
 	}
 	n.logger.Info("Consensus node stopped")
-	
+
 	n.logger.Info("Stopping database engine...")
 	if err := n.dbNode.Stop(); err != nil {
 		return err
 	}
 	n.logger.Info("Database node stopped")
+
+	n.logger.Info("Stopping prometheus service...")
+	if err := n.prometheusNode.Stop(); err != nil {
+		return err
+	}
+	n.logger.Info("Prometheus service stopped")
+
 	return nil
 }

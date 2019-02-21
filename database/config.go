@@ -12,25 +12,26 @@ import (
 	ethNode "github.com/ethereum/go-ethereum/node"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
-	
 )
 
 var (
 	DataDirPath = "database"
-	
+	NodeName    = "lightchain"
 	// IMPORTANT: Following three values needs to correspond to the internal values used by go-ethereum
 	KeystorePath = "keystore"
-	ChainDbPath = "chaindata" // it needs to match to the value passed at go-ethereum/eth/backend.go:CreateDB()
-	GenesisPath = "genesis.json"
-	
-	blankGenesis = new(ethCore.Genesis)
+	ChainDbPath  = "chaindata" // it needs to match to the value passed at go-ethereum/eth/backend.go:CreateDB()
+	GenesisPath  = "genesis.json"
+	GethIpcFile  = "geth.ipc"
+
+	blankGenesis    = new(ethCore.Genesis)
 	errBlankGenesis = errors.New("could not parse a valid/non-blank Genesis")
 )
 
 type Config struct {
-	DataDir string
-	GethCfg GethConfig
+	DataDir   string
+	GethCfg   GethConfig
 	tracerCfg tracerConfig
+	metrics   bool
 }
 
 type ethstatsConfig struct {
@@ -43,7 +44,7 @@ type GethConfig struct {
 	Ethstats ethstatsConfig
 }
 
-func NewConfig(dataDir string, shouldTrace bool, tracerLogFilePath string, ctx *cli.Context) (Config, error) {
+func NewConfig(dataDir string, shouldTrace bool, tracerLogFilePath string, metrics bool, ctx *cli.Context) (Config, error) {
 	gethCfg := GethConfig{
 		EthCfg:  eth.DefaultConfig,
 		NodeCfg: DefaultEthNodeConfig(dataDir),
@@ -54,7 +55,7 @@ func NewConfig(dataDir string, shouldTrace bool, tracerLogFilePath string, ctx *
 	gethCfg.NodeCfg.P2P.MaxPeers = 0
 	gethCfg.NodeCfg.P2P.NoDiscovery = true
 	gethCfg.NodeCfg.DataDir = dataDir
-	
+
 	// IMPORTANT: If we do not define ".Name" Ethereum lib will automatically set it by the process name which will use 
 	// to generate every subfolder underneath
 	gethCfg.NodeCfg.Name = "."
@@ -68,32 +69,37 @@ func NewConfig(dataDir string, shouldTrace bool, tracerLogFilePath string, ctx *
 	// Configure ethereum db settings
 	ethUtils.SetEthConfig(ctx, ethereum, &gethCfg.EthCfg)
 	gethCfg.EthCfg.Ethash.PowMode = ethash.ModeFake
-	
+
 	// Due to the low usages of the blockchain we need to reduce cache size to prevent huge number block replies on every restart. 
 	// @TODO once the usage of blockchain is larger we should tune these values again accordingly
-	gethCfg.EthCfg.DatabaseCache  = 32 // MB
-	gethCfg.EthCfg.TrieCleanCache = 8  // MB
-	gethCfg.EthCfg.TrieDirtyCache = 0  // MB
+	gethCfg.EthCfg.DatabaseCache = 32 // MB
+	gethCfg.EthCfg.TrieCleanCache = 8 // MB
+	gethCfg.EthCfg.TrieDirtyCache = 0 // MB
 	gethCfg.EthCfg.TrieTimeout = 5 * time.Minute
-	
-	return Config {
+
+	return Config{
 		dataDir,
 		gethCfg,
 		newTracerConfig(shouldTrace, tracerLogFilePath),
+		metrics,
 	}, nil
 }
 
 // DefaultEthNodeConfig returns the default configuration for a go-ethereum ethereum
 func DefaultEthNodeConfig(dataDir string) ethNode.Config {
 	cfg := ethNode.DefaultConfig
-	cfg.Name = "lightchain"
+	cfg.Name = NodeName
 	cfg.Version = params.Version
 	cfg.HTTPModules = append(cfg.HTTPModules, "eth")
 	cfg.WSModules = append(cfg.WSModules, "eth")
-	cfg.IPCPath = "geth.ipc"
+	cfg.IPCPath = GethIpcFile
 	cfg.DataDir = dataDir
 
 	return cfg
+}
+
+func (c Config) GethIpcPath() string {
+	return filepath.Join(c.DataDir, GethIpcFile)
 }
 
 func (c Config) keystoreDir() string {

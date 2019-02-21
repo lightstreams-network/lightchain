@@ -17,7 +17,7 @@ lightchain init [flags]
   -h, --help             help for init
       --lvl string       Level of logging (default "info")
       --sirius           Initialize a node connected to Sirius network
-      --standalone       Data directory for the databases and keystore
+      --standalone       Initialize a stand alone node not connected to any network
 ```
 
 ### SEE ALSO

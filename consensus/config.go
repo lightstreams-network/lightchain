@@ -25,9 +25,10 @@ type Config struct {
 	p2pListenPort   uint
 	proxyListenPort uint
 	proxyProtocol   string
+	metrics         bool
 }
 
-func NewConfig(dataDir string, rpcListenPort uint, p2pListenPort uint, proxyListenPort uint, proxyProtocol string) Config {
+func NewConfig(dataDir string, rpcListenPort uint, p2pListenPort uint, proxyListenPort uint, proxyProtocol string, metrics bool) Config {
 	tendermintCfg := config.DefaultConfig()
 
 	applyTendermintConfig(filepath.Join(dataDir, "config"), tendermintCfg)
@@ -37,13 +38,14 @@ func NewConfig(dataDir string, rpcListenPort uint, p2pListenPort uint, proxyList
 	tendermintCfg.P2P.ListenAddress = fmt.Sprintf("tcp://0.0.0.0:%d", p2pListenPort)
 	tendermintCfg.ProxyApp = fmt.Sprintf("tcp://127.0.0.1:%d", proxyListenPort)
 
-	return Config {
+	return Config{
 		dataDir,
 		tendermintCfg,
 		rpcListenPort,
 		p2pListenPort,
 		proxyListenPort,
 		proxyProtocol,
+		metrics,
 	}
 }
 
@@ -65,14 +67,14 @@ func applyTendermintConfig(configPath string, tmtCfg *config.Config) error {
 		// ignore not found error, return other errors
 		return err
 	}
-	
+
 	if err := viper.Unmarshal(tmtCfg); err != nil {
 		return err
 	}
-	
+
 	if err := tmtCfg.ValidateBasic(); err != nil {
 		return err
 	}
-	
+
 	return nil
 }

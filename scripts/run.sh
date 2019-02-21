@@ -32,8 +32,9 @@ done
 INIT_ARGS="--datadir=${DATA_DIR}"
 
 RUN_ARGS="--datadir=${DATA_DIR} --lvl=info"
-RUN_ARGS="${RUN_ARGS} --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi eth,net,web3,personal,admin"
+RUN_ARGS="${RUN_ARGS} --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi eth,net,web3,personal,admin,debug"
 RUN_ARGS="${RUN_ARGS} --tmt_rpc_port=26657 --tmt_proxy_port=26658 --tmt_p2p_port=26656"
+RUN_ARGS="${RUN_ARGS} --prometheus"
 
 if [ -n "${STANDALONE_NET}" ]; then
 	INIT_ARGS="${INIT_ARGS} --standalone"
