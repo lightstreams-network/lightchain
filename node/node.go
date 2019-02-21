@@ -60,7 +60,7 @@ func (n *Node) Start() error {
 	}
 
 	n.logger.Info("Starting prometheus service...")
-	if err := n.prometheusNode.Start(n.cfg.dbCfg.GethIpcPath()); err != nil {
+	if err := n.prometheusNode.Start(); err != nil {
 		return err
 	}
 

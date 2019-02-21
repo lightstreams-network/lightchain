@@ -36,7 +36,7 @@ func (n *Node) Registry() *prometheus.Registry {
 	return n.registry
 }
 
-func (n *Node) Start(gethIpcPath string) error {
+func (n *Node) Start() error {
 	if ! n.cfg.enabled {
 		n.logger.Info("Ignored initialization of prometheus service")
 		return nil
@@ -52,7 +52,7 @@ func (n *Node) Start(gethIpcPath string) error {
 		WriteTimeout: n.cfg.http.WriteTimeout,
 	}
 
-	collectors.NewCollectors(n.registry, gethIpcPath)
+	collectors.NewCollectors(n.registry, n.cfg.ethDialUrl)
 	n.logger.Info("Prometheus endpoint opened", "addr", n.cfg.http.Addr)
 	if err := n.httpSrv.ListenAndServe(); err != nil {
 		return err
