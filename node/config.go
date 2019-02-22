@@ -24,3 +24,7 @@ func NewConfig(dataDir string, consensusCfg consensus.Config, dbCfg database.Con
 		tracerCfg,
 	}
 }
+
+func (c Config) DbCfg() database.Config {
+	return c.dbCfg
+}

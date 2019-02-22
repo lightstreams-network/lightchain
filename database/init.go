@@ -19,7 +19,7 @@ import (
 
 func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
 	logger := log.NewLogger().With("engine", "database")
-	keystoreDir := cfg.keystoreDir()
+	keystoreDir := cfg.KeystoreDir()
 	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
 		return err
 	}
