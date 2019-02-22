@@ -72,7 +72,7 @@ func NewNode(cfg *Config, consensusAPI conAPI.API, registry *prometheus.Registry
 	return &n, nil
 }
 
-// Start starts base node and stop p2p server
+// Start starts base node and stops p2p server
 func (n *Node) Start() error {
 	n.logger.Debug("Starting ethereum node")
 	err := n.ethereum.Start()

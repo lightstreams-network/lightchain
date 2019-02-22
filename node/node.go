@@ -17,7 +17,6 @@ type Node struct {
 	logger         tmtLog.Logger
 }
 
-// makeFullNode creates a full go-database node
 func NewNode(cfg *Config) (*Node, error) {
 	logger := log.NewLogger().With("engine", "node")
 
@@ -46,9 +45,7 @@ func NewNode(cfg *Config) (*Node, error) {
 	}, nil
 }
 
-// Start starts base node and stop p2p server
 func (n *Node) Start() error {
-	// Start database node
 	n.logger.Info("Starting database engine...")
 	if err := n.dbNode.Start(); err != nil {
 		return err

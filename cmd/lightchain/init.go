@@ -41,13 +41,28 @@ func initCmd() *cobra.Command {
 	}
 
 	addDefaultFlags(initCmd)
-	initCmd.Flags().Bool(StandAloneNetFlag.Name, false, DataDirFlag.Usage)
-	initCmd.Flags().Bool(SiriusNetFlag.Name, false, SiriusNetFlag.Usage)
+	addInitCmdFLags(initCmd)
 
 	return initCmd
 }
 
 func initCmdRun(cmd *cobra.Command, args []string) {
+	nodeCfg, ntw, err := newNodeCfgFromCmd(cmd)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
+	if err := node.Init(nodeCfg, ntw); err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
+	logger.Info(fmt.Sprintf("Lightchain node successfully initialized into '%s'!", nodeCfg.DataDir))
+	os.Exit(0)
+}
+
+func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, setup.Network, error) {
 	lvlStr, _ := cmd.Flags().GetString(LogLvlFlag.Name)
 	if lvl, err := ethLog.LvlFromString(lvlStr); err == nil {
 		log.SetupLogger(lvl)
@@ -69,8 +84,7 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 
 	var network setup.Network
 	if useStandAloneNet && useSiriusNet {
-		logger.Error(fmt.Errorf("multiple networks selected: %s, %s", setup.SiriusNetwork, setup.StandaloneNetwork).Error())
-		os.Exit(1)
+		return node.Config{}, "", fmt.Errorf("multiple networks selected: %s, %s", setup.SiriusNetwork, setup.StandaloneNetwork)
 	} else if useStandAloneNet {
 		network = setup.StandaloneNetwork
 	} else if useSiriusNet {
@@ -85,30 +99,29 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 		TendermintProxyListenPort,
 		TendermintP2PListenPort,
 		TendermintProxyProtocol,
-		false)
+		false,
+	)
 
 	dbDataDir := filepath.Join(dataDir, database.DataDirPath)
 	dbCfg, err := database.NewConfig(dbDataDir, false, newNodeClientCtx(dbDataDir, cmd))
 
 	if err != nil {
-		logger.Error(err.Error())
-		os.Exit(1)
+		return node.Config{}, "", err
 	}
 	
 	prometheusCfg := prometheus.NewConfig(
 		false,
 		prometheus.DefaultPrometheusAddr,
 		prometheus.DefaultPrometheusNamespace,
-		dbCfg.GethIpcPath())
-	
+		dbCfg.GethIpcPath(),
+	)
 
 	tracerCfg := tracer.NewConfig(shouldTrace, traceLogFilePath)
-	nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg)
-	if err := node.Init(nodeCfg, network); err != nil {
-		logger.Error(err.Error())
-		os.Exit(1)
-	}
 
-	logger.Info(fmt.Sprintf("Lightchain node successfully initialized into '%s'!", dataDir))
-	os.Exit(0)
+	return node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg), network, nil
+}
+
+func addInitCmdFLags(cmd *cobra.Command) {
+	cmd.Flags().Bool(StandAloneNetFlag.Name, false, DataDirFlag.Usage)
+	cmd.Flags().Bool(SiriusNetFlag.Name, false, SiriusNetFlag.Usage)
 }
