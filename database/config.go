@@ -100,7 +100,7 @@ func (c Config) GethIpcPath() string {
 	return filepath.Join(c.DataDir, GethIpcFile)
 }
 
-func (c Config) keystoreDir() string {
+func (c Config) KeystoreDir() string {
 	return filepath.Join(c.DataDir, KeystorePath)
 }
 
