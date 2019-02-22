@@ -22,7 +22,7 @@ const (
 	TendermintP2PListenPort   = uint(26656)
 	TendermintRpcListenPort   = uint(26657)
 	TendermintProxyListenPort = uint(26658)
-	TendermintProxyProtocol   = "rpc"
+	TendermintProxyProtocol   = "socket"
 )
 
 var (
@@ -44,7 +44,7 @@ var (
 	// ABCIProtocolFlag defines whether GRPC or SOCKET should be used for the ABCI connections
 	ConsensusProxyProtocolFlag = cli.StringFlag{
 		Name:  "abci_protocol",
-		Value: "socket",
+		Value: TendermintProxyProtocol,
 		Usage: "socket | grpc",
 	}
 	PrometheusFlag = cli.BoolFlag{
@@ -99,44 +99,60 @@ func runCmd() *cobra.Command {
 				enablePrometheus,
 				prometheus.DefaultPrometheusAddr,
 				prometheus.DefaultPrometheusNamespace,
-				dbCfg.GethIpcPath())
+				dbCfg.GethIpcPath(),
+			)
 
 			tracerCfg := tracer.NewConfig(shouldTrace, traceLogFilePath)
 			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg)
 
-			lightChainNode, err := node.NewNode(&nodeCfg)
+			err = startNode(nodeCfg, stopNode)
 			if err != nil {
-				logger.Error(fmt.Errorf("lightchain node could not be instantiated: %v", err).Error())
+				logger.Error(err.Error())
 				os.Exit(1)
 			}
-
-			logger.Debug("Starting lightchain node...")
-			if err := lightChainNode.Start(); err != nil {
-				logger.Error(fmt.Errorf("lightchain node could not be started: %v", err).Error())
-				os.Exit(1)
-			}
-
-			common.TrapSignal(func() {
-				if err := lightChainNode.Stop(); err != nil {
-					logger.Error(fmt.Errorf("error stopping lightchain node. %v", err).Error())
-				}
-				os.Exit(1)
-			})
 
 			os.Exit(0)
 		},
 	}
 
-	addDefaultFlags(runCmd)
-	addConsensusFlags(runCmd)
-	addEthNodeFlags(runCmd)
-	runCmd.Flags().Bool(PrometheusFlag.GetName(), false, PrometheusFlag.Usage)
+	addRunCmdFlags(runCmd)
 
 	return runCmd
 }
 
+func startNode(nodeCfg node.Config, stopNode func(*node.Node)) error {
+	lightChainNode, err := node.NewNode(&nodeCfg)
+	if err != nil {
+		return fmt.Errorf("lightchain node could not be instantiated: %v", err)
+	}
+
+	logger.Debug("Starting lightchain node...")
+	if err := lightChainNode.Start(); err != nil {
+		return fmt.Errorf("lightchain node could not be started: %v", err)
+	}
+
+	stopNode(lightChainNode)
+
+	return nil
+}
+
+func stopNode(n *node.Node) {
+	common.TrapSignal(func() {
+		if err := n.Stop(); err != nil {
+			logger.Error(fmt.Errorf("error stopping lightchain node. %v", err).Error())
+			os.Exit(1)
+		}
+	})
+}
+
+func addRunCmdFlags(cmd *cobra.Command) {
+	addDefaultFlags(cmd)
+	addConsensusFlags(cmd)
+	addEthNodeFlags(cmd)
+	cmd.Flags().Bool(PrometheusFlag.GetName(), false, PrometheusFlag.Usage)
+}
+
 func addConsensusFlags(cmd *cobra.Command) {
-	// Consensus Flags
 	cmd.Flags().Uint(ConsensusRpcListenPortFlag.GetName(), ConsensusRpcListenPortFlag.Value, ConsensusRpcListenPortFlag.Usage)
 	cmd.Flags().Uint(ConsensusP2PListenPortFlag.GetName(), ConsensusP2PListenPortFlag.Value, ConsensusP2PListenPortFlag.Usage)
 	cmd.Flags().Uint(ConsensusProxyListenPortFlag.GetName(), ConsensusProxyListenPortFlag.Value, ConsensusProxyListenPortFlag.Usage)

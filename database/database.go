@@ -178,16 +178,6 @@ func (db *Database) Protocols() []p2p.Protocol {
 	return nil
 }
 
-func (db *Database) FlushStateTrieDb() error {
-	bc := db.Ethereum().BlockChain()
-	triedb := bc.StateCache().TrieDB()
-	root := bc.CurrentBlock().Root()
-	if err := triedb.Commit(root, true); err != nil {
-		return err
-	}
-	return nil
-}
-
 func isDefaultAPI(namespace string) bool {
 	return namespace == "miner" || namespace == "debug" || namespace == "admin"
 }
