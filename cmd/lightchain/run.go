@@ -105,11 +105,18 @@ func runCmd() *cobra.Command {
 			tracerCfg := tracer.NewConfig(shouldTrace, traceLogFilePath)
 			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg)
 
-			err = startNode(nodeCfg, stopNode)
+			n, err := startNode(nodeCfg)
 			if err != nil {
 				logger.Error(err.Error())
 				os.Exit(1)
 			}
+
+			common.TrapSignal(func() {
+				if err := n.Stop(); err != nil {
+					logger.Error(fmt.Errorf("error stopping lightchain node. %v", err).Error())
+					os.Exit(1)
+				}
+			})
 
 			os.Exit(0)
 		},
@@ -120,29 +127,18 @@ func runCmd() *cobra.Command {
 	return runCmd
 }
 
-func startNode(nodeCfg node.Config, stopNode func(*node.Node)) error {
-	lightChainNode, err := node.NewNode(&nodeCfg)
+func startNode(nodeCfg node.Config) (*node.Node, error) {
+	n, err := node.NewNode(&nodeCfg)
 	if err != nil {
-		return fmt.Errorf("lightchain node could not be instantiated: %v", err)
+		return nil, fmt.Errorf("lightchain node could not be instantiated: %v", err)
 	}
 
 	logger.Debug("Starting lightchain node...")
-	if err := lightChainNode.Start(); err != nil {
-		return fmt.Errorf("lightchain node could not be started: %v", err)
+	if err := n.Start(); err != nil {
+		return nil, fmt.Errorf("lightchain node could not be started: %v", err)
 	}
 
-	stopNode(lightChainNode)
-
-	return nil
-}
-
-func stopNode(n *node.Node) {
-	common.TrapSignal(func() {
-		if err := n.Stop(); err != nil {
-			logger.Error(fmt.Errorf("error stopping lightchain node. %v", err).Error())
-			os.Exit(1)
-		}
-	})
+	return n, nil
 }
 
 func addRunCmdFlags(cmd *cobra.Command) {

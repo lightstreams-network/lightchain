@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"time"
 	"fmt"
 	"math/big"
 	"github.com/spf13/cobra"
@@ -11,13 +10,17 @@ import (
 	"github.com/lightstreams-network/lightchain/txclient"
 	"github.com/lightstreams-network/lightchain/authy"
 	"github.com/lightstreams-network/lightchain/log"
+	"github.com/lightstreams-network/lightchain/database"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	ethLog "github.com/ethereum/go-ethereum/log"
 )
 
-const standaloneGenesisAcc = "0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e"
-const standaloneGenesisPwd = "WelcomeToSirius"
+const simulateTxFrom = "0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e"
+const simulateTxFromPwd = "WelcomeToSirius"
 const standaloneNonExistingAddr = "0xc111111111111111111111111111111111111111"
-const simulateTxAfterSeconds = 10
+
+var simulateTxAmount = big.NewInt(1e+18)
 
 func simulateCmd() *cobra.Command {
 	var simulateCmd = &cobra.Command{
@@ -43,16 +46,17 @@ func simulateCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			// Give the node few secs to boot and then fire a TX.
-			// This should be improved in the future, awaiting the node boot-up via a channel
-			logger.Info("Simulating TX to modify state...")
-			go simulateTransferTx(nodeCfg)
-
-			err = startNode(nodeCfg, stopSimulatedNode)
+			n, err := startNode(nodeCfg)
 			if err != nil {
 				logger.Error(err.Error())
 				os.Exit(1)
 			}
+
+			tx := simulateTransferTx(nodeCfg)
+
+			n.Stop()
+
+			assertPostSimulationState(nodeCfg, tx)
 
 			logger.Info("Lightchain simulation finished.")
 			os.Exit(0)
@@ -65,27 +69,32 @@ func simulateCmd() *cobra.Command {
 	return simulateCmd
 }
 
-func simulateTransferTx(nodeCfg node.Config) {
-	time.Sleep(time.Second*simulateTxAfterSeconds)
+func simulateTransferTx(nodeCfg node.Config) *types.Transaction {
+	logger.Info("Simulating 1 TX to modify state...")
+
 	client, err := txclient.Dial(nodeCfg.DbCfg().GethIpcPath())
 	if err != nil {
 		panic(err)
 	}
 
-	auth, err := authy.FindInKeystoreDir(nodeCfg.DbCfg().KeystoreDir(), authy.NewEthAccountFromHex(standaloneGenesisAcc), standaloneGenesisPwd)
+	auth, err := authy.FindInKeystoreDir(nodeCfg.DbCfg().KeystoreDir(), authy.NewEthAccountFromHex(simulateTxFrom), simulateTxFromPwd)
 	if err != nil {
 		panic(err)
 	}
 
-	amount := big.NewInt(1e+18)
-
-	err = wallety.Transfer(client, auth, authy.NewEthAccountFromHex(standaloneNonExistingAddr), amount.String())
+	tx, err := wallety.Transfer(client, auth, authy.NewEthAccountFromHex(standaloneNonExistingAddr), simulateTxAmount.String())
 	if err != nil {
 		panic(err)
 	}
+
+	return tx
 }
 
-func stopSimulatedNode(n *node.Node) {
-	time.Sleep(time.Second*simulateTxAfterSeconds+time.Second*5)
-	n.Stop()
+func assertPostSimulationState(nodeCfg node.Config, tx *types.Transaction) {
+	tracer, err := database.NewTracer(nodeCfg.TracerCfg(), nodeCfg.DbCfg().ChainDbDir())
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	tracer.AssertPostTxSimulationState(common.HexToAddress(simulateTxFrom), tx)
 }

@@ -78,8 +78,8 @@ func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
 
 	logger.Info("Successfully persisted genesis block!", "hash", hash)
 
-	trc, err := newTracer(trcCfg, cfg.ChainDbDir())
-	trc.assertPersistedGenesisBlock(*genesis)
+	trc, err := NewTracer(trcCfg, cfg.ChainDbDir())
+	trc.AssertPersistedGenesisBlock(*genesis)
 	
 	return nil
 }
