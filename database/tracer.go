@@ -5,47 +5,53 @@ import (
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/state"
-	
+
 	stdtracer "github.com/lightstreams-network/lightchain/tracer"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"bytes"
+	"math/big"
 )
 
-// tracer is used to trace and assert behaviour of lightchain `database` pkg.
-type tracer interface {
-	// assertPersistedGenesisBlock validates if the GenesisBlock was properly saved in disk.
+// Tracer is used to trace and assert behaviour of lightchain `database` pkg.
+type Tracer interface {
+	// AssertPersistedGenesisBlock validates if the GenesisBlock was properly saved in disk.
 	//
 	// Verifies whenever it's possible to re-construct the eth state from disk and
 	// asserts accounts balances, nonces, gas settings as defined in Genesis config.
-	assertPersistedGenesisBlock(genesis core.Genesis)
+	AssertPersistedGenesisBlock(genesis core.Genesis)
+
+	// AssertPostTxSimulationState validates if the state saved in disk after TX simulation is correct.
+	AssertPostTxSimulationState(from common.Address, tx *types.Transaction)
 }
 
-var _ tracer = ethDBTracer{}
+var _ Tracer = EthDBTracer{}
 
-type ethDBTracer struct {
+type EthDBTracer struct {
 	stdtracer.Tracer
 	chainDataDir string
 }
 
-// newTracer creates a new tracer instance.
+// NewTracer creates a new Tracer instance.
 //
-// If tracing is disabled, it will return a nullable tracer that doesn't do anything.
+// If tracing is disabled, it will return a nullable Tracer that doesn't do anything.
 //
 // DANGER: Tracing is not recommended in production due decrease in performance!
 // 		   Use tracing only to debug bugs and for testing purposes.
-func newTracer(cfg stdtracer.Config, chainDataDir string) (tracer, error) {
+func NewTracer(cfg stdtracer.Config, chainDataDir string) (Tracer, error) {
 	trc, err := stdtracer.NewTracer(cfg)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if cfg.ShouldTrace {
-		return ethDBTracer{trc, ChainDbPath}, nil 
+		return EthDBTracer{trc, ChainDbPath}, nil
 	}
-	
+
 	return nullEthDBTracer{}, nil
 }
 
-
-func (t ethDBTracer) assertPersistedGenesisBlock(genesis core.Genesis) {
+func (t EthDBTracer) AssertPersistedGenesisBlock(genesis core.Genesis) {
 	t.Logger.Infow("Tracing if ETH DB wrote a valid genesis block to disk...", "chaindata", t.chainDataDir)
 
 	chainDb, err := ethdb.NewLDBDatabase(t.chainDataDir, 0, 0)
@@ -81,6 +87,113 @@ func (t ethDBTracer) assertPersistedGenesisBlock(genesis core.Genesis) {
 			"acc", addr.Hex(),
 			"genesis_balance", account.Balance.String(),
 			"persisted_balance", persistedBalance.String(),
+		)
+	}
+}
+
+func (t EthDBTracer) AssertPostTxSimulationState(from common.Address, tx *types.Transaction) {
+	t.Logger.Infow("Tracing if ETH DB is in a valid state after simulation...", "chaindata", t.chainDataDir)
+
+	chainDb, err := ethdb.NewLDBDatabase(t.chainDataDir, 0, 0)
+	if err != nil {
+		t.Logger.Errorw("unable to open LDB db", "err", err)
+		return
+	}
+	defer chainDb.Close()
+
+	headHash := rawdb.ReadHeadBlockHash(chainDb)
+	headNumber := rawdb.ReadHeaderNumber(chainDb, headHash)
+	block := rawdb.ReadBlock(chainDb, headHash, *headNumber)
+
+	stateDB, err := state.New(block.Root(), state.NewDatabase(chainDb))
+	if err != nil {
+		t.Logger.Errorw("unable to open new stateDB", "err", err)
+		return
+	}
+
+	// Given the same TX inputs, hash must not change
+	expectedTxHash := common.HexToHash("0x49828264ee35226d1242893343c29537a04f61bbb2671d58d7ff9e16f5e5c4bd")
+	if !bytes.Equal(block.TxHash().Bytes(), expectedTxHash.Bytes()) {
+		t.Logger.Errorw("incorrect simulated TX hash", "expected", expectedTxHash.Hex(), "actual", block.TxHash().Hex())
+	} else {
+		t.Logger.Infow("correct simulated TX hash", "hash", block.TxHash().Hex())
+	}
+
+	// Given the same TX changes, block root hash must not change
+	expectedRootHash := common.HexToHash("0x39e5006078070400d77b2494c879d5a6315ab3a7ae19c1309c0b4126f1f56f9c")
+	if !bytes.Equal(block.Root().Bytes(), expectedRootHash.Bytes()) {
+		t.Logger.Errorw("incorrect root hash", "expected", expectedRootHash.Hex(), "actual", block.Root().Hex())
+	} else {
+		t.Logger.Infow("correct root hash", "hash", block.Root().Hex())
+	}
+
+	// Coinbase should be 0x0
+	expectedCoinbase := common.HexToAddress("0x0")
+	if !bytes.Equal(block.Coinbase().Bytes(), expectedCoinbase.Bytes()) {
+		t.Logger.Errorw("incorrect coinbase", "expected", expectedCoinbase.Hex(), "actual", block.Coinbase().Hex())
+	} else {
+		t.Logger.Infow("correct coinbase", "acc", block.Coinbase().Hex())
+	}
+
+	// Parent hash is always the genesis block
+	expectedParentHash := common.HexToHash("0x55e06fc7b51b31efb053f128068be8b09c86569895d98591ea5790b683770c58")
+	if !bytes.Equal(block.ParentHash().Bytes(), expectedParentHash.Bytes()) {
+		t.Logger.Errorw("incorrect parent hash", "expected", expectedParentHash.Hex(), "actual", block.ParentHash().Hex())
+	} else {
+		t.Logger.Infow("correct parent hash", "hash", block.ParentHash().Hex())
+	}
+
+	genesisFromBalance, _ := new(big.Int).SetString("300000000000000000000000000", 10)
+	genesisFromBalanceCopy, _ := new(big.Int).SetString(genesisFromBalance.String(), 10)
+	expectedFromBalance := new(big.Int).Sub(genesisFromBalanceCopy, tx.Cost())
+
+	fromBalance := stateDB.GetBalance(from)
+	if fromBalance.Cmp(expectedFromBalance) != 0 {
+		t.Logger.Errorw(
+			"incorrect post TX balance",
+			"acc", from.Hex(),
+			"genesis_balance", genesisFromBalance.String(),
+			"expected_balance", expectedFromBalance.String(),
+			"post_simulation_balance", fromBalance.String(),
+		)
+	} else {
+		t.Logger.Infow(
+			"sender balance after TX simulation is correct",
+			"acc", from.Hex(),
+			"genesis_balance", genesisFromBalance.String(),
+			"expected_balance", expectedFromBalance.String(),
+			"post_simulation_balance", fromBalance.String(),
+		)
+	}
+
+	defaultGasPrice, _ := new(big.Int).SetString("1000000000", 10)
+	if tx.GasPrice().Cmp(defaultGasPrice) != 0 {
+		t.Logger.Errorw(
+			"incorrect gas price. Expected default gas price",
+			"default_gas_price", defaultGasPrice.String(),
+			"tx_gas_price", tx.GasPrice().String(),
+		)
+	} else {
+		t.Logger.Infow(
+			"TX gas price set to default gas price as expected",
+			"default_gas_price", defaultGasPrice.String(),
+			"tx_gas_price", tx.GasPrice().String(),
+		)
+	}
+
+	fromNonce := stateDB.GetNonce(from)
+	expectedNonce := uint64(1)
+	if fromNonce != expectedNonce {
+		t.Logger.Errorw(
+			"incorrect sender nonce",
+			"expected_nonce", expectedNonce,
+			"actual_nonce", fromNonce,
+		)
+	} else {
+		t.Logger.Infow(
+			"correct sender nonce",
+			"expected_nonce", expectedNonce,
+			"actual_nonce", fromNonce,
 		)
 	}
 }
