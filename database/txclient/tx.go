@@ -10,9 +10,10 @@ import (
 	"time"
 	"github.com/ethereum/go-ethereum"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 )
 
-func GenerateTxOpts(ctx context.Context, client *ethclient.Client, auth authy.User, cfg TxConfig) (*bind.TransactOpts, error) {
+func GenerateTxOpts(ctx context.Context, client *ethclient.Client, auth authy.Auth, cfg TxConfig) (*bind.TransactOpts, error) {
 	txOpts := bind.NewKeyedTransactor(auth.PrivKey())
 
 	logger.Debug(fmt.Sprintf("Obtaining pending nonce for account '%s'.", txOpts.From.Hex()))
@@ -40,7 +41,7 @@ func GenerateTxOpts(ctx context.Context, client *ethclient.Client, auth authy.Us
 	return txOpts, nil
 }
 
-func SignTransferTx(ctx context.Context, client *ethclient.Client, auth authy.User, to authy.EthAccount, amount *big.Int, cfg TxConfig) (*types.Transaction, error) {
+func SignTransferTx(ctx context.Context, client *ethclient.Client, auth authy.Auth, to common.Address, amount *big.Int, cfg TxConfig) (*types.Transaction, error) {
 	txOpts, err := GenerateTxOpts(ctx, client, auth, cfg)
 	if err != nil {
 		return nil, err
@@ -51,7 +52,7 @@ func SignTransferTx(ctx context.Context, client *ethclient.Client, auth authy.Us
 		return nil, err
 	}
 
-	rawTx := types.NewTransaction(txOpts.Nonce.Uint64(), to.Addr(), amount, txOpts.GasLimit, txOpts.GasPrice, nil)
+	rawTx := types.NewTransaction(txOpts.Nonce.Uint64(), to, amount, txOpts.GasLimit, txOpts.GasPrice, nil)
 
 	return types.SignTx(rawTx, types.NewEIP155Signer(chainID), auth.PrivKey())
 }
