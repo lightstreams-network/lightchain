@@ -19,7 +19,7 @@ import (
 	tmtLog "github.com/tendermint/tendermint/libs/log"
 	
 	"github.com/lightstreams-network/lightchain/database/metrics"
-	"github.com/lightstreams-network/lightchain/prometheus/utils"
+	"github.com/lightstreams-network/lightchain/database/web3"
 )
 
 // Database manages the underlying ethereum state for storage and processing
@@ -76,11 +76,11 @@ func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDel
 	db.metrics.ExecutedTxsTotal.Add(1)
 	db.logger.Info("Executing DB TX", "hash", tx.Hash().Hex(), "nonce", tx.Nonce())
 	
-	txCost, _ := utils.Web3FromWei(tx.Cost()).Float64()
+	txCost, _ := web3.WeiToPhoton(tx.Cost()).Float64()
 	db.metrics.TxsCostTotal.Add(txCost)
 	
 	txGasWei := new(big.Int).Mul(big.NewInt(int64(tx.Gas())), tx.GasPrice())
-	txGas, _ := utils.Web3FromWei(txGasWei).Float64()
+	txGas, _ := web3.WeiToPhoton(txGasWei).Float64()
 	db.metrics.TxsGasTotal.Add(txGas)
 
 	db.metrics.TxsSizeTotal.Add(float64(tx.Size()))

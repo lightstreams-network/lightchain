@@ -14,3 +14,9 @@ func PhotonToWei(value string) (*big.Int, error) {
 
 	return new(big.Int).Mul(valueBn, new(big.Int).Set(big.NewInt(params.Ether))), nil
 }
+
+func WeiToPhoton(amountInWei *big.Int) *big.Float {
+	amount := new(big.Float)
+	amount.SetString(amountInWei.String())
+	return new(big.Float).Quo(amount, big.NewFloat(params.Ether))
+}
