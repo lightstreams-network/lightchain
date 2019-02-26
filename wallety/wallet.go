@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/lightstreams-network/lightchain/authy"
-	"github.com/lightstreams-network/lightchain/txclient"
+	"github.com/lightstreams-network/lightchain/database/txclient"
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/ethereum/go-ethereum/core/types"
 )
