@@ -9,12 +9,13 @@ import (
 	"github.com/lightstreams-network/lightchain/database/txclient"
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 var logger = log.NewLogger().With("module", "wallety")
 
-func BalanceOf(client *ethclient.Client, account authy.EthAccount) (*big.Int, error) {
-	balance, err := client.BalanceAt(context.Background(), account.Addr(), nil)
+func BalanceOf(client *ethclient.Client, account common.Address) (*big.Int, error) {
+	balance, err := client.BalanceAt(context.Background(), account, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -22,7 +23,7 @@ func BalanceOf(client *ethclient.Client, account authy.EthAccount) (*big.Int, er
 	return balance, nil
 }
 
-func Transfer(client *ethclient.Client, auth authy.User, to authy.EthAccount, valueWei string) (*types.Transaction, error) {
+func Transfer(client *ethclient.Client, auth authy.Auth, to common.Address, valueWei string) (*types.Transaction, error) {
 	ctx := context.Background()
 
 	amount, ok := new(big.Int).SetString(valueWei, 10)
@@ -47,7 +48,7 @@ func Transfer(client *ethclient.Client, auth authy.User, to authy.EthAccount, va
 		return nil, err
 	}
 
-	logger.Info(fmt.Sprintf("Account '%s' transferred '%s' Wei to account '%s'.", auth.EthAccountAddress().String(), amount, to.String()))
+	logger.Info(fmt.Sprintf("Account '%s' transferred '%s' Wei to account '%s'.", auth.Address().Hex(), amount, to.String()))
 
 	return tx, nil
 }
