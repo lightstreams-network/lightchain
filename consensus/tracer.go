@@ -34,6 +34,8 @@ func (trc consensusTracer) assertPersistedInitStateDb(tmtCfg *config.Config, ntw
 	trc.Logger.Infow("Tracing whether Tendermint StateDB wrote a valid initial state...", "statedb", tmtCfg.DBPath)
 
 	stateDB := tmtDb.NewDB("state", tmtDb.DBBackendType(tmtCfg.DBBackend), tmtCfg.DBDir())
+	defer stateDB.Close()
+
 	persistStateDb := tmtState.LoadState(stateDB)
 
 	switch ntw {
