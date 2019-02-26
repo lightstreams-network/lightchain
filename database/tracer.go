@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"bytes"
 	"math/big"
+	"github.com/lightstreams-network/lightchain/database/web3"
 )
 
 // Tracer is used to trace and assert behaviour of lightchain `database` pkg.
@@ -143,7 +144,7 @@ func (t EthDBTracer) AssertPostTxSimulationState(from common.Address, tx *types.
 		t.Logger.Infow("correct parent hash", "hash", block.ParentHash().Hex())
 	}
 
-	genesisFromBalance, _ := new(big.Int).SetString("300000000000000000000000000", 10)
+	genesisFromBalance, _ := web3.PhotonToWei("300000000")
 	genesisFromBalanceCopy, _ := new(big.Int).SetString(genesisFromBalance.String(), 10)
 	expectedFromBalance := new(big.Int).Sub(genesisFromBalanceCopy, tx.Cost())
 

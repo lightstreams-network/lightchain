@@ -2,14 +2,19 @@ package log
 
 import (
 	"go.uber.org/zap"
-	"io/ioutil"
 	"os"
 	"fmt"
 )
 
 func New(logFilePath string) (*zap.SugaredLogger, error) {
-	if err := ioutil.WriteFile(logFilePath, []byte(""), os.ModePerm); err != nil {
-		return nil, fmt.Errorf("error creating log file. %v", err)
+	f, err := os.OpenFile(logFilePath, os.O_WRONLY|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		return nil, err
+	}
+
+	err = f.Close()
+	if err != nil {
+		return nil, err
 	}
 
 	cfg := zap.NewProductionConfig()
