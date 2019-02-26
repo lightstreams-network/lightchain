@@ -20,7 +20,7 @@ func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
 	logger := log.NewLogger().With("engine", "consensus")
 	// This is a necessary evil because
 	// Tendermint is using panics instead of errors where they shouldn't...
-	//defer recoverNodeInitPanic()
+	defer recoverNodeInitPanic()
 
 	createConsensusDataDirIfNotExists(cfg.dataDir)
 
