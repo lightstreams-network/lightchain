@@ -45,7 +45,7 @@ func NewTracer(cfg stdtracer.Config, chainDataDir string) (Tracer, error) {
 	}
 
 	if cfg.ShouldTrace {
-		return EthDBTracer{trc, ChainDbPath}, nil
+		return EthDBTracer{trc, chainDataDir}, nil
 	}
 
 	return nullEthDBTracer{}, nil
