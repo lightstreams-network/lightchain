@@ -30,7 +30,6 @@ var (
 type Config struct {
 	DataDir   string
 	GethCfg   GethConfig
-	tracerCfg tracerConfig
 	metrics   bool
 }
 
@@ -44,7 +43,7 @@ type GethConfig struct {
 	Ethstats ethstatsConfig
 }
 
-func NewConfig(dataDir string, shouldTrace bool, tracerLogFilePath string, metrics bool, ctx *cli.Context) (Config, error) {
+func NewConfig(dataDir string, metrics bool, ctx *cli.Context) (Config, error) {
 	gethCfg := GethConfig{
 		EthCfg:  eth.DefaultConfig,
 		NodeCfg: DefaultEthNodeConfig(dataDir),
@@ -80,7 +79,6 @@ func NewConfig(dataDir string, shouldTrace bool, tracerLogFilePath string, metri
 	return Config{
 		dataDir,
 		gethCfg,
-		newTracerConfig(shouldTrace, tracerLogFilePath),
 		metrics,
 	}, nil
 }

@@ -9,10 +9,10 @@ import (
 const Major = "0"
 
 // Minor version component of the current release
-const Minor = "9"
+const Minor = "10"
 
 // Fix version component of the current release
-const Fix = "1"
+const Fix = "0"
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
