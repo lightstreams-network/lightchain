@@ -22,11 +22,3 @@ func NewTracer(cfg Config) (Tracer, error) {
 		Logger:      *logger,
 	}, nil
 }
-
-func (t Tracer) Assert(assertion func(tracer Tracer)) {
-	if ! t.shouldTrace {
-		return
-	}
-
-	assertion(t)
-}
