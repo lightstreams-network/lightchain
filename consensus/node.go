@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	siriusProtocolBlockVersion version.Protocol = 8
+	siriusProtocolBlockVersion version.Protocol = 9
 	standaloneProtocolBlockVersion = version.BlockProtocol
 )
 
