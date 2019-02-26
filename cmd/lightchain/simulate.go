@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/lightstreams-network/lightchain/node"
 	"github.com/lightstreams-network/lightchain/wallety"
-	"github.com/lightstreams-network/lightchain/txclient"
+	"github.com/lightstreams-network/lightchain/database/txclient"
 	"github.com/lightstreams-network/lightchain/authy"
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/lightstreams-network/lightchain/database"
