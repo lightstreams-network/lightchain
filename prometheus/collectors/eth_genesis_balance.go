@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/lightstreams-network/lightchain/prometheus/utils"
+	"github.com/lightstreams-network/lightchain/database/web3"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -49,7 +49,7 @@ func (collector *EthGenesisBalance) Collect(ch chan<- prometheus.Metric) {
 		if err != nil {
 			ch <- prometheus.NewInvalidMetric(collector.desc, err)
 		} else {
-			phtBalance, _ := utils.Web3FromWei(balance).Float64()
+			phtBalance, _ := web3.WeiToPhoton(balance).Float64()
 			ch <- prometheus.MustNewConstMetric(collector.desc, prometheus.GaugeValue, phtBalance, acc)
 		}
 	}
