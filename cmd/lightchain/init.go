@@ -15,6 +15,7 @@ import (
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/lightstreams-network/lightchain/setup"
 	"github.com/lightstreams-network/lightchain/prometheus"
+	"github.com/lightstreams-network/lightchain/tracer"
 )
 
 var (
@@ -78,18 +79,17 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 		network = setup.SiriusNetwork
 	}
 
-
 	consensusCfg := consensus.NewConfig(
 		filepath.Join(dataDir, consensus.DataDirName),
 		TendermintRpcListenPort,
 		TendermintProxyListenPort,
 		TendermintP2PListenPort,
 		TendermintProxyProtocol,
-		false,
-	)
+		false)
 
 	dbDataDir := filepath.Join(dataDir, database.DataDirPath)
-	dbCfg, err := database.NewConfig(dbDataDir, shouldTrace, traceLogFilePath, false, newNodeClientCtx(dbDataDir, cmd))
+	dbCfg, err := database.NewConfig(dbDataDir, false, newNodeClientCtx(dbDataDir, cmd))
+
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
@@ -100,8 +100,10 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 		prometheus.DefaultPrometheusAddr,
 		prometheus.DefaultPrometheusNamespace,
 		dbCfg.GethIpcPath())
+	
 
-	nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg)
+	tracerCfg := tracer.NewConfig(shouldTrace, traceLogFilePath)
+	nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg)
 	if err := node.Init(nodeCfg, network); err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)

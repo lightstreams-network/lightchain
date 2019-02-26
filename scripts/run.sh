@@ -29,23 +29,27 @@ while [ "$1" != "" ]; do
     shift
 done
 
-INIT_ARGS="--datadir=${DATA_DIR}"
+if [ -n "${STANDALONE_NET}" ]; then
+	DATA_DIR="${DATA_DIR}/standalone"
+	INIT_ARGS="--datadir=${DATA_DIR} --standalone"
+else
+	DATA_DIR="${DATA_DIR}/sirius"
+	INIT_ARGS="--datadir=${DATA_DIR} --sirius"
+fi
 
-RUN_ARGS="--datadir=${DATA_DIR} --lvl=info"
-RUN_ARGS="${RUN_ARGS} --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi eth,net,web3,personal,admin,debug"
+RUN_ARGS="--datadir=${DATA_DIR}"
+RUN_ARGS="${RUN_ARGS} --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi eth,net,web3,personal,admin"
 RUN_ARGS="${RUN_ARGS} --tmt_rpc_port=26657 --tmt_proxy_port=26658 --tmt_p2p_port=26656"
 RUN_ARGS="${RUN_ARGS} --prometheus"
-
-if [ -n "${STANDALONE_NET}" ]; then
-	INIT_ARGS="${INIT_ARGS} --standalone"
-fi
 
 pushd "$ROOT_PATH"
 
 echo -e "Compiling latest version...."
 if [ -n "${IS_DEBUG}" ]; then
+	RUN_ARGS="${RUN_ARGS} --lvl=debug"
     run "make build-dev"
 else
+	RUN_ARGS="${RUN_ARGS} --lvl=info"
     run "make build"
 fi
 
@@ -58,7 +62,10 @@ if [ -n "${CLEAN}" ]; then
 	    echo "################################"
 	    run "rm -rf ${DATA_DIR}"
 		run "$EXEC_BIN init ${INIT_ARGS}"
-		run "cp ./setup/sirius/database/keystore/* ${DATA_DIR}/database/keystore/"
+		if [ -z "${STANDALONE_NET}" ]; then
+			echo "Restoring sirius private keys"
+			run "cp ./setup/sirius/database/keystore/* ${DATA_DIR}/database/keystore/"		
+		fi
 		echo -e "################################ \n"
 	else
 		echo -e "Exiting"

@@ -12,16 +12,17 @@ import (
 func Init(cfg Config, ntw setup.Network) error {
 	logger := log.NewLogger().With("engine", "node")
 	logger.Info("Initializing lightchain node data dir...", "dir", cfg.DataDir)
-
+	
+	
 	if err := os.MkdirAll(cfg.DataDir, os.ModePerm); err != nil {
 		return err
 	}
 	
-	if err := consensus.Init(cfg.consensusCfg, ntw); err != nil {
+	if err := consensus.Init(cfg.consensusCfg, ntw, cfg.tracerCfg); err != nil {
 		return err
 	}
 
-	if err := database.Init(cfg.dbCfg, ntw); err != nil {
+	if err := database.Init(cfg.dbCfg, ntw, cfg.tracerCfg); err != nil {
 		return err
 	}
 

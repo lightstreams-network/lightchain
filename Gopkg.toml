@@ -8,7 +8,7 @@
 
 [[constraint]]
   name = "github.com/ethereum/go-ethereum"
-  version = "1.8.21"
+  version = "1.8.23"
 
 [[override]]
   name = "github.com/tendermint/iavl"
@@ -16,7 +16,7 @@
 
 [[override]]
   name = "github.com/tendermint/tendermint"
-  version = "^0.29.0"
+  version = "0.30.1"
 
 [[override]]
   name = "github.com/tendermint/go-amino"

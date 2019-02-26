@@ -29,11 +29,14 @@ while [ "$1" != "" ]; do
     shift
 done
 
-INIT_ARGS="--datadir=${DATA_DIR}"
-
 if [ -n "${STANDALONE_NET}" ]; then
-	INIT_ARGS="${INIT_ARGS} --standalone"
+	DATA_DIR="${DATA_DIR}/standalone"
+	INIT_ARGS="--datadir=${DATA_DIR} --standalone"
+else
+	DATA_DIR="${DATA_DIR}/sirius"
+	INIT_ARGS="--datadir=${DATA_DIR} --sirius"
 fi
+
 
 pushd "$ROOT_PATH"
 
@@ -52,6 +55,7 @@ if [ -n "${CLEAN}" ]; then
 	    echo -e "\t Restart environment"
 	    echo "################################"
 	    run "rm -rf ${DATA_DIR}"
+	    INIT_ARGS="${INIT_ARGS} --trace"
 		echo -e "################################ \n"
 	else
 		echo -e "Exiting"
@@ -67,7 +71,10 @@ fi
 
 run "$EXEC_CMD"
 
-run "cp ./setup/sirius/database/keystore/* ${DATA_DIR}/database/keystore/"
+if [ -z "${STANDALONE_NET}" ]; then
+	echo "Restoring sirius private keys"
+	run "cp ./setup/sirius/database/keystore/* ${DATA_DIR}/database/keystore/"		
+fi
 
 popd
 

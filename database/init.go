@@ -8,14 +8,16 @@ import (
 	"fmt"
 	"io/ioutil"
 	"github.com/ethereum/go-ethereum/ethdb"
-	"github.com/lightstreams-network/lightchain/setup"
-	"github.com/lightstreams-network/lightchain/log"
-	"github.com/ethereum/go-ethereum/common"
+	
 	ethCore "github.com/ethereum/go-ethereum/core"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
+	
+	"github.com/lightstreams-network/lightchain/setup"
+	"github.com/lightstreams-network/lightchain/log"
+	stdtracer "github.com/lightstreams-network/lightchain/tracer"
 )
 
-func Init(cfg Config, ntw setup.Network) error {
+func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
 	logger := log.NewLogger().With("engine", "database")
 	keystoreDir := cfg.keystoreDir()
 	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
@@ -76,10 +78,8 @@ func Init(cfg Config, ntw setup.Network) error {
 
 	logger.Info("Successfully persisted genesis block!", "hash", hash)
 
-	err = tracePersistedGenesisBlock(cfg, *genesis)
-	if err != nil {
-		return err
-	}
+	trc, err := newTracer(trcCfg, cfg.ChainDbDir())
+	trc.assertPersistedGenesisBlock(*genesis)
 	
 	return nil
 }
@@ -133,22 +133,6 @@ func writeKeystoreFiles(logger tmtLog.Logger, keystoreDir string, keystoreFiles 
 
 		logger.Info("Successfully wrote keystore files", "keystore", storeFileName)
 	}
-
-	return nil
-}
-
-func tracePersistedGenesisBlock(cfg Config, genesis ethCore.Genesis) error {
-	if common.FileExist(cfg.tracerCfg.logFilePath) {
-		os.Remove(cfg.tracerCfg.logFilePath)
-	}
-
-	tracer, err := newTracer(cfg.tracerCfg, cfg.ChainDbDir())
-	if err != nil {
-		err = fmt.Errorf("failed to construct DB tracer: %v", err)
-		return err
-	}
-
-	tracer.AssertPersistedGenesisBlock(genesis)
 
 	return nil
 }

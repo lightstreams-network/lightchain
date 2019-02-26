@@ -4,17 +4,23 @@ import (
 	"fmt"
 	"github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/p2p"
-	"github.com/lightstreams-network/lightchain/setup"
+	
 	tmtCommon "github.com/tendermint/tendermint/libs/common"
 	tmtConfig "github.com/tendermint/tendermint/config"
+	tmtDb "github.com/tendermint/tendermint/libs/db"
+	tmtState "github.com/tendermint/tendermint/state"
+	"github.com/tendermint/tendermint/version"
+	
+	"github.com/lightstreams-network/lightchain/setup"
 	"github.com/lightstreams-network/lightchain/log"
+	stdtracer "github.com/lightstreams-network/lightchain/tracer"
 )
 
-func Init(cfg Config, ntw setup.Network) error {
+func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
 	logger := log.NewLogger().With("engine", "consensus")
 	// This is a necessary evil because
 	// Tendermint is using panics instead of errors where they shouldn't...
-	defer recoverNodeInitPanic()
+	//defer recoverNodeInitPanic()
 
 	createConsensusDataDirIfNotExists(cfg.dataDir)
 
@@ -42,12 +48,14 @@ func Init(cfg Config, ntw setup.Network) error {
 
 	var genContent []byte
 	var cfgDoc []byte
+	var protocolBlockVersion version.Protocol
 	var err error
 	cfgFilePath := cfg.TendermintConfigFilePath()
 	genFile := cfg.tendermintCfg.GenesisFile()
 
 	switch ntw {
 	case setup.SiriusNetwork:
+		protocolBlockVersion = siriusProtocolBlockVersion
 		if genContent, err = setup.ReadSiriusConsensusGenesis(); err != nil {
 			return err
 		}
@@ -55,6 +63,7 @@ func Init(cfg Config, ntw setup.Network) error {
 			return err
 		}
 	case setup.StandaloneNetwork:
+		protocolBlockVersion = standaloneProtocolBlockVersion
 		if genContent, err = setup.CreateStandaloneConsensusGenesis(pv); err != nil {
 			return err
 		}
@@ -77,6 +86,21 @@ func Init(cfg Config, ntw setup.Network) error {
 		return err
 	}
 	
+	logger.Info("Initializing consensus statedb", "database", cfg.tendermintCfg.DBDir())
+	stateDB := tmtDb.NewDB("state", tmtDb.DBBackendType(cfg.tendermintCfg.DBBackend), cfg.tendermintCfg.DBDir())
+	state, err := tmtState.LoadStateFromDBOrGenesisFile(stateDB, cfg.tendermintCfg.GenesisFile())
+	state.Version.Consensus.Block = protocolBlockVersion
+	logger.Info("Saving and closing consensus statedb", "database", cfg.tendermintCfg.DBDir())
+	tmtState.SaveState(stateDB, state)
+	stateDB.Close()
+	
+	trc, err := newTracer(trcCfg)
+	if err != nil {
+		return err
+	}
+	
+	trc.assertPersistedInitStateDb(cfg.tendermintCfg, ntw)
+
 	return nil
 }
 

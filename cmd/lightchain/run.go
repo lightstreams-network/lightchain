@@ -15,6 +15,7 @@ import (
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/lightstreams-network/lightchain/prometheus"
+	"github.com/lightstreams-network/lightchain/tracer"
 )
 
 const (
@@ -88,7 +89,7 @@ func runCmd() *cobra.Command {
 
 			// Fake cli.context required by Ethereum node
 			ctx := newNodeClientCtx(databaseDataDir, cmd)
-			dbCfg, err := database.NewConfig(databaseDataDir, shouldTrace, traceLogFilePath, enablePrometheus, ctx)
+			dbCfg, err := database.NewConfig(databaseDataDir, enablePrometheus, ctx)
 			if err != nil {
 				logger.Error(fmt.Errorf("database node config could not be created: %v", err).Error())
 				os.Exit(1)
@@ -100,7 +101,8 @@ func runCmd() *cobra.Command {
 				prometheus.DefaultPrometheusNamespace,
 				dbCfg.GethIpcPath())
 
-			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg)
+			tracerCfg := tracer.NewConfig(shouldTrace, traceLogFilePath)
+			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg)
 
 			lightChainNode, err := node.NewNode(&nodeCfg)
 			if err != nil {

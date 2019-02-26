@@ -118,7 +118,7 @@ external_address = ""
 seeds = ""
 
 # Comma separated list of nodes to keep persistent connections to
-persistent_peers = "A9984F4CA2D1BA468C3F3B1C55FF11692285FD77@sirius.lightstreams.io:9001, B703BCF1768E59430DF58E1320C54312DA50FCCB@sirius.lightstreams.io:9002"
+persistent_peers = "4172cede3e68412577965d0655597b9a7f235820@sirius.lightstreams.io:9001, 0f04a32ffd95529c277e92aa9f006cc613595e54@sirius.lightstreams.io:9002"
 
 # UPNP port forwarding
 upnp = true
@@ -252,5 +252,5 @@ prometheus_listen_addr = ":26660"
 max_open_connections = 3
 
 # Instrumentation namespace
-namespace = "sirius-net"
+namespace = "tendermint"
 `

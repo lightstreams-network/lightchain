@@ -1,11 +1,13 @@
 package consensus
 
 import (
-	"path/filepath"
-	"github.com/tendermint/tendermint/config"
 	"fmt"
-	"github.com/spf13/viper"
 	"os"
+	"path/filepath"
+	
+	"github.com/spf13/viper"
+	"github.com/tendermint/tendermint/config"
+	
 )
 
 const DataDirName = "consensus"
