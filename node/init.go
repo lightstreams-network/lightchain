@@ -13,7 +13,6 @@ func Init(cfg Config, ntw setup.Network) error {
 	logger := log.NewLogger().With("engine", "node")
 	logger.Info("Initializing lightchain node data dir...", "dir", cfg.DataDir)
 	
-	
 	if err := os.MkdirAll(cfg.DataDir, os.ModePerm); err != nil {
 		return err
 	}
