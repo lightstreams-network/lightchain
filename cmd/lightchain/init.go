@@ -79,6 +79,8 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, setup.Network, error) {
 	// This should be done inside of the `node.Init()` pkg but due to bad design,
 	// creation of new Ethereum node instance from a config accidentally modifies the FS by creating
 	// a keystore dir therefore we have to perform this check as early as possible.
+	//
+	// Todo: After #90 is done, move this code to `Node.Init()`
 	if doesExist, err := fs.DirExists(dataDir); doesExist || err != nil {
 		return node.Config{}, "", fmt.Errorf("unable to initialize lightchain node. %s already exists", dataDir)
 	}

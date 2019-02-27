@@ -34,7 +34,7 @@ func NewNode(cfg *Config, consensusAPI conAPI.API, registry *prometheus.Registry
 		return nil, err
 	}
 
-	// Todo: Should be refactored, creating a new instance of a struct SHOULDN'T do any FS changes
+	// Todo: #90 Should be refactored, creating a new instance of a struct SHOULDN'T do any FS changes
 	cfg.GethCfg.EthCfg.NetworkId = cfg.GethCfg.EthCfg.Genesis.Config.ChainID.Uint64()
 	ethereum, err := ethNode.New(&cfg.GethCfg.NodeCfg)
 	if err != nil {

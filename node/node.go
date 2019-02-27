@@ -29,7 +29,7 @@ func NewNode(cfg *Config) (*Node, error) {
 		return nil, err
 	}
 
-	// Todo: Should be refactored, creating a new instance of a struct SHOULDN'T do any FS changes
+	// Todo: #90 Should be refactored, creating a new instance of a struct SHOULDN'T do any FS changes
 	conRPCAPI := conAPI.NewRPCApi(cfg.consensusCfg.RPCListenPort())
 	logger.Debug("Creating new database node instance from config and creates a keystore dir...")
 	dbNode, err := database.NewNode(&cfg.dbCfg, conRPCAPI, prometheusNode.Registry())
