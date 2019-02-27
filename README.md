@@ -113,6 +113,28 @@ At the genesis block, the account `0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e`ha
 ## Metrics
 [Read how to run metrics explorer](METRICS.md)
 
+## Troubleshooting
+
+### Corrupted Database state
+
+If you node is displaying the following error message:
+```
+Nonce not strictly increasing. Expected YYYY got XXXX engine=consensus module=ABCI
+```
+
+That was likely caused due to an synchronization issue after a transaction
+ was executed from your local node. Due to that connection problem the 
+ local state becomes invalid and the nonce of account used to performes
+ that transaction stays behind the real one.
+ 
+ We have an open issue to resolve this problem 
+ 
+ In meanwhile our team resolve the issue [#70](https://github.com/lightstreams-network/lightchain/issues/70), 
+ there is an alternative solution: 
+ * Shut down your node
+ * Remove the memory state saved on `$rm ${DATADIR}/database/transactions.rlp`
+ * Start the node again `lightchain run...`
+
 ## Applications
 
 ### Leth
