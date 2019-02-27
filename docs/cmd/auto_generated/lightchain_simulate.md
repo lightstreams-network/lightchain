@@ -1,13 +1,13 @@
-## lightchain run
+## lightchain simulate
 
-Launches lightchain node and all of its online services including blockchain (Geth) and the consensus (Tendermint).
+Executes `init` and `run` commands with active tracing and simulates TXs activity to assert crucial components such as Consensus State, DB, Mempool and others. (testing purposes)
 
 ### Synopsis
 
-Launches lightchain node and all of its online services including blockchain (Geth) and the consensus (Tendermint).
+Executes `init` and `run` commands with active tracing and simulates TXs activity to assert crucial components such as Consensus State, DB, Mempool and others. (testing purposes)
 
 ```
-lightchain run [flags]
+lightchain simulate [flags]
 ```
 
 ### Options
@@ -15,13 +15,15 @@ lightchain run [flags]
 ```
       --abci_protocol string   socket | grpc (default "socket")
       --datadir string         Data directory for the databases and keystore (default "/Users/enchanterio/lightchain")
-  -h, --help                   help for run
+  -h, --help                   help for simulate
       --lvl string             Level of logging (default "info")
       --prometheus             Enable prometheus metrics exporter
       --rpc                    Enable the HTTP-RPC server
       --rpcaddr string         HTTP-RPC server listening interface (default "localhost")
       --rpcapi string          API's offered over the HTTP-RPC interface
       --rpcport int            HTTP-RPC server listening port (default 8545)
+      --sirius                 Initialize a node connected to Sirius network
+      --standalone             Data directory for the databases and keystore
       --tmt_p2p_port uint      Tendermint port used to achieve exchange messages across nodes (default 26656)
       --tmt_proxy_port uint    Lightchain RPC port used to receive incoming messages from Tendermint (default 26658)
       --tmt_rpc_port uint      Tendermint RPC port used to receive incoming messages from Lightchain (default 26657)
