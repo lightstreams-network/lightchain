@@ -34,6 +34,7 @@ func NewNode(cfg *Config, consensusAPI conAPI.API, registry *prometheus.Registry
 		return nil, err
 	}
 
+	// Todo: Should be refactored, creating a new instance of a struct SHOULDN'T do any FS changes
 	cfg.GethCfg.EthCfg.NetworkId = cfg.GethCfg.EthCfg.Genesis.Config.ChainID.Uint64()
 	ethereum, err := ethNode.New(&cfg.GethCfg.NodeCfg)
 	if err != nil {
@@ -56,7 +57,7 @@ func NewNode(cfg *Config, consensusAPI conAPI.API, registry *prometheus.Registry
 	}
 
 	logger.Debug("Binding ethereum events to rpc client...")
-	if err := ethereum.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {
+	err = ethereum.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {
 		logger.Debug(fmt.Sprintf("Registering database..."))
 
 		n.database, err = NewDatabase(ctx, &cfg.GethCfg.EthCfg, consensusAPI, logger, trackedMetrics)
@@ -65,8 +66,9 @@ func NewNode(cfg *Config, consensusAPI conAPI.API, registry *prometheus.Registry
 		}
 
 		return n.database, nil
-	}); err != nil {
-		return &n, err
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return &n, nil

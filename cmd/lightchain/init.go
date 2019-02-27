@@ -16,6 +16,7 @@ import (
 	"github.com/lightstreams-network/lightchain/setup"
 	"github.com/lightstreams-network/lightchain/prometheus"
 	"github.com/lightstreams-network/lightchain/tracer"
+	"github.com/lightstreams-network/lightchain/fs"
 )
 
 var (
@@ -74,6 +75,13 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, setup.Network, error) {
 
 	shouldTrace, _ := cmd.Flags().GetBool(TraceFlag.Name)
 	traceLogFilePath, _ := cmd.Flags().GetString(TraceLogFlag.Name)
+
+	// This should be done inside of the `node.Init()` pkg but due to bad design,
+	// creation of new Ethereum node instance from a config accidentally modifies the FS by creating
+	// a keystore dir therefore we have to perform this check as early as possible.
+	if doesExist, err := fs.DirExists(dataDir); doesExist || err != nil {
+		return node.Config{}, "", fmt.Errorf("unable to initialize lightchain node. %s already exists", dataDir)
+	}
 
 	if shouldTrace {
 		logger.Info("|--------")

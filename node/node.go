@@ -20,17 +20,18 @@ type Node struct {
 func NewNode(cfg *Config) (*Node, error) {
 	logger := log.NewLogger().With("engine", "node")
 
-	logger.Debug("Initializing prometheus node...")
+	logger.Debug("Creating new prometheus node instance from config...")
 	prometheusNode := prometheus.NewNode(cfg.prometheusCfg)
 
-	logger.Debug("Initializing consensus node...")
+	logger.Debug("Creating new consensus node instance from config...")
 	consensusNode, err := consensus.NewNode(&cfg.consensusCfg, prometheusNode.Registry())
 	if err != nil {
 		return nil, err
 	}
 
+	// Todo: Should be refactored, creating a new instance of a struct SHOULDN'T do any FS changes
 	conRPCAPI := conAPI.NewRPCApi(cfg.consensusCfg.RPCListenPort())
-	logger.Debug("Initializing database node...")
+	logger.Debug("Creating new database node instance from config and creates a keystore dir...")
 	dbNode, err := database.NewNode(&cfg.dbCfg, conRPCAPI, prometheusNode.Registry())
 	if err != nil {
 		return nil, err
