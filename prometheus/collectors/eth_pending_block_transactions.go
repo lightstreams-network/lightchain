@@ -34,6 +34,7 @@ func (collector *EthPendingBlockTransactions) Collect(ch chan<- prometheus.Metri
 		ch <- prometheus.NewInvalidMetric(collector.desc, err)
 		return
 	}
+	defer ethClient.Close()
 	
 	result, err := ethClient.PendingTransactionCount(context.Background())
 	if err != nil {

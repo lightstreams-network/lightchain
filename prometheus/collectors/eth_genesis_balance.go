@@ -43,6 +43,7 @@ func (collector *EthGenesisBalance) Collect(ch chan<- prometheus.Metric) {
 	if err != nil {
 		ch <- prometheus.NewInvalidMetric(collector.desc, err)
 	}
+	defer ethClient.Close()
 
 	for _, acc := range (GenesisEthAccounts) {
 		balance, err := ethClient.PendingBalanceAt(context.Background(), common.HexToAddress(acc))
