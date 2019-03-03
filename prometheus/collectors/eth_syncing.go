@@ -34,6 +34,7 @@ func (collector *EthSyncing) Collect(ch chan<- prometheus.Metric) {
 	if err != nil {
 		ch <- prometheus.NewInvalidMetric(collector.desc, err)
 	}
+	defer ethClient.Close()
 
 	syncProgress, err := ethClient.SyncProgress(context.Background())
 	if err != nil {
