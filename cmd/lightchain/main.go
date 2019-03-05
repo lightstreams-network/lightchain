@@ -9,6 +9,7 @@ import (
 	"path"
 	"github.com/lightstreams-network/lightchain/log"
 	"path/filepath"
+	"runtime/debug"
 
 	ethLog "github.com/ethereum/go-ethereum/log"
 	ethUtils "github.com/ethereum/go-ethereum/cmd/utils"
@@ -44,6 +45,12 @@ var (
 
 func main() {
 	lightchainCmd := LightchainCmd()
+
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("Node resulted in panic: %s. \n" + string(debug.Stack()), r)
+		}
+	}()
 
 	if err := lightchainCmd.Execute(); err != nil {
 		fmt.Println(err)

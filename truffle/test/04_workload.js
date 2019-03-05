@@ -34,7 +34,7 @@ describe('Workload', async () => {
     const sentFundTxReceiptIds = Array();
     
     // It runs every txs in parallel
-    for(let i=0; i < iterations; i++) {
+    for (let i=0; i < iterations; i++) {
       const txReceiptPromise = web3.eth.sendTransaction({
         from: ROOT_ACCOUNT,
         to: NEW_ACCOUNT_ADDR,

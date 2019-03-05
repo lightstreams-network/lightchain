@@ -31,7 +31,7 @@ A simulate cmd executes as follows:
 
 Simulation can be run via:
 ```
-lightchain simulate --datadir=${HOME}/.lightchain --standalone --trace
+lightchain simulate --datadir=${HOME}/.lightchain --standalone --trace --force
 ```
 
 Output example:

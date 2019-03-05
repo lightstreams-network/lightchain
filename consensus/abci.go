@@ -12,11 +12,10 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/lightstreams-network/lightchain/consensus/metrics"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
-	abciTypes "github.com/lightstreams-network/lightchain/consensus/types"
 	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
-	"github.com/lightstreams-network/lightchain/consensus/metrics"
 )
 
 // maxTransactionSize is 32KB in order to prevent DOS attacks
@@ -123,70 +122,32 @@ func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx
 	
 	tx, err := decodeRLP(txBytes)
 	if err != nil {
-		abci.logger.Error("Received invalid transaction", "tx", tx.Hash().String())
-		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrEncodingError.Code))
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrEncodingError.Code), Log: err.Error()}
+		abci.logger.Error("Unable to decode RLP TX", "err", err.Error())
+		abci.metrics.CheckErrTxsTotal.Add(1, "INVALID_TX")
+		return tmtAbciTypes.ResponseCheckTx{Code: 1, Log: "INVALID_TX"}
 	}
 
 	abci.logger.Info("Checking TX", "hash", tx.Hash().String(), "nonce", tx.Nonce(), "cost", tx.Cost())
-
-	if tx.Size() > maxTransactionSize {
-		abci.logger.Error(core.ErrOversizedData.Error())
-		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrInternalError.Code))
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInternalError.Code), Log: core.ErrOversizedData.Error()}
-	}
-
-	var signer ethTypes.Signer = ethTypes.FrontierSigner{}
-	if tx.Protected() {
-		signer = ethTypes.NewEIP155Signer(tx.ChainId())
-	}
-
-	from, err := ethTypes.Sender(signer, tx)
-	if err != nil {
-		abci.logger.Error(core.ErrInvalidSender.Error())
-		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrBaseInvalidSignature.Code))
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBaseInvalidSignature.Code), Log: core.ErrInvalidSender.Error()}
-	}
-
-	if tx.Value().Sign() < 0 {
-		abci.logger.Error(core.ErrNegativeValue.Error())
-		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrBaseInvalidInput.Code))
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBaseInvalidInput.Code), Log: core.ErrNegativeValue.Error()}
-	}
-
-	if !abci.checkTxState.Exist(from) {
-		abci.logger.Error(core.ErrInvalidSender.Error())
-		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrBaseUnknownAddress.Code))
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBaseUnknownAddress.Code), Log: core.ErrInvalidSender.Error()}
-	}
-
-	if abci.checkTxState.GetNonce(from) != tx.Nonce() {
-		errMsg := fmt.Sprintf("Nonce not strictly increasing. Expected %d got %d", abci.checkTxState.GetNonce(from), tx.Nonce())
-		abci.logger.Error(errMsg)
-		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrBadNonce.Code))
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrBadNonce.Code), Log: errMsg}
-	}
-
-	intrinsicGas, err := core.IntrinsicGas(tx.Data(), tx.To() == nil, true)
+	from, err := abci.doMempoolValidation(tx)
 	if err != nil {
 		abci.logger.Error(err.Error())
-		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrInternalError.Code))
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInternalError.Code), Log: err.Error()}
+		abci.metrics.CheckErrTxsTotal.Add(1, err.Error())
+		return tmtAbciTypes.ResponseCheckTx{Code: 1, Log: err.Error()}
 	}
 
-	if tx.Gas() < intrinsicGas {
-		abci.logger.Error("TX gas is lower than intrinsic gas", "tx_gas", tx.Gas(), "intrinsic_gas", intrinsicGas)
-		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrInsufficientGas.Code))
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInsufficientGas.Code), Log: err.Error()}
+	// Additional custom validation aside of the Ethereum default mempool validation
+	if tx.GasPrice().Uint64() < abci.db.Config().TxPool.PriceLimit {
+		abci.logger.Error("TX gas price too low", "tx_gas_price", tx.GasPrice(), "required_tx_gas_price", abci.db.Config().TxPool.PriceLimit)
+		abci.metrics.CheckErrTxsTotal.Add(1, "INSUFFICIENT_GAS_PRICE")
+		return tmtAbciTypes.ResponseCheckTx{Code: 1, Log: "INSUFFICIENT_GAS_PRICE"}
 	}
 
 	currentBalance := abci.checkTxState.GetBalance(from)
 	txCost := tx.Cost()
 	if currentBalance.Cmp(txCost) < 0 {
-		errMsg := fmt.Sprintf("Current balance: %s, TX cost: %s", currentBalance, tx.Cost())
-		abci.logger.Error(errMsg)
-		abci.metrics.CheckErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrInsufficientFunds.Code))
-		return tmtAbciTypes.ResponseCheckTx{Code: uint32(abciTypes.ErrInsufficientFunds.Code), Log: errMsg}
+		abci.logger.Error("Low balance", "balance", currentBalance.String(), "tx_cost", tx.Cost().String())
+		abci.metrics.CheckErrTxsTotal.Add(1, "INSUFFICIENT_FUNDS")
+		return tmtAbciTypes.ResponseCheckTx{Code: 1, Log: "INSUFFICIENT_FUNDS"}
 	}
 
 	// Adjust From and To balances in order for the balance verification to be valid for next TX
@@ -202,6 +163,46 @@ func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx
 	return tmtAbciTypes.ResponseCheckTx{Code: tmtAbciTypes.CodeTypeOK}
 }
 
+func (abci *TendermintABCI) doMempoolValidation(tx *ethTypes.Transaction) (address common.Address, err error) {
+	if tx.Size() > maxTransactionSize {
+		return common.Address{}, fmt.Errorf("MAX_TRANSACTION_SIZE")
+	}
+
+	var signer ethTypes.Signer = ethTypes.FrontierSigner{}
+	if tx.Protected() {
+		signer = ethTypes.NewEIP155Signer(tx.ChainId())
+	}
+
+	from, err := ethTypes.Sender(signer, tx)
+	if err != nil {
+		return common.Address{}, fmt.Errorf("INVALID_SENDER")
+	}
+
+	if tx.Value().Sign() < 0 {
+		return common.Address{}, fmt.Errorf("INVALID_SIGNATURE")
+	}
+
+	if !abci.checkTxState.Exist(from) {
+		return common.Address{}, fmt.Errorf("UNKNOWN_ADDRESS")
+	}
+
+	if abci.checkTxState.GetNonce(from) != tx.Nonce() {
+		abci.logger.Error(fmt.Sprintf("Nonce not strictly increasing. Expected %d got %d", abci.checkTxState.GetNonce(from), tx.Nonce()))
+		return common.Address{}, fmt.Errorf("BAD_NONCE")
+	}
+
+	intrinsicGas, err := core.IntrinsicGas(tx.Data(), tx.To() == nil, true)
+	if err != nil {
+		return common.Address{}, fmt.Errorf("INTRINSIC_GAS_UNKNOWN")
+	}
+
+	if tx.Gas() < intrinsicGas {
+		return common.Address{}, fmt.Errorf("INTRINSIC_GAS")
+	}
+
+	return from, nil
+}
+
 // DeliverTx executes the transaction against Ethereum block's work state.
 //
 // Response:
@@ -212,17 +213,17 @@ func (abci *TendermintABCI) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDeliv
 	abci.metrics.DeliverTxsTotal.Add(1)
 	tx, err := decodeRLP(txBytes)
 	if err != nil {
-		abci.metrics.DeliverErrTxsTotal.Add(1, fmt.Sprint(abciTypes.ErrEncodingError.Code))
-		abci.logger.Info("Received invalid transaction", "hash", tx, "err", err)
-		return tmtAbciTypes.ResponseDeliverTx{Code: uint32(abciTypes.ErrEncodingError.Code), Log: err.Error()}
+		abci.logger.Error(err.Error())
+		abci.metrics.DeliverErrTxsTotal.Add(1, "INVALID_TX")
+		return tmtAbciTypes.ResponseDeliverTx{Code: 1, Log: "INVALID_TX"}
 	}
 
 	abci.logger.Info("Delivering TX", "hash", tx.Hash().String(), "nonce", tx.Nonce(), "cost", tx.Cost(), "gas", tx.Gas(), "gas_price", tx.GasPrice())
 
 	res := abci.db.ExecuteTx(tx)
 	if res.IsErr() {
-		abci.metrics.DeliverErrTxsTotal.Add(1, fmt.Sprint(res.Code))
 		abci.logger.Error("Error delivering TX to DB", "hash", tx.Hash().String(), "err", res.Log)
+		abci.metrics.DeliverErrTxsTotal.Add(1, "UNABLE_TO_DELIVER")
 		return res
 	}
 
@@ -258,16 +259,16 @@ func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
 	rootHash := abci.getCurrentBlock().Root()
 	blockHash, err := abci.db.Persist(abci.RewardReceiver())
 	if err != nil {
-		abci.metrics.CommitErrBlockTotal.Add(1, "ErrGettingLastState")
 		abci.logger.Error("Error getting latest database state", "err", err)
+		abci.metrics.CommitErrBlockTotal.Add(1, "UNABLE_TO_PERSIST")
 		return tmtAbciTypes.ResponseCommit{Data: rootHash.Bytes()}
 	}
 	nextRootHash := abci.getCurrentBlock().Root()
 
 	ethState, err := abci.getCurrentDBState()
 	if err != nil {
-		abci.metrics.CommitErrBlockTotal.Add(1, "ErrGettingNextLastState")
 		abci.logger.Error("Error getting next latest state", "err", err)
+		abci.metrics.CommitErrBlockTotal.Add(1, "ErrGettingNextLastState")
 		return tmtAbciTypes.ResponseCommit{Data: nextRootHash.Bytes()}
 	}
 
@@ -300,17 +301,20 @@ func (abci *TendermintABCI) Query(query tmtAbciTypes.RequestQuery) tmtAbciTypes.
 
 	var in jsonRequest
 	if err := json.Unmarshal(query.Data, &in); err != nil {
-		return tmtAbciTypes.ResponseQuery{Code: uint32(abciTypes.ErrEncodingError.Code), Log: err.Error()}
+		abci.logger.Error("unable to unmarshal query data", "err", err.Error())
+		return tmtAbciTypes.ResponseQuery{Code: 1, Log: "INVALID_QUERY_REQ"}
 	}
 
 	var result interface{}
 	if err := abci.ethRPCClient.Call(&result, in.Method, in.Params...); err != nil {
-		return tmtAbciTypes.ResponseQuery{Code: uint32(abciTypes.ErrInternalError.Code), Log: err.Error()}
+		abci.logger.Error("unable to call ETH RPC client", "err", err.Error())
+		return tmtAbciTypes.ResponseQuery{Code: 1, Log: "ETH_RPC_CLIENT_UNAVAILABLE"}
 	}
 
 	resultBytes, err := json.Marshal(result)
 	if err != nil {
-		return tmtAbciTypes.ResponseQuery{Code: uint32(abciTypes.ErrInternalError.Code), Log: err.Error()}
+		abci.logger.Error("unable to unmarshal info response", "err", err.Error())
+		return tmtAbciTypes.ResponseQuery{Code: 1, Log: "INVALID_QUERY_RES"}
 	}
 
 	return tmtAbciTypes.ResponseQuery{Code: tmtAbciTypes.CodeTypeOK, Value: resultBytes}

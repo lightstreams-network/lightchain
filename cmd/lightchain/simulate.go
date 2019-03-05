@@ -82,13 +82,14 @@ func simulateTransferTx(nodeCfg node.Config) *types.Transaction {
 	if err != nil {
 		panic(err)
 	}
+	defer client.Close()
 
 	auth, err := authy.FindInKeystoreDir(nodeCfg.DbCfg().KeystoreDir(), common.HexToAddress(simulateTxFrom), simulateTxFromPwd)
 	if err != nil {
 		panic(err)
 	}
 
-	tx, err := wallety.Transfer(client, auth, common.HexToAddress(standaloneNonExistingAddr), simulateTxAmount.String())
+	tx, err := wallety.Transfer(client, auth, common.HexToAddress(standaloneNonExistingAddr), simulateTxAmount.String(), txclient.NewTransferTxConfig())
 	if err != nil {
 		panic(err)
 	}

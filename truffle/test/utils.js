@@ -34,6 +34,14 @@ module.exports.calculateGasCostBN = function(gasAmount) {
   return web3.eth.gasPrice.mul(gasAmount);
 };
 
+module.exports.minimumGasPriceBN = function() {
+  return web3._extend.utils.toBigNumber("500000000000");
+};
+
+module.exports.toBN = function(wei) {
+  return web3._extend.utils.toBigNumber(wei);
+};
+
 module.exports.fetchTxReceipt = function(txReceiptId, timeoutInSec = 30) {
   const startTime = new Date();
   const retryInSec = 2;

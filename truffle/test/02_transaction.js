@@ -6,7 +6,7 @@
  * - Validate Encoded data
  */
 
-const { isAccountLocked, convertPhtToWeiBN, fetchTxReceipt, calculateGasCostBN, extractEnvAccountAndPwd } = require('./utils');
+const { isAccountLocked, convertPhtToWeiBN, fetchTxReceipt, calculateGasCostBN, minimumGasPriceBN, extractEnvAccountAndPwd, toBN } = require('./utils');
 
 const HelloBlockchainWorld = artifacts.require("HelloBlockchainWorld");
 
@@ -16,28 +16,28 @@ describe('TestTransaction', async () => {
   const NEW_ACCOUNT_PASS = "password";
 
   it('should fail transfer on insufficient funds', async function() {
+    const expectedWeb3ErrMsg = 'insufficient funds for gas * price + value';
     const instance = await HelloBlockchainWorld.deployed();
     NEW_ACCOUNT_ADDR = await web3.personal.newAccount(NEW_ACCOUNT_PASS);
     await web3.personal.unlockAccount(NEW_ACCOUNT_ADDR, NEW_ACCOUNT_PASS, 10);
 
-    const errMsg = 'insufficient funds for gas * price + value';
     try {
       await web3.eth.sendTransaction({
         from: NEW_ACCOUNT_ADDR,
         to: instance.address,
         value: convertPhtToWeiBN(1)
       });
-      assert.equal(true, false, `Transaction should fails due to "${errMsg}"`)
-    } catch ( e ) {
-      assert.equal(e.message, errMsg);
+    } catch (e) {
+      assert.equal(e.message, expectedWeb3ErrMsg);
     }
   });
 
   it('should fail transaction because gas limit is set too low', async function() {
+    const expectedWeb3ErrMsg = 'intrinsic gas too low';
     const weiBalancePreTxBN = await web3.eth.getBalance(ROOT_ACCOUNT);
     const weiAmountSentBN = convertPhtToWeiBN(0.1);
-    const errMsg = 'intrinsic gas too low';
     const gasLimit = 20999; // Min required is 21000
+
     try {
       const txReceiptId = await web3.eth.sendTransaction({
         from: ROOT_ACCOUNT,
@@ -45,15 +45,49 @@ describe('TestTransaction', async () => {
         value: weiAmountSentBN,
         gas: gasLimit
       });
-      await fetchTxReceipt(txReceiptId, 15);
-      assert(false, `Transaction should fails due to "${errMsg}"`)
-    } catch ( e ) {
-      assert.equal(e.message, errMsg);
+    } catch (e) {
+      assert.equal(e.message, expectedWeb3ErrMsg);
     }
 
     const weiBalancePostTxBN = await web3.eth.getBalance(ROOT_ACCOUNT);
-    assert.equal(weiBalancePostTxBN.toNumber(), weiBalancePreTxBN.toNumber(), 'No gas is wasted as trx failed')
+    assert.equal(weiBalancePostTxBN.toNumber(), weiBalancePreTxBN.toNumber(), 'No gas was spent as TX failed')
   });
+
+  // Uncomment once #70
+  // it('should fail TX because gas price is set too low', async function() {
+  //   const expectedWeb3ErrMsg = 'Timeout after 15 seconds';
+  //   const gasLimit = 21000;
+  //   const recipient = NEW_ACCOUNT_ADDR;
+  //   const weiAmountSentBN = convertPhtToWeiBN(0.1);
+  //   const requiredGasPrice = minimumGasPriceBN();
+  //   const lowGasPrice = requiredGasPrice.sub(1);
+  //   const txGasCost = calculateGasCostBN(gasLimit);
+  //   const weiBalancePreTxBN = await web3.eth.getBalance(ROOT_ACCOUNT);
+  //   const recipientBalancePreTxBN = await web3.eth.getBalance(recipient);
+  //
+  //   try {
+  //     const txReceiptId = await web3.eth.sendTransaction({
+  //       from: ROOT_ACCOUNT,
+  //       to: recipient,
+  //       value: weiAmountSentBN,
+  //       gas: gasLimit,
+  //       gasPrice: lowGasPrice,
+  //     });
+  //
+  //     const txReceipt = await fetchTxReceipt(txReceiptId, 5);
+  //
+  //     console.log(txReceipt);
+  //
+  //     assert.equal(undefined, txReceipt, "TX with insufficient gas price should not be added to a block");
+  //   } catch (e) {
+  //     assert.equal(e.message, expectedWeb3ErrMsg)
+  //   }
+  //
+  //   const weiBalancePostTxBN = await web3.eth.getBalance(ROOT_ACCOUNT);
+  //   const recipientBalancePostTxBN = await web3.eth.getBalance(recipient);
+  //   assert.equal(recipientBalancePostTxBN.toNumber(), recipientBalancePreTxBN.toNumber(), "recipient should not have received the funds");
+  //   assert.equal(weiBalancePostTxBN.toNumber(), weiBalancePreTxBN.toNumber(), 'No gas should be spent on invalid TX')
+  // });
 
   it('should transfer 0.1 PHT and gas is spent in the transaction', async function() {
     const amountToSendBN = convertPhtToWeiBN(0.1);

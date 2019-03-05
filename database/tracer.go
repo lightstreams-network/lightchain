@@ -113,7 +113,7 @@ func (t EthDBTracer) AssertPostTxSimulationState(from common.Address, tx *types.
 	}
 
 	// Given the same TX inputs, hash must not change
-	expectedTxHash := common.HexToHash("0x49828264ee35226d1242893343c29537a04f61bbb2671d58d7ff9e16f5e5c4bd")
+	expectedTxHash := common.HexToHash("0x11aef34de0533989f78f43439913f5f11cd31d4cbcbd43e52630dd8a1f2d69e8")
 	if !bytes.Equal(block.TxHash().Bytes(), expectedTxHash.Bytes()) {
 		t.Logger.Errorw("incorrect simulated TX hash", "expected", expectedTxHash.Hex(), "actual", block.TxHash().Hex())
 	} else {
@@ -121,7 +121,7 @@ func (t EthDBTracer) AssertPostTxSimulationState(from common.Address, tx *types.
 	}
 
 	// Given the same TX changes, block root hash must not change
-	expectedRootHash := common.HexToHash("0x39e5006078070400d77b2494c879d5a6315ab3a7ae19c1309c0b4126f1f56f9c")
+	expectedRootHash := common.HexToHash("0x61bf842528ab995fc819b306b42ddb31b92aee0328f1cabf4f2cf4d7d23e9c45")
 	if !bytes.Equal(block.Root().Bytes(), expectedRootHash.Bytes()) {
 		t.Logger.Errorw("incorrect root hash", "expected", expectedRootHash.Hex(), "actual", block.Root().Hex())
 	} else {
@@ -144,7 +144,7 @@ func (t EthDBTracer) AssertPostTxSimulationState(from common.Address, tx *types.
 		t.Logger.Infow("correct parent hash", "hash", block.ParentHash().Hex())
 	}
 
-	genesisFromBalance, _ := web3.PhotonToWei("300000000")
+	genesisFromBalance, _ := web3.ParseWei("300000000000000000000000000")
 	genesisFromBalanceCopy, _ := new(big.Int).SetString(genesisFromBalance.String(), 10)
 	expectedFromBalance := new(big.Int).Sub(genesisFromBalanceCopy, tx.Cost())
 
@@ -167,17 +167,17 @@ func (t EthDBTracer) AssertPostTxSimulationState(from common.Address, tx *types.
 		)
 	}
 
-	defaultGasPrice, _ := new(big.Int).SetString("1000000000", 10)
-	if tx.GasPrice().Cmp(defaultGasPrice) != 0 {
+	requiredGasPrice := big.NewInt(MinGasPrice)
+	if requiredGasPrice.Cmp(tx.GasPrice()) > 0 {
 		t.Logger.Errorw(
 			"incorrect gas price. Expected default gas price",
-			"default_gas_price", defaultGasPrice.String(),
+			"required_gas_price", requiredGasPrice.String(),
 			"tx_gas_price", tx.GasPrice().String(),
 		)
 	} else {
 		t.Logger.Infow(
 			"TX gas price set to default gas price as expected",
-			"default_gas_price", defaultGasPrice.String(),
+			"required_gas_price", requiredGasPrice.String(),
 			"tx_gas_price", tx.GasPrice().String(),
 		)
 	}

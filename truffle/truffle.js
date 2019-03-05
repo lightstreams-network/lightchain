@@ -18,13 +18,15 @@ module.exports = {
             host: "127.0.0.1",
             port: 8545,
             network_id: "162",
-            from: "0xd119b8b038d3a67d34ca1d46e1898881626a082b"
+            from: "0xd119b8b038d3a67d34ca1d46e1898881626a082b",
+            gasPrice: "500000000000",
         },
         standalone: {
             host: "127.0.0.1",
             port: 8545,
             network_id: "161",
-            from: "0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e"
+            from: "0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e",
+            gasPrice: "500000000000",
         }
     },
     mocha: { 
