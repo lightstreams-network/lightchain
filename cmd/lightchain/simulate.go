@@ -52,8 +52,13 @@ func simulateCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			n, err := startNode(nodeCfg)
+			n, err := node.NewNode(&nodeCfg)
 			if err != nil {
+				logger.Error(err.Error())
+				os.Exit(1)
+			}
+
+			if err := n.Start(); err != nil {
 				logger.Error(err.Error())
 				os.Exit(1)
 			}

@@ -37,10 +37,11 @@ func (n *Node) Registry() *prometheus.Registry {
 }
 
 func (n *Node) Start() error {
-	if ! n.cfg.enabled {
-		n.logger.Info("Ignored initialization of prometheus service")
+	if !n.cfg.enabled {
 		return nil
 	}
+
+	n.logger.Info("Starting prometheus node...")
 	
 	n.httpSrv = &http.Server{
 		Addr: n.cfg.http.Addr,
@@ -62,14 +63,15 @@ func (n *Node) Start() error {
 }
 
 func (n *Node) Stop() error {
-	if ! n.cfg.enabled {
-		n.logger.Info("Ignored stopping of prometheus service")
+	if !n.cfg.enabled {
 		return nil
 	}
 
+	n.logger.Info("Stopping prometheus node...")
 	if err := n.httpSrv.Shutdown(context.Background()); err != nil {
 		return err
 	}
+	n.logger.Info("Prometheus node stopped")
 
 	return nil
 }
