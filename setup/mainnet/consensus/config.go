@@ -11,7 +11,7 @@ const ConfigToml = `
 proxy_app = "tcp://127.0.0.1:26658"
 
 # A custom human readable name for this node
-moniker = "lightchain-mainnet"
+moniker = "mainnet-moniker"
 
 # If this node is many blocks behind the tip of the chain, FastSync
 # allows them to catchup quickly by downloading blocks in parallel
@@ -118,7 +118,7 @@ external_address = ""
 seeds = ""
 
 # Comma separated list of nodes to keep persistent connections to
-persistent_peers = ""
+persistent_peers = "4b54476ccebf721117c09169a11f4704a4503aa5@172.104.141.23:26656"
 
 # UPNP port forwarding
 upnp = true
