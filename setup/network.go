@@ -11,9 +11,11 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	
+	mainnetConsensus "github.com/lightstreams-network/lightchain/setup/mainnet/consensus"
 	siriusConsensus "github.com/lightstreams-network/lightchain/setup/sirius/consensus"
 	standaloneConsensus "github.com/lightstreams-network/lightchain/setup/standalone/consensus"
 	
+	mainnetDatabase "github.com/lightstreams-network/lightchain/setup/mainnet/database"
 	siriusDatabase "github.com/lightstreams-network/lightchain/setup/sirius/database"
 	standaloneDatabase "github.com/lightstreams-network/lightchain/setup/standalone/database"
 )
@@ -29,6 +31,7 @@ func init() {
 // Name represents name of blockchain used when running a node.
 type Network string
 
+const MainNetNetwork Network = "mainnet"
 const SiriusNetwork Network = "sirius"
 const StandaloneNetwork Network = "standalone"
 
@@ -69,6 +72,14 @@ func ReadSiriusConsensusConfig() ([]byte, error) {
 	return []byte(siriusConsensus.ConfigToml), nil
 }
 
+func ReadMainNetConsensusGenesis() ([]byte, error) {
+	return []byte(mainnetConsensus.Genesis), nil
+}
+
+func ReadMainNetConsensusConfig() ([]byte, error) {
+	return []byte(mainnetConsensus.ConfigToml), nil
+}
+
 /******************
  DATABASE SETUP
 ******************/
@@ -99,4 +110,11 @@ func ReadSiriusDatabaseKeystore() (map[string][]byte, error) {
 	return files, nil
 }
 
+func ReadMainNetDatabaseGenesis() ([]byte, error) {
+	return []byte(mainnetDatabase.Genesis), nil
+}
 
+// No default accounts should be generated for mainnet node
+func ReadMainNetDatabaseKeystore() (map[string][]byte, error) {
+	return make(map[string][]byte), nil
+}
