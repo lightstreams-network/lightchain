@@ -49,6 +49,7 @@ func main() {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("Node resulted in panic: %s. \n" + string(debug.Stack()), r)
+			os.Exit(1)
 		}
 	}()
 

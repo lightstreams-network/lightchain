@@ -75,7 +75,7 @@ func (db *Database) Config() *eth.Config {
 func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
 	db.logger.Info("Executing DB TX", "hash", tx.Hash().Hex(), "nonce", tx.Nonce())
 
-	db.UpdateExecuteTxMetrics(tx)
+	db.updateExecuteTxMetrics(tx)
 
 	return db.ethState.ExecuteTx(tx)
 }
@@ -171,7 +171,7 @@ func (db *Database) Protocols() []p2p.Protocol {
 	return nil
 }
 
-func (db *Database) UpdateExecuteTxMetrics(tx *ethTypes.Transaction) {
+func (db *Database) updateExecuteTxMetrics(tx *ethTypes.Transaction) {
 	db.metrics.ExecutedTxsTotal.Add(1)
 
 	txCost, _ := web3.WeiToPhoton(tx.Cost()).Float64()

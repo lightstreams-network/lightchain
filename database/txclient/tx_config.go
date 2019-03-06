@@ -25,12 +25,7 @@ func NewTxConfig(gasLimit uint64, gasPrice uint64, receiptTimeout time.Duration,
 }
 
 func NewTransferTxConfig() TxConfig {
-	return TxConfig{
-		21000,
-		database.MinGasPrice,
-		TxReceiptTimeout,
-		TxReceiptInterval,
-	}
+	return NewTxConfig(21000, database.MinGasPrice, TxReceiptTimeout, TxReceiptInterval)
 }
 
 func (c TxConfig) TxReceiptTimeout() time.Duration {

@@ -70,8 +70,8 @@ describe('SmartContract', async () => {
       });
       const txReceipt = await fetchTxReceipt(tx.tx);
       const weiBNBalancePostTx = await web3.eth.getBalance(ROOT_ACCOUNT);
-      const expectedGasCost = calculateGasCostBN(txReceipt.gasUsed);
-      const expectedBalance = weiBNBalancePreTx.sub(expectedGasCost);
+      const txGasCost = calculateGasCostBN(txReceipt.gasUsed);
+      const expectedBalance = weiBNBalancePreTx.sub(txGasCost);
 
       assert.equal(txReceipt.status, "0x1", "successful TX status expected");
       assert.equal(weiBNBalancePostTx.toNumber(), expectedBalance.toNumber(), "correct balance - gas cost expected");

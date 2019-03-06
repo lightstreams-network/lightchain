@@ -128,7 +128,20 @@ func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx
 	}
 
 	abci.logger.Info("Checking TX", "hash", tx.Hash().String(), "nonce", tx.Nonce(), "cost", tx.Cost())
-	from, err := abci.doMempoolValidation(tx)
+
+	var signer ethTypes.Signer = ethTypes.FrontierSigner{}
+	if tx.Protected() {
+		signer = ethTypes.NewEIP155Signer(tx.ChainId())
+	}
+
+	from, err := ethTypes.Sender(signer, tx)
+	if err != nil {
+		abci.logger.Error("Unable to retrieve TX sender", "err", err.Error())
+		abci.metrics.CheckErrTxsTotal.Add(1, "INVALID_SENDER")
+		return tmtAbciTypes.ResponseCheckTx{Code: 1, Log: "INVALID_SENDER"}
+	}
+
+	err = abci.doMempoolValidation(tx, from)
 	if err != nil {
 		abci.logger.Error(err.Error())
 		abci.metrics.CheckErrTxsTotal.Add(1, err.Error())
@@ -163,44 +176,34 @@ func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx
 	return tmtAbciTypes.ResponseCheckTx{Code: tmtAbciTypes.CodeTypeOK}
 }
 
-func (abci *TendermintABCI) doMempoolValidation(tx *ethTypes.Transaction) (address common.Address, err error) {
+func (abci *TendermintABCI) doMempoolValidation(tx *ethTypes.Transaction, from common.Address) (err error) {
 	if tx.Size() > maxTransactionSize {
-		return common.Address{}, fmt.Errorf("MAX_TRANSACTION_SIZE")
-	}
-
-	var signer ethTypes.Signer = ethTypes.FrontierSigner{}
-	if tx.Protected() {
-		signer = ethTypes.NewEIP155Signer(tx.ChainId())
-	}
-
-	from, err := ethTypes.Sender(signer, tx)
-	if err != nil {
-		return common.Address{}, fmt.Errorf("INVALID_SENDER")
+		return fmt.Errorf("MAX_TRANSACTION_SIZE")
 	}
 
 	if tx.Value().Sign() < 0 {
-		return common.Address{}, fmt.Errorf("INVALID_SIGNATURE")
+		return fmt.Errorf("INVALID_SIGNATURE")
 	}
 
 	if !abci.checkTxState.Exist(from) {
-		return common.Address{}, fmt.Errorf("UNKNOWN_ADDRESS")
+		return fmt.Errorf("UNKNOWN_ADDRESS")
 	}
 
 	if abci.checkTxState.GetNonce(from) != tx.Nonce() {
 		abci.logger.Error(fmt.Sprintf("Nonce not strictly increasing. Expected %d got %d", abci.checkTxState.GetNonce(from), tx.Nonce()))
-		return common.Address{}, fmt.Errorf("BAD_NONCE")
+		return fmt.Errorf("BAD_NONCE")
 	}
 
 	intrinsicGas, err := core.IntrinsicGas(tx.Data(), tx.To() == nil, true)
 	if err != nil {
-		return common.Address{}, fmt.Errorf("INTRINSIC_GAS_UNKNOWN")
+		return fmt.Errorf("INTRINSIC_GAS_UNKNOWN")
 	}
 
 	if tx.Gas() < intrinsicGas {
-		return common.Address{}, fmt.Errorf("INTRINSIC_GAS")
+		return fmt.Errorf("INSUFFICIENT_INTRINSIC_GAS")
 	}
 
-	return from, nil
+	return nil
 }
 
 // DeliverTx executes the transaction against Ethereum block's work state.
