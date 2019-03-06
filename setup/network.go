@@ -116,5 +116,10 @@ func ReadMainNetDatabaseGenesis() ([]byte, error) {
 
 // No default accounts should be generated for mainnet node
 func ReadMainNetDatabaseKeystore() (map[string][]byte, error) {
-	return make(map[string][]byte), nil
+	var files = make(map[string][]byte)
+	for name, keystore := range mainnetDatabase.Keystore {
+		files[name] = []byte(keystore)
+	}
+
+	return files, nil
 }
