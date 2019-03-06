@@ -57,7 +57,6 @@ func (n *Node) Start() error {
 		return err
 	}
 
-	n.logger.Info("Starting prometheus service...")
 	if err := n.prometheusNode.Start(); err != nil {
 		return err
 	}
@@ -80,11 +79,9 @@ func (n *Node) Stop() error {
 	}
 	n.logger.Info("Database node stopped")
 
-	n.logger.Info("Stopping prometheus service...")
 	if err := n.prometheusNode.Stop(); err != nil {
 		return err
 	}
-	n.logger.Info("Prometheus service stopped")
 
 	return nil
 }

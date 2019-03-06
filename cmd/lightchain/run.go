@@ -105,11 +105,19 @@ func runCmd() *cobra.Command {
 			tracerCfg := tracer.NewConfig(shouldTrace, traceLogFilePath)
 			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg)
 
-			n, err := startNode(nodeCfg)
+			n, err := node.NewNode(&nodeCfg)
 			if err != nil {
-				logger.Error(err.Error())
+				logger.Error(fmt.Errorf("lightchain node could not be instantiated: %v", err).Error())
 				os.Exit(1)
 			}
+
+			go func() {
+				logger.Debug("Starting lightchain node...")
+				if err := n.Start(); err != nil {
+					logger.Error(fmt.Errorf("lightchain node could not be started: %v", err).Error())
+					os.Exit(1)
+				}
+			}()
 
 			common.TrapSignal(func() {
 				if err := n.Stop(); err != nil {
@@ -125,20 +133,6 @@ func runCmd() *cobra.Command {
 	addRunCmdFlags(runCmd)
 
 	return runCmd
-}
-
-func startNode(nodeCfg node.Config) (*node.Node, error) {
-	n, err := node.NewNode(&nodeCfg)
-	if err != nil {
-		return nil, fmt.Errorf("lightchain node could not be instantiated: %v", err)
-	}
-
-	logger.Debug("Starting lightchain node...")
-	if err := n.Start(); err != nil {
-		return nil, fmt.Errorf("lightchain node could not be started: %v", err)
-	}
-
-	return n, nil
 }
 
 func addRunCmdFlags(cmd *cobra.Command) {
