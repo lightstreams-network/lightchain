@@ -17,11 +17,11 @@ func DirExists(path string) (bool, error) {
 	return true, err
 }
 
-func IsDirEmpty(name string) (bool, error) {
+func IsDirEmptyOrNotExists(name string) (bool, error) {
 	f, err := os.Open(name)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return true, err
+			return true, nil
 		}
 		return false, err
 	}
