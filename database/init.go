@@ -28,6 +28,13 @@ func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
 	var genesisBlob []byte
 	var err error
 	switch ntw {
+	case setup.MainNetNetwork:
+		if keystoreFiles, err = setup.ReadMainNetDatabaseKeystore(); err != nil {
+			return err
+		}
+		if genesisBlob, err = setup.ReadMainNetDatabaseGenesis(); err != nil {
+			return err
+		}
 	case setup.SiriusNetwork:
 		if keystoreFiles, err = setup.ReadSiriusDatabaseKeystore(); err != nil {
 			return err
@@ -47,13 +54,13 @@ func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
 	}
 	
 	if err = writeKeystoreFiles(logger, keystoreDir, keystoreFiles); err != nil {
-		err = fmt.Errorf("could not open write keystore: %v", err)
+		err = fmt.Errorf("could not write keystore files: %v", err)
 		return err
 	}
 	
 	genesis, err := parseBlobGenesis(genesisBlob)
 	if err != nil {
-		err = fmt.Errorf("reading genesis err: %v", err)
+		err = fmt.Errorf("unable to parse genesis file. err: %v", err)
 		return err
 	}
 

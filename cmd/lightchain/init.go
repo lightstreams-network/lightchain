@@ -30,6 +30,11 @@ var (
 		Usage: "Initialize a node connected to Sirius network",
 	}
 
+	MainNetFlag = cli.BoolFlag{
+		Name:  "mainnet",
+		Usage: "Initialize a node connected to production, MainNet",
+	}
+
 	ForceFlag = cli.BoolFlag{
 		Name:  "force",
 		Usage: "Forces the init by removing the data dir if already exists",
@@ -75,10 +80,7 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, setup.Network, error) {
 	}
 
 	dataDir, _ := cmd.Flags().GetString(DataDirFlag.Name)
-	useStandAloneNet, _ := cmd.Flags().GetBool(StandAloneNetFlag.Name)
-	useSiriusNet, _ := cmd.Flags().GetBool(SiriusNetFlag.Name)
 	forceInit, _ := cmd.Flags().GetBool(ForceFlag.Name)
-
 	shouldTrace, _ := cmd.Flags().GetBool(TraceFlag.Name)
 	traceLogFilePath, _ := cmd.Flags().GetString(TraceLogFlag.Name)
 
@@ -118,15 +120,9 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, setup.Network, error) {
 		}
 	}
 
-	var network setup.Network
-	if useStandAloneNet && useSiriusNet {
-		return node.Config{}, "", fmt.Errorf("multiple networks selected: %s, %s", setup.SiriusNetwork, setup.StandaloneNetwork)
-	} else if useStandAloneNet {
-		network = setup.StandaloneNetwork
-	} else if useSiriusNet {
-		network = setup.SiriusNetwork
-	} else {
-		network = setup.SiriusNetwork
+	ntw, err := chooseNetwork(cmd)
+	if err != nil {
+		return node.Config{}, "", err
 	}
 
 	consensusCfg := consensus.NewConfig(
@@ -154,11 +150,40 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, setup.Network, error) {
 
 	tracerCfg := tracer.NewConfig(shouldTrace, traceLogFilePath)
 
-	return node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg), network, nil
+	return node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg), ntw, nil
+}
+
+func chooseNetwork(cmd *cobra.Command) (setup.Network, error) {
+	useStandAloneNet, _ := cmd.Flags().GetBool(StandAloneNetFlag.Name)
+	useSiriusNet, _ := cmd.Flags().GetBool(SiriusNetFlag.Name)
+	useMainNet, _ := cmd.Flags().GetBool(MainNetFlag.Name)
+
+	if (boolToInt(useStandAloneNet) + boolToInt(useSiriusNet) + boolToInt(useMainNet)) > 1 {
+		return "", fmt.Errorf("select only one network")
+	}
+
+	if useStandAloneNet {
+		return setup.StandaloneNetwork, nil
+	}
+
+	if useSiriusNet {
+		return setup.SiriusNetwork, nil
+	}
+
+	return setup.MainNetNetwork, nil
+}
+
+func boolToInt(a bool) int {
+	if a {
+		return 1
+	}
+
+	return 0
 }
 
 func addInitCmdFLags(cmd *cobra.Command) {
 	cmd.Flags().Bool(StandAloneNetFlag.Name, false, DataDirFlag.Usage)
 	cmd.Flags().Bool(SiriusNetFlag.Name, false, SiriusNetFlag.Usage)
+	cmd.Flags().Bool(MainNetFlag.Name, false, MainNetFlag.Usage)
 	cmd.Flags().Bool(ForceFlag.Name, false, ForceFlag.Usage)
 }

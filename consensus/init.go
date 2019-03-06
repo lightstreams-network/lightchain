@@ -18,9 +18,6 @@ import (
 
 func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
 	logger := log.NewLogger().With("engine", "consensus")
-	// This is a necessary evil because
-	// Tendermint is using panics instead of errors where they shouldn't...
-	defer recoverNodeInitPanic()
 
 	createConsensusDataDirIfNotExists(cfg.dataDir)
 
@@ -29,11 +26,11 @@ func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
 	var pv *privval.FilePV
 	if tmtCommon.FileExists(privateValidatorKeyFile) {
 		pv = privval.LoadFilePV(privateValidatorKeyFile, privateValidatorStateFile)
-		logger.Info("Found private validator", "path", privateValidatorKeyFile)
+		logger.Info("Found private validator key file", "path", privateValidatorKeyFile)
 	} else {
 		pv = privval.GenFilePV(privateValidatorKeyFile, privateValidatorStateFile)
 		pv.Save()
-		logger.Info("Generated private validator", "path", privateValidatorKeyFile)
+		logger.Info("Generated private validator key file", "path", privateValidatorKeyFile)
 	}
 
 	nodeKeyFile := cfg.tendermintCfg.NodeKeyFile()
@@ -54,6 +51,14 @@ func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
 	genFile := cfg.tendermintCfg.GenesisFile()
 
 	switch ntw {
+	case setup.MainNetNetwork:
+		protocolBlockVersion = mainNetProtocolBlockVersion
+		if genContent, err = setup.ReadMainNetConsensusGenesis(); err != nil {
+			return err
+		}
+		if cfgDoc, err = setup.ReadMainNetConsensusConfig(); err != nil {
+			return err
+		}
 	case setup.SiriusNetwork:
 		protocolBlockVersion = siriusProtocolBlockVersion
 		if genContent, err = setup.ReadSiriusConsensusGenesis(); err != nil {
@@ -71,7 +76,7 @@ func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
 			return err
 		}
 	default:
-		return fmt.Errorf("Invalid network selected %s", ntw)
+		return fmt.Errorf("invalid network selected %s", ntw)
 	}
 	
 	if tmtCommon.FileExists(genFile) {
@@ -86,11 +91,11 @@ func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
 		return err
 	}
 	
-	logger.Info("Initializing consensus statedb", "database", cfg.tendermintCfg.DBDir())
+	logger.Info("Initializing consensus StateDB", "database", cfg.tendermintCfg.DBDir())
 	stateDB := tmtDb.NewDB("state", tmtDb.DBBackendType(cfg.tendermintCfg.DBBackend), cfg.tendermintCfg.DBDir())
 	state, err := tmtState.LoadStateFromDBOrGenesisFile(stateDB, cfg.tendermintCfg.GenesisFile())
 	state.Version.Consensus.Block = protocolBlockVersion
-	logger.Info("Saving and closing consensus statedb", "database", cfg.tendermintCfg.DBDir())
+	logger.Info("Saving and closing consensus StateDB", "database", cfg.tendermintCfg.DBDir())
 	tmtState.SaveState(stateDB, state)
 	stateDB.Close()
 	
@@ -106,12 +111,4 @@ func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
 
 func createConsensusDataDirIfNotExists(dataDir string) {
 	tmtConfig.EnsureRoot(dataDir)
-}
-
-func recoverNodeInitPanic() error {
-	if r := recover(); r != nil {
-		return fmt.Errorf("panic occured initializing consensus node init. %v", r)
-	}
-
-	return nil
 }
