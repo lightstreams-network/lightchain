@@ -5,12 +5,12 @@ import (
 	tmtDb "github.com/tendermint/tendermint/libs/db"
 	tmtState "github.com/tendermint/tendermint/state"
 
-	"github.com/lightstreams-network/lightchain/setup"
+	"github.com/lightstreams-network/lightchain/network"
 	stdtracer "github.com/lightstreams-network/lightchain/tracer"
 )
 
 type tracer interface {
-	assertPersistedInitStateDb(tmtCfg *config.Config, ntw setup.Network)
+	assertPersistedInitStateDb(tmtCfg *config.Config, ntw network.Network)
 }
 
 type consensusTracer struct {
@@ -30,7 +30,7 @@ func newTracer(cfg stdtracer.Config) (tracer, error) {
 	return consensusNullTracer{trc}, nil
 }
 
-func (trc consensusTracer) assertPersistedInitStateDb(tmtCfg *config.Config, ntw setup.Network) {
+func (trc consensusTracer) assertPersistedInitStateDb(tmtCfg *config.Config, ntw network.Network) {
 	trc.Logger.Infow("Tracing whether Tendermint StateDB wrote a valid initial state...", "statedb", tmtCfg.DBPath)
 
 	stateDB := tmtDb.NewDB("state", tmtDb.DBBackendType(tmtCfg.DBBackend), tmtCfg.DBDir())
@@ -38,26 +38,16 @@ func (trc consensusTracer) assertPersistedInitStateDb(tmtCfg *config.Config, ntw
 
 	persistStateDb := tmtState.LoadState(stateDB)
 
-	switch ntw {
-	case setup.SiriusNetwork:
-		if persistStateDb.Version.Consensus.Block != siriusProtocolBlockVersion {
-			trc.Logger.Errorw("Invalid protocol block version persist",
-				"expected", siriusProtocolBlockVersion,
-				"persist", persistStateDb.Version.Consensus.Block)
-		}
-		break;
-	case setup.StandaloneNetwork:
-		if persistStateDb.Version.Consensus.Block != standaloneProtocolBlockVersion {
-			trc.Logger.Errorw("Invalid protocol block version persist",
-				"expected", standaloneProtocolBlockVersion,
-				"persist", persistStateDb.Version.Consensus.Block)
-		}
-		break;
-	default:
-		trc.Logger.Errorw("Invalid network selected", "network", ntw)
-		return
+	protocolVersion, err := ntw.ConsensusProtocolBlockVersion()
+	if err != nil {
+		trc.Logger.Error(err.Error())
 	}
-
+	if persistStateDb.Version.Consensus.Block != protocolVersion {
+		trc.Logger.Errorw("Invalid protocol block version persist",
+			"expected", protocolVersion,
+			"persist", persistStateDb.Version.Consensus.Block)
+	}
+	
 	trc.Logger.Infow("Protocol block version was persisted correctly",
 		"block_version", persistStateDb.Version.Consensus.Block)
 }

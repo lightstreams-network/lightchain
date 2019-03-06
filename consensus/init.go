@@ -1,7 +1,6 @@
 package consensus
 
 import (
-	"fmt"
 	"github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/p2p"
 	
@@ -11,12 +10,12 @@ import (
 	tmtState "github.com/tendermint/tendermint/state"
 	"github.com/tendermint/tendermint/version"
 	
-	"github.com/lightstreams-network/lightchain/setup"
+	"github.com/lightstreams-network/lightchain/network"
 	"github.com/lightstreams-network/lightchain/log"
 	stdtracer "github.com/lightstreams-network/lightchain/tracer"
 )
 
-func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
+func Init(cfg Config, ntw network.Network, trcCfg stdtracer.Config) error {
 	logger := log.NewLogger().With("engine", "consensus")
 
 	createConsensusDataDirIfNotExists(cfg.dataDir)
@@ -50,33 +49,16 @@ func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
 	cfgFilePath := cfg.TendermintConfigFilePath()
 	genFile := cfg.tendermintCfg.GenesisFile()
 
-	switch ntw {
-	case setup.MainNetNetwork:
-		protocolBlockVersion = mainNetProtocolBlockVersion
-		if genContent, err = setup.ReadMainNetConsensusGenesis(); err != nil {
-			return err
-		}
-		if cfgDoc, err = setup.ReadMainNetConsensusConfig(); err != nil {
-			return err
-		}
-	case setup.SiriusNetwork:
-		protocolBlockVersion = siriusProtocolBlockVersion
-		if genContent, err = setup.ReadSiriusConsensusGenesis(); err != nil {
-			return err
-		}
-		if cfgDoc, err = setup.ReadSiriusConsensusConfig(); err != nil {
-			return err
-		}
-	case setup.StandaloneNetwork:
-		protocolBlockVersion = standaloneProtocolBlockVersion
-		if genContent, err = setup.CreateStandaloneConsensusGenesis(pv); err != nil {
-			return err
-		}
-		if cfgDoc, err = setup.ReadStandaloneConsensusConfig(); err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("invalid network selected %s", ntw)
+	if genContent, err = ntw.ConsensusGenesis(pv); err != nil {
+		return err
+	}
+	
+	if cfgDoc, err = ntw.ConsensusConfig(); err != nil {
+		return err
+	}
+	
+	if protocolBlockVersion, err = ntw.ConsensusProtocolBlockVersion(); err != nil {
+		return err
 	}
 	
 	if tmtCommon.FileExists(genFile) {

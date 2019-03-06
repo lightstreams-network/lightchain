@@ -16,13 +16,6 @@ import (
 	tmtServer "github.com/tendermint/tendermint/abci/server"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/lightstreams-network/lightchain/consensus/metrics"
-	"github.com/tendermint/tendermint/version"
-)
-
-var (
-	mainNetProtocolBlockVersion = version.BlockProtocol
-	siriusProtocolBlockVersion version.Protocol = 9
-	standaloneProtocolBlockVersion = version.BlockProtocol
 )
 
 type Node struct {
