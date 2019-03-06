@@ -23,15 +23,13 @@ func BalanceOf(client *ethclient.Client, account common.Address) (*big.Int, erro
 	return balance, nil
 }
 
-func Transfer(client *ethclient.Client, auth authy.Auth, to common.Address, valueWei string) (*types.Transaction, error) {
+func Transfer(client *ethclient.Client, auth authy.Auth, to common.Address, valueWei string, cfg txclient.TxConfig) (*types.Transaction, error) {
 	ctx := context.Background()
 
 	amount, ok := new(big.Int).SetString(valueWei, 10)
 	if !ok {
 		return nil, fmt.Errorf("unable to convert '%s' Wei value to a big.Int", valueWei)
 	}
-
-	cfg := txclient.NewTransferTxConfig()
 
 	tx, err := txclient.SignTransferTx(ctx, client, auth, to, amount, cfg)
 	if err != nil {

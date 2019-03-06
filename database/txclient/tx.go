@@ -24,12 +24,10 @@ func GenerateTxOpts(ctx context.Context, client *ethclient.Client, auth authy.Au
 	txOpts.Nonce = big.NewInt(int64(nonce))
 	logger.Debug(fmt.Sprintf("Nonce '%d' calculated for account '%s'.", nonce, txOpts.From.Hex()))
 
-	gasPrice, err := client.SuggestGasPrice(ctx)
-	if err != nil {
-		return nil, err
-	}
+	logger.Debug(fmt.Sprintf("Gas price '%d' configured.", cfg.GasPrice()))
+
 	txOpts.Value = big.NewInt(0)
-	txOpts.GasPrice = gasPrice
+	txOpts.GasPrice = big.NewInt(int64(cfg.GasPrice()))
 	txOpts.GasLimit = cfg.GasLimit()
 
 	balance, err := client.BalanceAt(ctx, txOpts.From, nil)

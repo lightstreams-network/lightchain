@@ -73,17 +73,10 @@ func (db *Database) Config() *eth.Config {
 
 // ExecuteTx appends a transaction to the current block.
 func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
-	db.metrics.ExecutedTxsTotal.Add(1)
 	db.logger.Info("Executing DB TX", "hash", tx.Hash().Hex(), "nonce", tx.Nonce())
-	
-	txCost, _ := web3.WeiToPhoton(tx.Cost()).Float64()
-	db.metrics.TxsCostTotal.Add(txCost)
-	
-	txGasWei := new(big.Int).Mul(big.NewInt(int64(tx.Gas())), tx.GasPrice())
-	txGas, _ := web3.WeiToPhoton(txGasWei).Float64()
-	db.metrics.TxsGasTotal.Add(txGas)
 
-	db.metrics.TxsSizeTotal.Add(float64(tx.Size()))
+	db.updateExecuteTxMetrics(tx)
+
 	return db.ethState.ExecuteTx(tx)
 }
 
@@ -176,6 +169,19 @@ func (db *Database) Stop() error {
 
 func (db *Database) Protocols() []p2p.Protocol {
 	return nil
+}
+
+func (db *Database) updateExecuteTxMetrics(tx *ethTypes.Transaction) {
+	db.metrics.ExecutedTxsTotal.Add(1)
+
+	txCost, _ := web3.WeiToPhoton(tx.Cost()).Float64()
+	db.metrics.TxsCostTotal.Add(txCost)
+
+	txGasWei := new(big.Int).Mul(big.NewInt(int64(tx.Gas())), tx.GasPrice())
+	txGas, _ := web3.WeiToPhoton(txGasWei).Float64()
+	db.metrics.TxsGasTotal.Add(txGas)
+
+	db.metrics.TxsSizeTotal.Add(float64(tx.Size()))
 }
 
 func isDefaultAPI(namespace string) bool {

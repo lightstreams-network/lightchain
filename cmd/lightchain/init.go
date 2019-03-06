@@ -29,6 +29,11 @@ var (
 		Name:  "sirius",
 		Usage: "Initialize a node connected to Sirius network",
 	}
+
+	ForceFlag = cli.BoolFlag{
+		Name:  "force",
+		Usage: "Forces the init by removing the data dir if already exists",
+	}
 )
 
 func initCmd() *cobra.Command {
@@ -72,9 +77,15 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, setup.Network, error) {
 	dataDir, _ := cmd.Flags().GetString(DataDirFlag.Name)
 	useStandAloneNet, _ := cmd.Flags().GetBool(StandAloneNetFlag.Name)
 	useSiriusNet, _ := cmd.Flags().GetBool(SiriusNetFlag.Name)
+	forceInit, _ := cmd.Flags().GetBool(ForceFlag.Name)
 
 	shouldTrace, _ := cmd.Flags().GetBool(TraceFlag.Name)
 	traceLogFilePath, _ := cmd.Flags().GetString(TraceLogFlag.Name)
+
+	// To prevent accidental data dir like "/" and disasters
+	if len(dataDir) < 3 {
+		return node.Config{}, "", fmt.Errorf("DataDir must be absolute path of at least 3 chars")
+	}
 
 	// This should be done inside of the `node.Init()` pkg but due to bad design,
 	// creation of new Ethereum node instance from a config accidentally modifies the FS by creating
@@ -82,7 +93,14 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, setup.Network, error) {
 	//
 	// Todo: After #90 is done, move this code to `Node.Init()`
 	if doesExist, err := fs.DirExists(dataDir); doesExist || err != nil {
-		return node.Config{}, "", fmt.Errorf("unable to initialize lightchain node. %s already exists", dataDir)
+		if forceInit {
+			logger.Info(fmt.Sprintf("Forcing '%s' data dir removal...", dataDir))
+			if err := fs.RemoveAll(dataDir); err != nil {
+				return node.Config{}, "", fmt.Errorf("unable to remove data dir '%s'. %s", dataDir, err)
+			}
+		} else {
+			return node.Config{}, "", fmt.Errorf("unable to initialize lightchain node. %s already exists", dataDir)
+		}
 	}
 
 	if shouldTrace {
@@ -90,6 +108,10 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, setup.Network, error) {
 		logger.Info("| Danger: Tracing enabled is not recommended in production!")
 		logger.Info(fmt.Sprintf("| Tracing output is configured to be persisted at %v", traceLogFilePath))
 		logger.Info("|--------")
+
+		if err := fs.RemoveFile(traceLogFilePath); err != nil {
+			return node.Config{}, "", fmt.Errorf("unable to remove trace log file '%s'. %s", traceLogFilePath, err)
+		}
 	}
 
 	var network setup.Network
@@ -134,4 +156,5 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, setup.Network, error) {
 func addInitCmdFLags(cmd *cobra.Command) {
 	cmd.Flags().Bool(StandAloneNetFlag.Name, false, DataDirFlag.Usage)
 	cmd.Flags().Bool(SiriusNetFlag.Name, false, SiriusNetFlag.Usage)
+	cmd.Flags().Bool(ForceFlag.Name, false, ForceFlag.Usage)
 }

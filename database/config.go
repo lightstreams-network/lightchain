@@ -12,7 +12,10 @@ import (
 	ethNode "github.com/ethereum/go-ethereum/node"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
+	"math/big"
 )
+
+const MinGasPrice = 500000000000
 
 var (
 	DataDirPath = "database"
@@ -75,6 +78,19 @@ func NewConfig(dataDir string, metrics bool, ctx *cli.Context) (Config, error) {
 	gethCfg.EthCfg.TrieCleanCache = 8 // MB
 	gethCfg.EthCfg.TrieDirtyCache = 0 // MB
 	gethCfg.EthCfg.TrieTimeout = 5 * time.Minute
+
+	// To prevent DDOS TX spam, a min gas price must be defined
+	//
+	// 1 PHT = 0.15$
+	// 1 TX = 21000 gas
+	//
+	// 1 TX costs 0.0015$ for the time being till anti-spam policies are implemented
+	// GPO is responsible for suggesting the right gas price so users don't have to
+	gethCfg.EthCfg.GPO.Default = big.NewInt(MinGasPrice)
+	// We don't use mining but this value is read from miner config anyway and used around the codebase
+	gethCfg.EthCfg.MinerGasPrice = big.NewInt(MinGasPrice)
+	// The TxPool is the most important and ensures TX price validation can happen, also web3 is using it
+	gethCfg.EthCfg.TxPool.PriceLimit = big.NewInt(MinGasPrice).Uint64()
 
 	return Config{
 		dataDir,

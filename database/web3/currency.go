@@ -4,15 +4,16 @@ import (
 	"math/big"
 	"fmt"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/ethereum/go-ethereum/common/math"
 )
 
-func PhotonToWei(value string) (*big.Int, error) {
-	valueBn, ok := new(big.Int).SetString(value, 10)
+func ParseWei(valueInHexOrDecimal string) (*big.Int, error) {
+	amount, ok := math.ParseBig256(valueInHexOrDecimal)
 	if !ok {
-		return nil, fmt.Errorf("unable to convert %s into Wei", value)
+		return nil, fmt.Errorf("unable to convert '%v' Wei value to a big.Int", valueInHexOrDecimal)
 	}
 
-	return new(big.Int).Mul(valueBn, new(big.Int).Set(big.NewInt(params.Ether))), nil
+	return amount, nil
 }
 
 func WeiToPhoton(amountInWei *big.Int) *big.Float {
