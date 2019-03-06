@@ -92,7 +92,11 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, setup.Network, error) {
 	// a keystore dir therefore we have to perform this check as early as possible.
 	//
 	// Todo: After #90 is done, move this code to `Node.Init()`
-	if doesExist, err := fs.DirExists(dataDir); doesExist || err != nil {
+	if isEmpty, err := fs.IsDirEmpty(dataDir); !isEmpty || err != nil {
+		if err != nil {
+			return node.Config{}, "", fmt.Errorf("unable to initialize lightchain node. %s", err.Error())
+		}
+
 		if forceInit {
 			logger.Info(fmt.Sprintf("Forcing '%s' data dir removal...", dataDir))
 			if err := fs.RemoveAll(dataDir); err != nil {

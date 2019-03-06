@@ -1,6 +1,9 @@
 package fs
 
-import "os"
+import (
+	"os"
+	"io"
+)
 
 func DirExists(path string) (bool, error) {
 	_, err := os.Stat(path)
@@ -12,6 +15,25 @@ func DirExists(path string) (bool, error) {
 	}
 
 	return true, err
+}
+
+func IsDirEmpty(name string) (bool, error) {
+	f, err := os.Open(name)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return true, err
+		}
+		return false, err
+	}
+	defer f.Close()
+
+	_, err = f.Readdirnames(1)
+	if err == io.EOF {
+		return true, nil
+	}
+
+	// Either not empty or error, suits both cases
+	return false, err
 }
 
 func RemoveAll(path string) error {
