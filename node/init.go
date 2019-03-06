@@ -6,10 +6,10 @@ import (
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/database"
-	"github.com/lightstreams-network/lightchain/setup"
+	"github.com/lightstreams-network/lightchain/network"
 )
 
-func Init(cfg Config, ntw setup.Network) error {
+func Init(cfg Config, ntw network.Network) error {
 	logger := log.NewLogger().With("engine", "node")
 	logger.Info("Initializing lightchain node data dir...", "dir", cfg.DataDir)
 	
