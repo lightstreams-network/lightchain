@@ -118,7 +118,7 @@ external_address = ""
 seeds = ""
 
 # Comma separated list of nodes to keep persistent connections to
-persistent_peers = "4b54476ccebf721117c09169a11f4704a4503aa5@172.104.141.23:26656"
+persistent_peers = "e6b8de0db7d7206f2a507976119c97f934c05fed@mainnet.lightstreams.io:7001"
 
 # UPNP port forwarding
 upnp = true
