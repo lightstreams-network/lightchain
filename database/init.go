@@ -12,12 +12,12 @@ import (
 	ethCore "github.com/ethereum/go-ethereum/core"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
 	
-	"github.com/lightstreams-network/lightchain/setup"
+	"github.com/lightstreams-network/lightchain/network"
 	"github.com/lightstreams-network/lightchain/log"
 	stdtracer "github.com/lightstreams-network/lightchain/tracer"
 )
 
-func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
+func Init(cfg Config, ntw network.Network, trcCfg stdtracer.Config) error {
 	logger := log.NewLogger().With("engine", "database")
 	keystoreDir := cfg.KeystoreDir()
 	if err := os.MkdirAll(keystoreDir, os.ModePerm); err != nil {
@@ -27,30 +27,11 @@ func Init(cfg Config, ntw setup.Network, trcCfg stdtracer.Config) error {
 	var keystoreFiles map[string][]byte
 	var genesisBlob []byte
 	var err error
-	switch ntw {
-	case setup.MainNetNetwork:
-		if keystoreFiles, err = setup.ReadMainNetDatabaseKeystore(); err != nil {
-			return err
-		}
-		if genesisBlob, err = setup.ReadMainNetDatabaseGenesis(); err != nil {
-			return err
-		}
-	case setup.SiriusNetwork:
-		if keystoreFiles, err = setup.ReadSiriusDatabaseKeystore(); err != nil {
-			return err
-		}
-		if genesisBlob, err = setup.ReadSiriusDatabaseGenesis(); err != nil {
-			return err
-		}
-	case setup.StandaloneNetwork:
-		if keystoreFiles, err = setup.ReadStandaloneDatabaseKeystore(); err != nil {
-			return err
-		}
-		if genesisBlob, err = setup.ReadStandaloneDatabaseGenesis(); err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("invalid network selected %s", ntw)
+	if keystoreFiles, err = ntw.DatabaseKeystore(); err != nil {
+		return err
+	}
+	if genesisBlob, err = ntw.DatabaseGenesis(); err != nil {
+		return err
 	}
 	
 	if err = writeKeystoreFiles(logger, keystoreDir, keystoreFiles); err != nil {

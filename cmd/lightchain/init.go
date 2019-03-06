@@ -13,7 +13,7 @@ import (
 	"github.com/lightstreams-network/lightchain/database"
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/log"
-	"github.com/lightstreams-network/lightchain/setup"
+	"github.com/lightstreams-network/lightchain/network"
 	"github.com/lightstreams-network/lightchain/prometheus"
 	"github.com/lightstreams-network/lightchain/tracer"
 	"github.com/lightstreams-network/lightchain/fs"
@@ -73,7 +73,7 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 	os.Exit(0)
 }
 
-func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, setup.Network, error) {
+func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, network.Network, error) {
 	lvlStr, _ := cmd.Flags().GetString(LogLvlFlag.Name)
 	if lvl, err := ethLog.LvlFromString(lvlStr); err == nil {
 		log.SetupLogger(lvl)
@@ -153,7 +153,7 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, setup.Network, error) {
 	return node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg), ntw, nil
 }
 
-func chooseNetwork(cmd *cobra.Command) (setup.Network, error) {
+func chooseNetwork(cmd *cobra.Command) (network.Network, error) {
 	useStandAloneNet, _ := cmd.Flags().GetBool(StandAloneNetFlag.Name)
 	useSiriusNet, _ := cmd.Flags().GetBool(SiriusNetFlag.Name)
 	useMainNet, _ := cmd.Flags().GetBool(MainNetFlag.Name)
@@ -163,14 +163,14 @@ func chooseNetwork(cmd *cobra.Command) (setup.Network, error) {
 	}
 
 	if useStandAloneNet {
-		return setup.StandaloneNetwork, nil
+		return network.StandaloneNetwork, nil
 	}
 
 	if useSiriusNet {
-		return setup.SiriusNetwork, nil
+		return network.SiriusNetwork, nil
 	}
 
-	return setup.MainNetNetwork, nil
+	return network.MainNetNetwork, nil
 }
 
 func boolToInt(a bool) int {
