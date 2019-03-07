@@ -6,7 +6,7 @@ package database
 const Genesis = `
 {
     "config": {
-        "chainId": 161,
+        "chainId": 163,
         "eip150Block": 0,
         "eip155Block": 0,
         "eip158Block": 0,

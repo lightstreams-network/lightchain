@@ -78,6 +78,13 @@ module.exports.extractEnvAccountAndPwd = (network) => {
       pwd: process.env.STANDALONE_PASSPHRASE
     }
   }
+  
+  if (network === "mainnet") {
+    return {
+      from: process.env.STANDALONE_ACCOUNT,
+      pwd: process.env.STANDALONE_PASSPHRASE
+    }
+  }
 
   console.error("unknown network " + network);
   throw Error("undefined network to deploy to");
