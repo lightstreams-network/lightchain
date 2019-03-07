@@ -27,6 +27,8 @@ make get_vendor_deps
 make install
 ```
 
+Note: `--> dep ensure` can take some time.
+
 To validate if you installation was done correctly, run the following command to obtain current installed version of Lightchain
 ```
 lightchain version
@@ -43,7 +45,7 @@ Lightstreams provides a testnet called `sirius`. By default, all new created nod
 
 ### Node initialization
 
-To initialise a new blockchain you need to run `lightchain init` and  choose a local path where blockchain files are going to be stored.
+To initialise a new node you need to run `lightchain init` and  choose a local path where blockchain files are going to be stored.
 ```
 lightchain init --datadir="${HOME}/.lightchain"
 ```
