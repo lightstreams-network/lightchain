@@ -7,8 +7,8 @@ import (
 
 const Major = "0"
 const Minor = "12"
-const Fix = "0"
-const Verbal = "Gas Price"
+const Fix = "1"
+const Verbal = "MainNet"
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
