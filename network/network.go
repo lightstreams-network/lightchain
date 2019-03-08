@@ -42,7 +42,7 @@ func (n Network) ConsensusConfig() ([]byte, error) {
 	case MainNetNetwork:
 		return []byte(mainnetConsensus.ConfigToml), nil
 	case SiriusNetwork:
-		return []byte(siriusConsensus.Genesis), nil
+		return []byte(siriusConsensus.ConfigToml), nil
 	case StandaloneNetwork:
 		return []byte(standaloneConsensus.ConfigToml), nil
 	default:
