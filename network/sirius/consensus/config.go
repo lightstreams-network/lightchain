@@ -146,7 +146,7 @@ max_packet_msg_payload_size = 1024
 send_rate = 5120000
 
 # Rate at which packets can be received, in bytes/second
-recv_rate = 5120000
+recv_rate = 20480000
 
 # Set true to enable the peer-exchange reactor
 pex = true
@@ -191,7 +191,7 @@ timeout_prevote = "1s"
 timeout_prevote_delta = "500ms"
 timeout_precommit = "1s"
 timeout_precommit_delta = "500ms"
-timeout_commit = "1s"
+timeout_commit = "5s"
 
 # Make progress as soon as we have all the precommits (as if TimeoutCommit = 0)
 skip_timeout_commit = false
