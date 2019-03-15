@@ -1,11 +1,11 @@
 {
-  "name": "Lightchain-truffle",
-  "version": "0.0.1",
+  "name": "Lightchain-Truffle",
+  "version": "1.0.0",
   "description": "Servers as truffle suite and support for JS based parts of Lightchain codebase.",
   "scripts": {
-    "test-mainnet": "truffle test --reset --network=mainnet",
-    "test-sirius": "truffle test --reset --network=sirius",
-    "test-standalone": "truffle test --reset --network=standalone"
+    "test-mainnet": "./node_modules/.bin/truffle test --reset --network=mainnet",
+    "test-sirius": "./node_modules/.bin/truffle test --reset --network=sirius",
+    "test-standalone": "./node_modules/.bin/truffle test --reset --network=standalone"
   },
   "keywords": [],
   "author": "Lukas Lukac",
@@ -13,10 +13,10 @@
     "async": "^2.6.1",
     "dotenv": "^6.1.0",
     "chai": "^4.1.2",
-    "ganache-cli": "^6.1.6",
+    "ganache-cli": "^6.4.1",
     "mocha": "^5.2.0",
-    "truffle": "^4.1.14",
-    "web3": "^1.0.0-beta.26"
+    "truffle": "^5.0.8",
+    "ethereumjs-tx": "^1.3.7"
   },
   "devDependencies": {}
 }

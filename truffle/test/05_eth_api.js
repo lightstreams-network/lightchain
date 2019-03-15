@@ -3,9 +3,8 @@
  */
 
 describe('Ethereum API', async () => {
-  
   it("should assert whether network version does not match Genesis chainId", async () => {
-    const networkVersion = web3.version.network;
+    const networkVersion = await web3.eth.net.getId();
     if (process.env.NETWORK === 'mainnet') {
       assert.equal(networkVersion, "163", "Network version is not expected one");
     } else if (process.env.NETWORK === 'sirius') {
