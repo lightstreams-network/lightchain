@@ -3,11 +3,11 @@ require('dotenv').config({ path: `${process.env.PWD}/.env` });
 const { waitForAccountToUnlock, extractEnvAccountAndPwd } = require('../test/utils');
 const Migrations = artifacts.require("./Migrations.sol");
 
-module.exports = (deployer) => {
+module.exports = async (deployer) => {
   process.env.NETWORK = deployer.network;
   const { from, pwd } = extractEnvAccountAndPwd(deployer.network);
 
-  let isUnlock = web3.eth.personal.unlockAccount(from, pwd, 1000);
+  let isUnlock = await web3.eth.personal.unlockAccount(from, pwd, 1000);
   if (!isUnlock) {
     console.error(`Account ${from} could not be unlock`);
     process.exit(1);
