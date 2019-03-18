@@ -6,26 +6,26 @@
  * - Validate Encoded data
  */
 
-const { isAccountLocked, convertPhtToWeiBN, fetchTxReceipt, calculateGasCostBN, minimumGasPriceBN, extractEnvAccountAndPwd, toBN } = require('./utils');
+const { isAccountLocked, convertPhtToWeiBN, calculateGasCostBN, minimumGasPriceBN, extractEnvAccountAndPwd, toBN } = require('./utils');
 
 const HelloBlockchainWorld = artifacts.require("HelloBlockchainWorld");
 
-describe('TestTransaction', async () => {
+describe('TestTransaction', () => {
   let ROOT_ACCOUNT = extractEnvAccountAndPwd(process.env.NETWORK).from;
   let NEW_ACCOUNT_ADDR;
   const NEW_ACCOUNT_PASS = "password";
 
   it('should fail transfer on insufficient funds', async function() {
-    const expectedWeb3ErrMsg = 'insufficient funds for gas * price + value';
+    const expectedWeb3ErrMsg = 'Returned error: insufficient funds for gas * price + value';
     const instance = await HelloBlockchainWorld.deployed();
-    NEW_ACCOUNT_ADDR = await web3.personal.newAccount(NEW_ACCOUNT_PASS);
-    await web3.personal.unlockAccount(NEW_ACCOUNT_ADDR, NEW_ACCOUNT_PASS, 10);
+    NEW_ACCOUNT_ADDR = await web3.eth.personal.newAccount(NEW_ACCOUNT_PASS);
+    await web3.eth.personal.unlockAccount(NEW_ACCOUNT_ADDR, NEW_ACCOUNT_PASS, 10);
 
     try {
       await web3.eth.sendTransaction({
         from: NEW_ACCOUNT_ADDR,
         to: instance.address,
-        value: convertPhtToWeiBN(1)
+        value: convertPhtToWeiBN("1")
       });
     } catch (e) {
       assert.equal(e.message, expectedWeb3ErrMsg);
@@ -33,13 +33,13 @@ describe('TestTransaction', async () => {
   });
 
   it('should fail transaction because gas limit is set too low', async function() {
-    const expectedWeb3ErrMsg = 'intrinsic gas too low';
-    const weiBalancePreTxBN = await web3.eth.getBalance(ROOT_ACCOUNT);
-    const weiAmountSentBN = convertPhtToWeiBN(0.1);
+    const expectedWeb3ErrMsg = 'Returned error: intrinsic gas too low';
+    const weiBalancePreTx = await web3.eth.getBalance(ROOT_ACCOUNT);
+    const weiAmountSentBN = convertPhtToWeiBN("0.1");
     const gasLimit = 20999; // Min required is 21000
 
     try {
-      const txReceiptId = await web3.eth.sendTransaction({
+      await web3.eth.sendTransaction({
         from: ROOT_ACCOUNT,
         to: NEW_ACCOUNT_ADDR,
         value: weiAmountSentBN,
@@ -49,8 +49,8 @@ describe('TestTransaction', async () => {
       assert.equal(e.message, expectedWeb3ErrMsg);
     }
 
-    const weiBalancePostTxBN = await web3.eth.getBalance(ROOT_ACCOUNT);
-    assert.equal(weiBalancePostTxBN.toNumber(), weiBalancePreTxBN.toNumber(), 'No gas was spent as TX failed')
+    const weiBalancePostTx = await web3.eth.getBalance(ROOT_ACCOUNT);
+    assert.equal(weiBalancePostTx, weiBalancePreTx, 'No gas was spent as TX failed');
   });
 
   // Uncomment once #70
@@ -74,8 +74,6 @@ describe('TestTransaction', async () => {
   //       gasPrice: lowGasPrice,
   //     });
   //
-  //     const txReceipt = await fetchTxReceipt(txReceiptId, 5);
-  //
   //     console.log(txReceipt);
   //
   //     assert.equal(undefined, txReceipt, "TX with insufficient gas price should not be added to a block");
@@ -89,21 +87,20 @@ describe('TestTransaction', async () => {
   //   assert.equal(weiBalancePostTxBN.toNumber(), weiBalancePreTxBN.toNumber(), 'No gas should be spent on invalid TX')
   // });
 
-  it('should transfer 0.1 PHT and gas is spent in the transaction', async function() {
-    const amountToSendBN = convertPhtToWeiBN(0.1);
+  it('should transfer 5 PHT and gas is spent in the transaction', async function() {
+    const amountToSendBN = convertPhtToWeiBN("0.1");
     const sender = ROOT_ACCOUNT;
     const recipient = NEW_ACCOUNT_ADDR;
     
-    const senderBalancePreTxBN = await web3.eth.getBalance(sender);
-    const recipientBalancePreTxBN = await web3.eth.getBalance(recipient);
+    const senderBalancePreTxBN = web3.utils.toBN(await web3.eth.getBalance(sender));
+    const recipientBalancePreTxBN = web3.utils.toBN(await web3.eth.getBalance(recipient));
 
-    const txReceiptId = await web3.eth.sendTransaction({
+    const txReceipt = await web3.eth.sendTransaction({
       from: sender,
       to: recipient,
       value: amountToSendBN
     });
 
-    const txReceipt = await fetchTxReceipt(txReceiptId, 15);
     const expectedGasUsed = 21000;
     const expectedStatus = '0x1';
 
@@ -112,12 +109,12 @@ describe('TestTransaction', async () => {
 
     const expectedRecipientBalanceBN = recipientBalancePreTxBN.add(amountToSendBN);
     const recipientBalancePostTxBN = await web3.eth.getBalance(NEW_ACCOUNT_ADDR);
-    assert.equal(recipientBalancePostTxBN.toNumber(), expectedRecipientBalanceBN.toNumber(), "recipient account balance is incorrect");
+    assert.equal(recipientBalancePostTxBN.toString(), expectedRecipientBalanceBN.toString(), "recipient account balance is incorrect");
 
-    const gasUsedCostBN = calculateGasCostBN(txReceipt.gasUsed);
+    const gasUsedCostBN = await calculateGasCostBN(txReceipt.gasUsed);
     const expectedSenderBalanceBN = senderBalancePreTxBN.sub(amountToSendBN).sub(gasUsedCostBN);
-    const senderBalancePostTxBN = await web3.eth.getBalance(sender);
+    const senderBalancePostTxBN = web3.utils.toBN(await web3.eth.getBalance(sender));
 
-    assert.equal(senderBalancePostTxBN.toNumber(), expectedSenderBalanceBN.toNumber(), "from account balance is incorrect")
+    assert.equal(senderBalancePostTxBN.toString(), expectedSenderBalanceBN.toString(), "from account balance is incorrect")
   });
 });
