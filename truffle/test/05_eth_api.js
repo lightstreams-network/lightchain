@@ -2,7 +2,7 @@
  * - Execute 100 transaction in parallel
  */
 
-describe('Ethereum API', async () => {
+describe('Ethereum API', () => {
   it("should assert whether network version does not match Genesis chainId", async () => {
     const networkVersion = await web3.eth.net.getId();
     if (process.env.NETWORK === 'mainnet') {

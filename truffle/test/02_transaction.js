@@ -10,7 +10,7 @@ const { isAccountLocked, convertPhtToWeiBN, calculateGasCostBN, minimumGasPriceB
 
 const HelloBlockchainWorld = artifacts.require("HelloBlockchainWorld");
 
-describe('TestTransaction', async () => {
+describe('TestTransaction', () => {
   let ROOT_ACCOUNT = extractEnvAccountAndPwd(process.env.NETWORK).from;
   let NEW_ACCOUNT_ADDR;
   const NEW_ACCOUNT_PASS = "password";

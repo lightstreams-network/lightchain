@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Servers as truffle suite and support for JS based parts of Lightchain codebase.",
   "scripts": {
-    "test-mainnet": "./node_modules/.bin/truffle test --reset --network=mainnet",
-    "test-sirius": "./node_modules/.bin/truffle test --reset --network=sirius",
-    "test-standalone": "./node_modules/.bin/truffle test --reset --network=standalone"
+    "test-mainnet": "truffle test --reset --network=mainnet",
+    "test-sirius": "truffle test --reset --network=sirius",
+    "test-standalone": "truffle test --reset --network=standalone"
   },
   "keywords": [],
   "author": "Lukas Lukac",

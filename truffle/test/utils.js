@@ -1,6 +1,6 @@
 require('dotenv').config({path: `${process.env.PWD}/.env`});
 
-module.exports.isAccountLocked = async (address) => {
+const isAccountLocked = async (address) => {
     return new Promise((resolve) => {
         web3.eth.sendTransaction({
             from: address,
@@ -11,6 +11,7 @@ module.exports.isAccountLocked = async (address) => {
         });
     });
 };
+module.exports.isAccountLocked = isAccountLocked;
 
 const waitFor = (waitInSeconds) => {
   return new Promise((resolve) => {
@@ -64,6 +65,29 @@ module.exports.extractEnvAccountAndPwd = (network) => {
   throw Error("undefined network to deploy to");
 };
 
+module.exports.fetchTxReceipt = function(hash, timeoutInSec = 30) {
+    const startTime = new Date();
+    const retryInSec = 2;
+
+    return new Promise(async (resolve, reject) => {
+        while ( true ) {
+            let txReceipt = await web3.eth.getTransactionReceipt(hash);
+            if (txReceipt != null && typeof txReceipt !== 'undefined') {
+                resolve(txReceipt);
+                return;
+            }
+
+            const now = new Date();
+            if (now.getTime() - startTime.getTime() > timeoutInSec * 1000) {
+                reject(`Timeout after ${timeoutInSec} seconds`);
+                return;
+            }
+
+            await waitFor(retryInSec)
+        }
+    });
+};
+
 module.exports.timeTravel = (time) => {
   return new Promise((resolve, reject) => {
     web3.currentProvider.sendAsync({
@@ -86,7 +110,7 @@ module.exports.waitForAccountToUnlock = function(address, timeoutInSec = 10) {
 
   return new Promise(async (resolve, reject) => {
     while ( true ) {
-      let isUnlock = isAccountLocked(address);
+      let isUnlock = await isAccountLocked(address);
       if (isUnlock) {
         resolve(txReceipt);
         return;

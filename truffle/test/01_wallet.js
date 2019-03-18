@@ -7,7 +7,7 @@
 
 const { isAccountLocked, convertPhtToWeiBN, waitFor, extractEnvAccountAndPwd } = require('./utils');
 
-describe('WalletTest', async () => {
+describe('WalletTest', () => {
   let ROOT_ACCOUNT = extractEnvAccountAndPwd(process.env.NETWORK).from;
   let NEW_ACCOUNT_ADDR;
   let NEW_ACCOUNT_PASS = "password";
