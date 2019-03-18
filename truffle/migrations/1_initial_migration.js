@@ -8,7 +8,7 @@ module.exports = (deployer) => {
   const { from, pwd } = extractEnvAccountAndPwd(deployer.network);
 
   console.log(`Unlocking  ${from} account...`);
-  web3.eth.personal.unlockAccount(from, pwd, 20)
+  web3.eth.personal.unlockAccount(from, pwd, 1000)
       .then(() => {
           console.log("Deploying `Migrations.sol`...");
           deployer.deploy(Migrations, {overwrite: false})
