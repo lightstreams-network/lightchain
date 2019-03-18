@@ -1,16 +1,15 @@
 require('dotenv').config({path: `${process.env.PWD}/.env`});
 
 const isAccountLocked = async (address) => {
-  try {
-    web3.eth.sendTransaction({
-      from: address,
-      to: address,
-      value: 0
+    return new Promise((resolve) => {
+        web3.eth.sendTransaction({
+            from: address,
+            to: address,
+            value: 0
+        }, function(err, txHash) {
+            resolve(err !== undefined && err.message === "Returned error: authentication needed: password or unlock")
+        });
     });
-    return false;
-  } catch ( err ) {
-    return (err.message === "authentication needed: password or unlock");
-  }
 };
 module.exports.isAccountLocked = isAccountLocked;
 
@@ -21,48 +20,24 @@ const waitFor = (waitInSeconds) => {
 };
 module.exports.waitFor = waitFor;
 
-module.exports.convertFromWeiBnToPht = function(bn) {
-  return Number(web3._extend.utils.fromWei(bn.toNumber(), 'ether'));
+module.exports.convertPhtToWeiBN = function(pht) {
+  return web3.utils.toBN(web3.utils.toWei(pht, 'ether'));
 };
 
-module.exports.convertPhtToWeiBN = function(ether) {
-  const etherInWei = web3._extend.utils.toWei(ether, 'ether');
-  return web3._extend.utils.toBigNumber(etherInWei);
-};
-
-module.exports.calculateGasCostBN = function(gasAmount) {
-  return web3.eth.gasPrice.mul(gasAmount);
+module.exports.calculateGasCostBN = async function(gasAmount) {
+  return new Promise(resolve => {
+      web3.eth.getGasPrice().then(function (gasPrice) {
+          resolve(web3.utils.toBN(gasPrice).mul(web3.utils.toBN(gasAmount)));
+      });
+  })
 };
 
 module.exports.minimumGasPriceBN = function() {
-  return web3._extend.utils.toBigNumber("500000000000");
+  return web3.utils.toBN("500000000000");
 };
 
 module.exports.toBN = function(wei) {
-  return web3._extend.utils.toBigNumber(wei);
-};
-
-module.exports.fetchTxReceipt = function(txReceiptId, timeoutInSec = 30) {
-  const startTime = new Date();
-  const retryInSec = 2;
-
-  return new Promise(async (resolve, reject) => {
-    while ( true ) {
-      let txReceipt = web3.eth.getTransactionReceipt(txReceiptId);
-      if (txReceipt != null && typeof txReceipt !== 'undefined') {
-        resolve(txReceipt);
-        return;
-      }
-
-      const now = new Date();
-      if (now.getTime() - startTime.getTime() > timeoutInSec * 1000) {
-        reject(`Timeout after ${timeoutInSec} seconds`);
-        return;
-      }
-
-      await waitFor(retryInSec)
-    }
-  });
+  return web3.utils.toBN(wei);
 };
 
 module.exports.extractEnvAccountAndPwd = (network) => {
@@ -90,6 +65,29 @@ module.exports.extractEnvAccountAndPwd = (network) => {
   throw Error("undefined network to deploy to");
 };
 
+module.exports.fetchTxReceipt = function(hash, timeoutInSec = 30) {
+    const startTime = new Date();
+    const retryInSec = 2;
+
+    return new Promise(async (resolve, reject) => {
+        while ( true ) {
+            let txReceipt = await web3.eth.getTransactionReceipt(hash);
+            if (txReceipt != null && typeof txReceipt !== 'undefined') {
+                resolve(txReceipt);
+                return;
+            }
+
+            const now = new Date();
+            if (now.getTime() - startTime.getTime() > timeoutInSec * 1000) {
+                reject(`Timeout after ${timeoutInSec} seconds`);
+                return;
+            }
+
+            await waitFor(retryInSec)
+        }
+    });
+};
+
 module.exports.timeTravel = (time) => {
   return new Promise((resolve, reject) => {
     web3.currentProvider.sendAsync({
@@ -112,7 +110,7 @@ module.exports.waitForAccountToUnlock = function(address, timeoutInSec = 10) {
 
   return new Promise(async (resolve, reject) => {
     while ( true ) {
-      let isUnlock = isAccountLocked(address);
+      let isUnlock = await isAccountLocked(address);
       if (isUnlock) {
         resolve(txReceipt);
         return;
