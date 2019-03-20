@@ -118,7 +118,7 @@ external_address = ""
 seeds = ""
 
 # Comma separated list of nodes to keep persistent connections to
-persistent_peers = "e6b8de0db7d7206f2a507976119c97f934c05fed@mainnet.lightstreams.io:7001, 35810c7cb7c139885144c96b6da11d545579125e@mainnet.lightstreams.io:7002"
+persistent_peers = "e6b8de0db7d7206f2a507976119c97f934c05fed@mainnet.sentry1.lightstreams.io:26656, 35810c7cb7c139885144c96b6da11d545579125e@mainnet.sentry2.lightstreams.io:26656"
 
 # UPNP port forwarding
 upnp = true
@@ -142,11 +142,11 @@ flush_throttle_timeout = "100ms"
 # Maximum size of a message packet payload, in bytes
 max_packet_msg_payload_size = 1024
 
-# Rate at which packets can be sent, in bytes/second
-send_rate = 5120000
+# Rate at which packets can be sent, in bytes/second (Default 512000)
+send_rate = 1024000
 
-# Rate at which packets can be received, in bytes/second
-recv_rate = 5120000
+# Rate at which packets can be received, in bytes/second (Default 512000)
+recv_rate = 2560000
 
 # Set true to enable the peer-exchange reactor
 pex = true
