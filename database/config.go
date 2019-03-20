@@ -74,10 +74,10 @@ func NewConfig(dataDir string, metrics bool, ctx *cli.Context) (Config, error) {
 
 	// Due to the low usages of the blockchain we need to reduce cache size to prevent huge number block replies on every restart. 
 	// @TODO once the usage of blockchain is larger we should tune these values again accordingly
-	gethCfg.EthCfg.DatabaseCache = 32 // MB
-	gethCfg.EthCfg.TrieCleanCache = 8 // MB
+	gethCfg.EthCfg.DatabaseCache = 256 // MB
+	gethCfg.EthCfg.TrieCleanCache = 64 // MB
 	gethCfg.EthCfg.TrieDirtyCache = 0 // MB
-	gethCfg.EthCfg.TrieTimeout = 5 * time.Minute
+	gethCfg.EthCfg.TrieTimeout = 10 * time.Minute
 
 	// To prevent DDOS TX spam, a min gas price must be defined
 	//
