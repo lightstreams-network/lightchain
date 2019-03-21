@@ -207,8 +207,13 @@ To know more about how Lightchain works and how Tendermint is integrated to perf
 ### Running Web3 tests verifying blockchain functionalities
 [Read how to run Web3 tests](truffle/README.md)
 
-### Running Lightchain Tracer asserting blockchain internals, state, DB
+### Running Tracer asserting blockchain internals, state, DB
 [Read how to run the Tracer](TRACER.md)
+
+### Running Unit Tests
+```bash
+go test ./...
+```
 
 ## Credit & Licenses
 

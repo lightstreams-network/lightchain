@@ -10,8 +10,6 @@ define VERSION_TAG
 	$(shell git ls-remote git@github.com:lightstreams-network/lightchain.git HEAD | cut -f1 | cut -c1-9)
 endef
 
-
-
 all: get_vendor_deps install
 
 check-tools:
@@ -35,6 +33,9 @@ clean:
 build-dev:
 	CGO_ENABLED=1 go build $(BUILD_DEBUG_FLAGS) -o ./build/lightchain ./cmd/lightchain
 
+gen-bindings:
+	abigen --sol ./distribution/distribution.sol --pkg distribution --out ./distribution/distribution_bindings.go
+
 ### Tooling ###
 
 get_vendor_deps:
@@ -46,4 +47,3 @@ get_vendor_deps:
 docker:
 	@echo "Build docker image"
 	docker build -t lightchain:latest --build-arg version="$(VERSION_TAG)" .
-

@@ -65,7 +65,7 @@ func LightchainCmd() *cobra.Command {
 		Use:   "lightchain",
 		Short: "Lightstreams PoA blockchain node.",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return fmt.Errorf("incorrect usage. More instructions also available at https://docs.lightstreams.network/cli-docs/lightchain/")
+			return incorrectUsageErr()
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 		},
@@ -76,6 +76,7 @@ func LightchainCmd() *cobra.Command {
 	lightchainCmd.AddCommand(initCmd())
 	lightchainCmd.AddCommand(runCmd())
 	lightchainCmd.AddCommand(simulateCmd())
+	lightchainCmd.AddCommand(distributeCmd())
 
 	return lightchainCmd
 }
@@ -87,5 +88,9 @@ func addDefaultFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(TraceFlag.Name, false, TraceFlag.Usage)
 	cmd.Flags().String(TraceLogFlag.Name, filepath.Join(os.TempDir(), "tracer.log"), TraceLogFlag.Usage)
 
-	cmd.MarkFlagRequired(DataDirFlag.Name)	
+	cmd.MarkFlagRequired(DataDirFlag.Name)
+}
+
+func incorrectUsageErr() error {
+	return fmt.Errorf("incorrect usage. More instructions also available at https://docs.lightstreams.network/cli-docs/lightchain/")
 }
