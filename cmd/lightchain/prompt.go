@@ -1,17 +1,15 @@
 package main
 
 import (
-	"bufio"
-	"os"
 	"strings"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 func promptPassword() (string, error) {
-	reader := bufio.NewReader(os.Stdin)
-	pw, err := reader.ReadString('\n')
+	pwd, err := terminal.ReadPassword(0)
 	if err != nil {
 		return "", err
 	}
 
-	return strings.TrimSpace(pw), nil
+	return strings.TrimSpace(string(pwd)), nil
 }

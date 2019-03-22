@@ -16,17 +16,18 @@ const csvHeaderColumnFrom = "from"
 const csvHeaderColumnTo = "to"
 const csvHeaderColumnAmountWei = "amount_wei"
 
-func parseCsvDistributions(csvFilePath string) ([]distribution, error) {
+func parseCsvDistributions(csvFilePath string) (map[common.Address]int, []distribution, error) {
 	records, err := parseCsvRecords(csvFilePath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
+	address2distributionsCount := make(map[common.Address]int)
 	distributions := make([]distribution, len(records)-1)
 	for i := 0; i < len(records); i++ {
 		if i == 0 {
 			if err := isValidCsvHeader(records[i]); err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			continue
@@ -34,13 +35,14 @@ func parseCsvDistributions(csvFilePath string) ([]distribution, error) {
 
 		distribution, err := parseCsvRow(records[i])
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
+		address2distributionsCount[distribution.from]++
 		distributions[i-1] = distribution
 	}
 
-	return distributions, nil
+	return address2distributionsCount, distributions, nil
 }
 
 func parseCsvRecords(csvFilePath string) ([][]string, error) {
