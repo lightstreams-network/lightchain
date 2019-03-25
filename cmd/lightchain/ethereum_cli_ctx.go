@@ -16,6 +16,8 @@ var (
 	WSEnabledFlag = ethUtils.WSEnabledFlag
 	WSListenAddrFlag = ethUtils.WSListenAddrFlag
 	WSPortFlag = ethUtils.WSPortFlag
+	RPCCORSDomainFlag = ethUtils.RPCCORSDomainFlag
+	RPCVirtualHostsFlag = ethUtils.RPCVirtualHostsFlag
 )
 
 func addEthNodeFlags(cmd *cobra.Command) {
@@ -24,7 +26,9 @@ func addEthNodeFlags(cmd *cobra.Command) {
 	cmd.Flags().String(RPCListenAddrFlag.GetName(), RPCListenAddrFlag.Value, RPCListenAddrFlag.Usage)
 	cmd.Flags().Int(RPCPortFlag.GetName(), RPCPortFlag.Value, RPCPortFlag.Usage)
 	cmd.Flags().String(RPCApiFlag.GetName(), RPCApiFlag.Value, RPCApiFlag.Usage)
-
+	cmd.Flags().String(RPCCORSDomainFlag.GetName(), RPCCORSDomainFlag.Value, RPCCORSDomainFlag.Usage)
+	cmd.Flags().String(RPCVirtualHostsFlag.GetName(), RPCVirtualHostsFlag.Value, RPCVirtualHostsFlag.Usage)
+	
 	// WS Flags
 	cmd.Flags().Bool(WSEnabledFlag.GetName(), false, WSEnabledFlag.Usage)
 	cmd.Flags().String(WSListenAddrFlag.GetName(), WSListenAddrFlag.Value, WSListenAddrFlag.Usage)
@@ -66,6 +70,14 @@ func newNodeClientCtx(dataDir string, cmd *cobra.Command) *cli.Context {
 	flagSet.Int(WSPortFlag.GetName(), wsPortFlagValue, WSPortFlag.Usage)
 	flagSet.Set(WSPortFlag.GetName(), strconv.Itoa(wsPortFlagValue))
 	
+	rpcCORSDomainFlagValue, _ := cmd.Flags().GetString(RPCCORSDomainFlag.GetName())
+	flagSet.String(RPCCORSDomainFlag.GetName(), rpcCORSDomainFlagValue, RPCCORSDomainFlag.Usage)
+	flagSet.Set(RPCCORSDomainFlag.GetName(), rpcCORSDomainFlagValue)
+	
+	rpcVirtualHostsFlagValue, _ := cmd.Flags().GetString(RPCVirtualHostsFlag.GetName())
+	flagSet.String(RPCVirtualHostsFlag.GetName(), rpcVirtualHostsFlagValue, RPCVirtualHostsFlag.Usage)
+	flagSet.Set(RPCVirtualHostsFlag.GetName(), rpcVirtualHostsFlagValue)
+
 	// Default values required
 	flagSet.String(ethUtils.GCModeFlag.GetName(), ethUtils.GCModeFlag.Value, ethUtils.GCModeFlag.Usage)
 	flagSet.Set(ethUtils.GCModeFlag.GetName(), ethUtils.GCModeFlag.Value)
