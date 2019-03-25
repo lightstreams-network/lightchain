@@ -91,6 +91,7 @@ func NewConfig(dataDir string, metrics bool, ctx *cli.Context) (Config, error) {
 	gethCfg.EthCfg.MinerGasPrice = big.NewInt(MinGasPrice)
 	// The TxPool is the most important and ensures TX price validation can happen, also web3 is using it
 	gethCfg.EthCfg.TxPool.PriceLimit = big.NewInt(MinGasPrice).Uint64()
+	gethCfg.EthCfg.TxPool.NoLocals = true
 
 	return Config{
 		dataDir,
