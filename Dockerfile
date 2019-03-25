@@ -13,7 +13,9 @@ RUN mkdir -p $GOPATH/src/github.com/lightstreams-network/lightchain
 COPY . $GOPATH/src/github.com/lightstreams-network/lightchain
 RUN cd $GOPATH/src/github.com/lightstreams-network/lightchain && \
 	make get_vendor_deps && \
-	make install
+	make install && \
+	cd ${HOME} && \
+	rm -rf $GOPATH/src/github.com/lightstreams-network/lightchain
 
 RUN cd $GOPATH/src/github.com/lightstreams-network/lightchain && \
 	lightchain init --datadir=/srv/lightchain
