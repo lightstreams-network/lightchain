@@ -36,16 +36,20 @@ lightchain version
 
 It should output something like this
 ```
-Version: 0.9.1-alpha Sirius-Net
+Version: 1.0.0-beta Mainnet
 ```
 
 ## Create a Lightstreams node
 
-Lightstreams provides a testnet called `sirius`. By default, all new created nodes get connected to this network and are automatically synchronized. **Please note** that we are actively working on improving the performance and stability of the network, therefore some issues might still occur which force us to restore blockchain. 
-
+Lightstreams provides its own MainNet network, and a testnet called `sirius`. 
+By default, all new created nodes get connected to MainNet and synchronized, but alternatively
+you can choose to connect to `sirius` or even run isolate network using `standalone`, more information is detailed
+above.
+ 
 ### Node initialization
 
-To initialise a new node you need to run `lightchain init` and  choose a local path where blockchain files are going to be stored.
+To initialise a new node you need to run `lightchain init` and  choose a local path where blockchain 
+files are going to be stored.
 ```
 lightchain init --datadir="${HOME}/.lightchain"
 ```
@@ -57,7 +61,8 @@ To run a lightchain node you only need to run the following command:
 lightchain run --datadir="${HOME}/.lightchain"
 ```
 
-After you run the command above, the network synchronization will take several minutes. So grab a coffee and [request some test tokens](https://discuss.lightstreams.network/t/request-test-tokens/64) while you wait :)
+After you run the command above, the network synchronization will take several minutes, so grab a coffee
+while you wait :)  
 
 ### Node launch with RPC open
 
@@ -67,14 +72,40 @@ To run a lightchain node with RPC open, you only need to append the RPC flags as
 ```
 lightchain run --datadir="${HOME}/.lightchain" --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi eth,net,web3,personal,admin
 ```
+## Networks
 
-### Request free tokens
-Please sign up to the [Lightstreams Community Forum](https://discuss.lightstreams.network) and [follow the instructions in this thread](https://discuss.lightstreams.network/t/request-test-tokens/64) to obtain free tokens to use in our test network Sirius.
+### Mainnet
 
-### Block explorer
-To see the current state of the `sirius` network and check the status of your transactions, you can go to the [lightstreams block explorer](https://explorer.sirius.lightstreams.io/home)
+To see the current state of the `MainNet` network and check the status of your transactions, 
+you can go to the **[lightstreams block explorer](https://explorer.mainnet.lightstreams.io/home)**
 
-#### Available flags
+
+### Sirius
+
+To run a node using `sirius` network you will need to initialize your node using `--sirius` flag as follow:
+```
+lightchain init --datadir="${HOME}/.lightchain_sirius" --sirius
+```
+
+To see the current state of the `sirius` network and check the status of your transactions, 
+you can go to the **[lightstreams block explorer](https://explorer.sirius.lightstreams.io/home)**
+
+To **request free tokens** Please sign up to the [Lightstreams Community Forum](https://discuss.lightstreams.network) and [follow the instructions in this thread](https://discuss.lightstreams.network/t/request-test-tokens/64) to obtain free tokens to use in our test network Sirius.
+
+### Standalone
+Standalone mode allows you to create an isolated node for testing proposes. To do it, you can run the following command:
+
+```
+lightchain init --datadir="${HOME}/.lightchain_standalone" --standalone
+```
+
+Using this network you won't need to synchronize to anyone as you a running an independent network
+where you are the only validator node.
+ 
+To use this network at the genesis block, the account `0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e` has been initialized with _300M Photons_. 
+Its passphrase is `WelcomeToSirius`.
+
+## Documentation
 
 When you run `lightchain run` or `lightchain run --help`, you will see a list of available flags:
 
@@ -86,31 +117,28 @@ Usage:
 
 Flags:
       --abci_protocol string   socket | grpc (default "socket")
-      --datadir string         Data directory for the databases and keystore (default "/home/a/lightchain")
+      --datadir string         Data directory for the databases and keystore (default "/home/ggarrido/lightchain")
   -h, --help                   help for run
-      --prometheus             Enable prometheus metrics exporter
       --lvl string             Level of logging (default "info")
+      --prometheus             Enable prometheus metrics exporter
       --rpc                    Enable the HTTP-RPC server
       --rpcaddr string         HTTP-RPC server listening interface (default "localhost")
       --rpcapi string          API's offered over the HTTP-RPC interface
+      --rpccorsdomain string   Comma separated list of domains from which to accept cross origin requests (browser enforced)
       --rpcport int            HTTP-RPC server listening port (default 8545)
+      --rpcvhosts string       Comma separated list of virtual hostnames from which to accept requests (server enforced). Accepts '*' wildcard. (default "localhost")
       --tmt_p2p_port uint      Tendermint port used to achieve exchange messages across nodes (default 26656)
       --tmt_proxy_port uint    Lightchain RPC port used to receive incoming messages from Tendermint (default 26658)
       --tmt_rpc_port uint      Tendermint RPC port used to receive incoming messages from Lightchain (default 26657)
+      --trace                  Whenever to be asserting and reporting blockchain state in real-time (testing, debugging purposes)
+      --tracelog string        The filepath to a log file where all tracing output will be persisted (default "/tmp/tracer.log")
       --ws                     Enable the WS-RPC server
       --wsaddr string          WS-RPC server listening interface (default "localhost")
       --wsport int             WS-RPC server listening port (default 8546)
 
 ```
 
-#### Run in standalone mode
-Standalone mode allows you to create an isolated node for testing proposes. To do it, you can run the following command:
-
-```
-lightchain init --datadir="${HOME}/.lightchain" --standalone
-```
-
-At the genesis block, the account `0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e`has been initialized with _300M Photons_. The passphrase is `WelcomeToSirius`
+If you want to know more about how to use `lightchain` command line client, see [our online documentation](https://docs.lightstreams.network/cli-docs/lightchain/)
 
 ## Metrics
 [Read how to run metrics explorer](METRICS.md)
