@@ -12,12 +12,15 @@ const Genesis = `
         "eip158Block": 0,
         "ByzantiumBlock": 0
     },
-	"nonce": "1",
+    "nonce": "1",
     "difficulty": "1024",
     "gasLimit": "100000000",
     "alloc": {
-        "0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e": {
-            "balance": "300000000000000000000000000"
+        "0xf84700820e211f383ab6ac29844b461f653a5b48": {
+            "balance": "165000000000000000000000000"
+        },
+        "0xc69cf54ee896c8545722d34673370d0f0ffcb964": {
+            "balance": "135000000000000000000000000"
         }
     }
 }
