@@ -20,10 +20,10 @@ else
 endif
 
 install:
-	CGO_ENABLED=1 go install ./cmd/lightchain
+	go install ./cmd/lightchain
 
 build:
-	CGO_ENABLED=1 go build -o ./build/lightchain ./cmd/lightchain
+	go build -o ./build/lightchain ./cmd/lightchain
 
 clean:
 	@rm build/lightchain
