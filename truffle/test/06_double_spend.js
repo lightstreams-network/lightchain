@@ -15,14 +15,14 @@ describe('TestSimplifiedUserBalanceDoubleSpend', () => {
         const txReceipt = await web3.eth.sendTransaction({
             from: ROOT_ACCOUNT,
             to: DOUBLE_SPEND_ACC,
-            value: convertPhtToWeiBN("5")
+            value: convertPhtToWeiBN("0.12")
         });
 
         assert.equal(txReceipt.status, "0x1", 'tx receipt should return a successful status');
     });
 
     it('perform simplified balance based double spend', async function() {
-        const amountToSendBN = convertPhtToWeiBN("4");
+        const amountToSendBN = convertPhtToWeiBN("0.1");
 
         const rootBalancePreTxBN = web3.utils.toBN(await web3.eth.getBalance(ROOT_ACCOUNT));
         const doubleSpendAccBalancePreTxBN = web3.utils.toBN(await web3.eth.getBalance(DOUBLE_SPEND_ACC));
