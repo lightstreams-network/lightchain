@@ -65,7 +65,7 @@ if [ -n "${CLEAN}" ]; then
 	    run "rm -rf ${DATA_DIR}"
 		run "$EXEC_BIN init ${INIT_ARGS}"
 		echo "Restoring ${NETWORK} private keys"
-		run "cp ./setup/${NETWORK}/database/keystore/* ${DATA_DIR}/database/keystore/"		
+		run "cp ./network/${NETWORK}/database/keystore/* ${DATA_DIR}/database/keystore/"		
 		echo -e "################################ \n"
 	else
 		echo -e "Exiting"
