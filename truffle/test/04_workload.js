@@ -18,7 +18,7 @@ describe('Workload', () => {
     const txReceipt = await web3.eth.sendTransaction({
       from: ROOT_ACCOUNT,
       to: NEW_ACCOUNT_ADDR,
-      value: convertPhtToWeiBN("1")
+      value: convertPhtToWeiBN("0.1")
     });
 
     assert.equal(txReceipt.status, "0x1", 'tx receipt should return a successful status');

@@ -25,7 +25,7 @@ describe('TestTransaction', () => {
       await web3.eth.sendTransaction({
         from: NEW_ACCOUNT_ADDR,
         to: instance.address,
-        value: convertPhtToWeiBN("1")
+        value: convertPhtToWeiBN("0.1")
       });
     } catch (e) {
       assert.equal(e.message, expectedWeb3ErrMsg);
