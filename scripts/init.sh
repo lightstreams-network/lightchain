@@ -7,6 +7,7 @@ ROOT_PATH="$(cd "$(dirname "$0")" && pwd)/.."
 DATA_DIR="${HOME}/.lightchain"
 EXEC_BIN="./build/lightchain"
 APPENDED_ARGS=""
+NETWORK="sirius"
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -21,7 +22,13 @@ while [ "$1" != "" ]; do
             CLEAN=1 
         ;;
         --standalone) 
-            STANDALONE_NET=1 
+            NETWORK="standalone"
+        ;;
+        --mainnet) 
+            NETWORK="mainnet" 
+        ;;
+        --sirius) 
+            NETWORK="sirius" 
         ;;
         * )
             APPENDED_ARGS="${APPENDED_ARGS} $1"
@@ -29,21 +36,18 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ -n "${STANDALONE_NET}" ]; then
-	DATA_DIR="${DATA_DIR}/standalone"
-	INIT_ARGS="--datadir=${DATA_DIR} --standalone"
-else
-	DATA_DIR="${DATA_DIR}/sirius"
-	INIT_ARGS="--datadir=${DATA_DIR} --sirius"
-fi
+DATA_DIR="${DATA_DIR}/${NETWORK}"
+INIT_ARGS="--datadir=${DATA_DIR} --${NETWORK}"
 
 
 pushd "$ROOT_PATH"
 
 echo -e "Compiling latest version...."
 if [ -n "${IS_DEBUG}" ]; then
+	INIT_ARGS="${INIT_ARGS} --lvl=debug"
     run "make build-dev"
 else
+	INIT_ARGS="${INIT_ARGS} --lvl=info"
     run "make build"
 fi
 
@@ -71,10 +75,8 @@ fi
 
 run "$EXEC_CMD"
 
-if [ -z "${STANDALONE_NET}" ]; then
-	echo "Restoring sirius private keys"
-	run "cp ./setup/sirius/database/keystore/* ${DATA_DIR}/database/keystore/"		
-fi
+echo "Restoring ${NETWORK} private keys"
+run "cp ./setup/${NETWORK}/database/keystore/* ${DATA_DIR}/database/keystore/"		
 
 popd
 

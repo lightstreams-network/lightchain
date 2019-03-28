@@ -56,8 +56,8 @@ module.exports.extractEnvAccountAndPwd = (network) => {
   
   if (network === "mainnet") {
     return {
-      from: process.env.STANDALONE_ACCOUNT,
-      pwd: process.env.STANDALONE_PASSPHRASE
+      from: process.env.MAINNET_ACCOUNT,
+      pwd: process.env.MAINNET_PASSPHRASE
     }
   }
 

@@ -7,6 +7,7 @@ ROOT_PATH="$(cd "$(dirname "$0")" && pwd)/.."
 DATA_DIR="${HOME}/.lightchain"
 EXEC_BIN="./build/lightchain"
 APPENDED_ARGS=""
+NETWORK="sirius"
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -21,7 +22,13 @@ while [ "$1" != "" ]; do
             CLEAN=1 
         ;;
         --standalone) 
-            STANDALONE_NET=1 
+            NETWORK="standalone"
+        ;;
+        --mainnet) 
+            NETWORK="mainnet" 
+        ;;
+        --sirius) 
+            NETWORK="sirius" 
         ;;
         * )
             APPENDED_ARGS="${APPENDED_ARGS} $1"
@@ -29,13 +36,8 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ -n "${STANDALONE_NET}" ]; then
-	DATA_DIR="${DATA_DIR}/standalone"
-	INIT_ARGS="--datadir=${DATA_DIR} --standalone"
-else
-	DATA_DIR="${DATA_DIR}/sirius"
-	INIT_ARGS="--datadir=${DATA_DIR} --sirius"
-fi
+DATA_DIR="${DATA_DIR}/${NETWORK}"
+INIT_ARGS="--datadir=${DATA_DIR} --${NETWORK}"
 
 RUN_ARGS="--datadir=${DATA_DIR}"
 RUN_ARGS="${RUN_ARGS} --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi eth,net,web3,personal,admin"
@@ -62,10 +64,8 @@ if [ -n "${CLEAN}" ]; then
 	    echo "################################"
 	    run "rm -rf ${DATA_DIR}"
 		run "$EXEC_BIN init ${INIT_ARGS}"
-		if [ -z "${STANDALONE_NET}" ]; then
-			echo "Restoring sirius private keys"
-			run "cp ./setup/sirius/database/keystore/* ${DATA_DIR}/database/keystore/"		
-		fi
+		echo "Restoring ${NETWORK} private keys"
+		run "cp ./setup/${NETWORK}/database/keystore/* ${DATA_DIR}/database/keystore/"		
 		echo -e "################################ \n"
 	else
 		echo -e "Exiting"
