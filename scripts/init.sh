@@ -76,7 +76,7 @@ fi
 run "$EXEC_CMD"
 
 echo "Restoring ${NETWORK} private keys"
-run "cp ./setup/${NETWORK}/database/keystore/* ${DATA_DIR}/database/keystore/"		
+run "cp ./network/${NETWORK}/database/keystore/* ${DATA_DIR}/database/keystore/"		
 
 popd
 
