@@ -48,17 +48,17 @@ above.
  
 ### Node initialization
 
-To initialise a new node you need to run `lightchain init` and  choose a local path where blockchain 
-files are going to be stored.
+To initialise a new node you need to run `lightchain init`. The local path where blockchain 
+files are going to be stored is set to `${HOME}/.lightchain`. You can change using the `--datadir` flag
 ```
-lightchain init --datadir="${HOME}/.lightchain"
+lightchain init
 ```
 
 ### Node launch
 
 To run a lightchain node you only need to run the following command:
 ```
-lightchain run --datadir="${HOME}/.lightchain"
+lightchain run
 ```
 
 After you run the command above, the network synchronization will take several minutes, so grab a coffee
@@ -117,7 +117,7 @@ Usage:
 
 Flags:
       --abci_protocol string   socket | grpc (default "socket")
-      --datadir string         Data directory for the databases and keystore (default "/home/ggarrido/lightchain")
+      --datadir string         Data directory for the databases and keystore (default "/home/ggarrido/.lightchain")
   -h, --help                   help for run
       --lvl string             Level of logging (default "info")
       --prometheus             Enable prometheus metrics exporter

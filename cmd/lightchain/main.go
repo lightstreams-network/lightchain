@@ -23,7 +23,7 @@ var (
 	DataDirFlag = ethUtils.DirectoryFlag{
 		Name:  "datadir",
 		Usage: "Data directory for the databases and keystore",
-		Value: ethUtils.DirectoryString{path.Join(defaultHomeDir, "lightchain")},
+		Value: ethUtils.DirectoryString{path.Join(defaultHomeDir, ".lightchain")},
 	}
 
 	LogLvlFlag = cli.StringFlag{
@@ -87,8 +87,6 @@ func addDefaultFlags(cmd *cobra.Command) {
 
 	cmd.Flags().Bool(TraceFlag.Name, false, TraceFlag.Usage)
 	cmd.Flags().String(TraceLogFlag.Name, filepath.Join(os.TempDir(), "tracer.log"), TraceLogFlag.Usage)
-
-	cmd.MarkFlagRequired(DataDirFlag.Name)
 }
 
 func incorrectUsageErr() error {

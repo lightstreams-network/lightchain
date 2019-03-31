@@ -14,7 +14,7 @@ lightchain run [flags]
 
 ```
       --abci_protocol string   socket | grpc (default "socket")
-      --datadir string         Data directory for the databases and keystore (default "/Users/enchanterio/lightchain")
+      --datadir string         Data directory for the databases and keystore (default "/Users/enchanterio/.lightchain")
   -h, --help                   help for run
       --lvl string             Level of logging (default "info")
       --prometheus             Enable prometheus metrics exporter
