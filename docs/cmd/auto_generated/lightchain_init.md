@@ -13,7 +13,7 @@ lightchain init [flags]
 ### Options
 
 ```
-      --datadir string    Data directory for the databases and keystore (default "/Users/enchanterio/lightchain")
+      --datadir string    Data directory for the databases and keystore (default "/Users/enchanterio/.lightchain")
   -h, --help              help for init
       --lvl string        Level of logging (default "info")
       --sirius            Initialize a node connected to Sirius network
