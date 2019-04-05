@@ -245,13 +245,16 @@ go test ./...
 
 ## Credit & Licenses
 
-- go-ethereum
-  - [source](https://github.com/ethereum/go-ethereum),[license](https://github.com/ethereum/go-ethereum/#license)
-- tendermint
-  - [source](https://github.com/tendermint/tendermint),[license](https://github.com/tendermint/tendermint/blob/master/LICENSE)
+- go-ethereum, [source](https://github.com/ethereum/go-ethereum),[license](https://github.com/ethereum/go-ethereum/#license)
+- tendermint, [source](https://github.com/tendermint/tendermint),[license](https://github.com/tendermint/tendermint/blob/master/LICENSE)
 
 ## Bugs, Issues, Questions
 If you find any bugs or simply have a question, please [write an issue](https://github.com/lightstreams-network/lightchain/issues) and we'll try and help as best we can.   
+
+## Help
+Need help? have questions? any feedback? Get in touch with us.
+* [Telegram](https://t.me/LightstreamsDevelopers)
+* [Discuss Forum)(https://discuss.lightstreams.network/c/dev)
 
 ## Contributors
 
