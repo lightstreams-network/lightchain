@@ -254,7 +254,7 @@ If you find any bugs or simply have a question, please [write an issue](https://
 ## Help
 Need help? have questions? any feedback? Get in touch with us.
 * [Telegram](https://t.me/LightstreamsDevelopers)
-* [Discuss Forum)(https://discuss.lightstreams.network/c/dev)
+* [Discuss Forum](https://discuss.lightstreams.network/c/dev)
 
 ## Contributors
 
