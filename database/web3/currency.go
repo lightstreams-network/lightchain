@@ -21,3 +21,10 @@ func WeiToPhoton(amountInWei *big.Int) *big.Float {
 	amount.SetString(amountInWei.String())
 	return new(big.Float).Quo(amount, big.NewFloat(params.Ether))
 }
+
+func PhtToWei(amount uint64) *big.Int {
+	pht := new(big.Int)
+	pht.SetUint64(amount)
+
+	return new(big.Int).Mul(pht, big.NewInt(params.Ether))
+}

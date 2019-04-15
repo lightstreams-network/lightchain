@@ -31,3 +31,22 @@ func TestParseWei(t *testing.T) {
 		}
 	}
 }
+
+func TestPhtToWei(t *testing.T) {
+	var values = []struct {
+		pht uint64
+		wei string
+	}{
+		{1, "1000000000000000000"},
+		{105000000, "105000000000000000000000000"},
+		{300000000, "300000000000000000000000000"},
+	}
+
+	for _, v := range values {
+		wei := PhtToWei(v.pht)
+
+		if wei.String() != v.wei {
+			t.Errorf("unable to parse PHT to Wei. Expected: %v Wei. Actual: %s", v.wei, wei.String())
+		}
+	}
+}
