@@ -1,5 +1,3 @@
-.PHONY: all clean build install docker
-
 DEP_REPO = github.com/golang/dep/cmd/dep
 DEP_BIN_PATH := $(shell command -v dep 2> /dev/null)
 
@@ -10,40 +8,48 @@ define VERSION_TAG
 	$(shell git ls-remote git@github.com:lightstreams-network/lightchain.git HEAD | cut -f1 | cut -c1-9)
 endef
 
-all: get_vendor_deps install
+.PHONY: help
+help: ## Prints this help message
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-check-tools:
+.PHONY: all
+all: get_vendor_deps install ## Downloads dependencies and install lightchain
+
+.PHONY: check-tools
+check-tools: ## Check that required tools are installed
 ifdef DEP_BIN_PATH
 	@echo "DEP is correctly installed"
 else
 	@echo "Not DEP found. Visit http://${DEP_REPO} and follow installation instructions."
 endif
 
-install:
+.PHONY: install
+install: ## Install lightchain
 	go install ./cmd/lightchain
 
-build:
+.PHONY: build
+build: ## Build lightchain
 	go build -o ./build/lightchain ./cmd/lightchain
 
-clean:
+.PHONY: clean
+clean: ## Clean binaries
 	@rm build/lightchain
 
-### Development ###
-
-build-dev:
+.PHONY: build-dev
+build-dev: ## (Dev) Build lightchain
 	CGO_ENABLED=1 go build $(BUILD_DEBUG_FLAGS) -o ./build/lightchain ./cmd/lightchain
 
-gen-bindings:
+.PHONY: gen-bindings
+gen-bindings: ## (Dev) Generate bindings
 	abigen --sol ./distribution/distribution.sol --pkg distribution --out ./distribution/distribution_bindings.go
 
-### Tooling ###
-
-get_vendor_deps:
+.PHONY: get_vendor_deps
+get_vendor_deps: check-tools ## Download dependencies
 	@rm -rf vendor
 	@echo "--> dep ensure"
 	@dep ensure
 
-### Docker ###
-docker:
+.PHONY: docker
+docker: ## Build docker image for lightchain
 	@echo "Build docker image"
 	docker build -t lightchain:latest --build-arg version="$(VERSION_TAG)" .
