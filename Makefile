@@ -1,6 +1,3 @@
-DEP_REPO = github.com/golang/dep/cmd/dep
-DEP_BIN_PATH := $(shell command -v dep 2> /dev/null)
-
 BUILD_TAGS? := lightchain
 BUILD_DEBUG_FLAGS = -gcflags=all="-N -l"
 
@@ -14,14 +11,6 @@ help: ## Prints this help message
 
 .PHONY: all
 all: get_vendor_deps install ## Downloads dependencies and install lightchain
-
-.PHONY: check-tools
-check-tools: ## Check that required tools are installed
-ifdef DEP_BIN_PATH
-	@echo "DEP is correctly installed"
-else
-	@echo "Not DEP found. Visit http://${DEP_REPO} and follow installation instructions."
-endif
 
 .PHONY: install
 install: ## Install lightchain
@@ -42,12 +31,6 @@ build-dev: ## (Dev) Build lightchain
 .PHONY: gen-bindings
 gen-bindings: ## (Dev) Generate bindings
 	abigen --sol ./distribution/distribution.sol --pkg distribution --out ./distribution/distribution_bindings.go
-
-.PHONY: get_vendor_deps
-get_vendor_deps: check-tools ## Download dependencies
-	@rm -rf vendor
-	@echo "--> dep ensure"
-	@dep ensure
 
 .PHONY: docker
 docker: ## Build docker image for lightchain
