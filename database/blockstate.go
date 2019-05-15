@@ -1,18 +1,19 @@
 package database
 
 import (
-	"math/big"
 	"fmt"
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/eth"
-	"github.com/ethereum/go-ethereum/params"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
-	tmtCode "github.com/tendermint/tendermint/abci/example/code"
+	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/state"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/eth"
+	"github.com/ethereum/go-ethereum/ethdb"
+	"github.com/ethereum/go-ethereum/params"
+	tmtCode "github.com/tendermint/tendermint/abci/example/code"
 	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
 )
 
@@ -99,7 +100,7 @@ func (bs *blockState) persist(bc *core.BlockChain, db ethdb.Database) (common.Ha
 
 func (bs *blockState) updateBlockState(config *params.ChainConfig, parentTime uint64, numTx uint64) {
 	parentHeader := bs.parent.Header()
-	bs.header.Time = new(big.Int).SetUint64(parentTime)
+	bs.header.Time = new(big.Int).SetUint64(parentTime).Uint64()
 	bs.header.Difficulty = ethash.CalcDifficulty(config, parentTime, parentHeader)
 	bs.transactions = make([]*ethTypes.Transaction, 0, numTx)
 	bs.receipts = make([]*ethTypes.Receipt, 0, numTx)
