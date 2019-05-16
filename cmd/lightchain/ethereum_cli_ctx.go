@@ -16,8 +16,10 @@ var (
 	WSEnabledFlag = ethUtils.WSEnabledFlag
 	WSListenAddrFlag = ethUtils.WSListenAddrFlag
 	WSPortFlag = ethUtils.WSPortFlag
+	WSApiFlag = ethUtils.WSApiFlag
 	RPCCORSDomainFlag = ethUtils.RPCCORSDomainFlag
 	RPCVirtualHostsFlag = ethUtils.RPCVirtualHostsFlag
+	WSAllowedOriginsFlag = ethUtils.WSAllowedOriginsFlag
 )
 
 func addEthNodeFlags(cmd *cobra.Command) {
@@ -33,6 +35,8 @@ func addEthNodeFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool(WSEnabledFlag.GetName(), false, WSEnabledFlag.Usage)
 	cmd.Flags().String(WSListenAddrFlag.GetName(), WSListenAddrFlag.Value, WSListenAddrFlag.Usage)
 	cmd.Flags().Int(WSPortFlag.GetName(), WSPortFlag.Value, WSPortFlag.Usage)
+	cmd.Flags().String(WSApiFlag.GetName(), WSApiFlag.Value, WSApiFlag.Usage)
+	cmd.Flags().String(WSAllowedOriginsFlag.GetName(), WSAllowedOriginsFlag.Usage, WSAllowedOriginsFlag.Usage)
 }
 
 func newNodeClientCtx(dataDir string, cmd *cobra.Command) *cli.Context {
@@ -70,6 +74,10 @@ func newNodeClientCtx(dataDir string, cmd *cobra.Command) *cli.Context {
 	flagSet.Int(WSPortFlag.GetName(), wsPortFlagValue, WSPortFlag.Usage)
 	flagSet.Set(WSPortFlag.GetName(), strconv.Itoa(wsPortFlagValue))
 	
+	wsApiFlagValue, _ := cmd.Flags().GetString(WSApiFlag.GetName())
+	flagSet.String(WSApiFlag.GetName(), wsApiFlagValue, WSApiFlag.Usage)
+	flagSet.Set(WSApiFlag.GetName(), wsApiFlagValue)
+	
 	rpcCORSDomainFlagValue, _ := cmd.Flags().GetString(RPCCORSDomainFlag.GetName())
 	flagSet.String(RPCCORSDomainFlag.GetName(), rpcCORSDomainFlagValue, RPCCORSDomainFlag.Usage)
 	flagSet.Set(RPCCORSDomainFlag.GetName(), rpcCORSDomainFlagValue)
@@ -77,6 +85,10 @@ func newNodeClientCtx(dataDir string, cmd *cobra.Command) *cli.Context {
 	rpcVirtualHostsFlagValue, _ := cmd.Flags().GetString(RPCVirtualHostsFlag.GetName())
 	flagSet.String(RPCVirtualHostsFlag.GetName(), rpcVirtualHostsFlagValue, RPCVirtualHostsFlag.Usage)
 	flagSet.Set(RPCVirtualHostsFlag.GetName(), rpcVirtualHostsFlagValue)
+	
+	wsAllowedOriginsFlagValue, _ := cmd.Flags().GetString(WSAllowedOriginsFlag.GetName())
+	flagSet.String(WSAllowedOriginsFlag.GetName(), wsAllowedOriginsFlagValue, WSAllowedOriginsFlag.Usage)
+	flagSet.Set(WSAllowedOriginsFlag.GetName(), wsAllowedOriginsFlagValue)
 
 	// Default values required
 	flagSet.String(ethUtils.GCModeFlag.GetName(), ethUtils.GCModeFlag.Value, ethUtils.GCModeFlag.Usage)
