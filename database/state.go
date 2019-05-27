@@ -61,21 +61,23 @@ func (es *EthState) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDel
 //
 // Persist is called after all TXs are executed against the application state.
 // Triggered by ABCI::Commit(), to persist changes introduced in latest block.
-func (es *EthState) Persist(receiver common.Address) (common.Hash, error) {
+//
+// Returns the persisted Block.
+func (es *EthState) Persist(receiver common.Address) (ethTypes.Block, error) {
 	es.mtx.Lock()
 	defer es.mtx.Unlock()
 
-	rootHash, err := es.blockState.persist(es.ethereum.BlockChain(), es.ethereum.ChainDb())
+	block, err := es.blockState.persist(es.ethereum.BlockChain(), es.ethereum.ChainDb())
 	if err != nil {
-		return common.Hash{}, err
+		return ethTypes.Block{}, err
 	}
 
 	err = es.resetBlockState(receiver)
 	if err != nil {
-		return common.Hash{}, err
+		return ethTypes.Block{}, err
 	}
 
-	return rootHash, err
+	return block, err
 }
 
 func (es *EthState) ResetBlockState(receiver common.Address) error {

@@ -81,10 +81,13 @@ func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDel
 }
 
 // Persist finalises the current block and writes it to disk.
-func (db *Database) Persist(receiver common.Address) (common.Hash, error) {
+//
+// Returns the persisted Block.
+func (db *Database) Persist(receiver common.Address) (ethTypes.Block, error) {
 	db.logger.Info("Persisting DB state", "data", db.ethState.blockState)
 	db.metrics.PersistedTxsTotal.Add(float64(len(db.ethState.blockState.transactions)))
 	db.metrics.ChaindbHeight.Set(float64(db.ethState.blockState.header.Number.Uint64()))
+
 	return db.ethState.Persist(receiver)
 }
 

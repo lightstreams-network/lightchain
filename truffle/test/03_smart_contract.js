@@ -70,8 +70,11 @@ contract('SmartContract', () => {
       const weiBNBalancePostTxBN = web3.utils.toBN(await web3.eth.getBalance(ROOT_ACCOUNT));
       const txGasCostBN = await calculateGasCostBN(tx.receipt.gasUsed);
       const expectedBalanceBN = weiBNBalancePreTxBN.sub(txGasCostBN);
+      const emitedEvent = tx.receipt.logs[0];
 
       assert.equal(tx.receipt.status, "0x1", "successful TX status expected");
+      assert.equal(emitedEvent.event, "HelloCountIncremented");
+      assert.equal(emitedEvent.blockHash, tx.receipt.blockHash);
       assert.equal(weiBNBalancePostTxBN.toString(), expectedBalanceBN.toString(), "correct balance - gas cost expected");
       assert(weiBNBalancePreTxBN.sub(weiBNBalancePostTxBN).lt(convertPhtToWeiBN("0.05")), "performing a SC TX should not cost more than 0.05 PHT")
     } catch (e) {
