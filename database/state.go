@@ -65,7 +65,7 @@ func (es *EthState) Persist(receiver common.Address) (common.Hash, error) {
 	es.mtx.Lock()
 	defer es.mtx.Unlock()
 
-	blockHash, err := es.blockState.persist(es.ethereum.BlockChain(), es.ethereum.ChainDb())
+	rootHash, err := es.blockState.persist(es.ethereum.BlockChain(), es.ethereum.ChainDb())
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -75,7 +75,7 @@ func (es *EthState) Persist(receiver common.Address) (common.Hash, error) {
 		return common.Hash{}, err
 	}
 
-	return blockHash, err
+	return rootHash, err
 }
 
 func (es *EthState) ResetBlockState(receiver common.Address) error {
