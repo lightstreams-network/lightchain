@@ -233,6 +233,7 @@ github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
 github.com/lib/pq v1.0.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/lightstreams-network/lightchain v1.0.0 h1:JPf9oXB4hd0ifsbb+PS5TOg48bYEmgX2CdDqQkhC988=
 github.com/lightstreams-network/lightchain v1.0.0/go.mod h1:MvbmcrUOk37N0WAAnqkRNL1vshqdRSVcKtcjtQkY1So=
+github.com/lightstreams-network/lightchain v1.1.2/go.mod h1:MvbmcrUOk37N0WAAnqkRNL1vshqdRSVcKtcjtQkY1So=
 github.com/magiconair/properties v1.8.0 h1:LLgXmsheXeRoUOBOjtwPQCWIYqM/LU1ayDtDePerRcY=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/mattn/go-colorable v0.0.9 h1:UVL0vNpWh04HeJXV0KLcaT7r06gOH2l4OW6ddYRUIY4=

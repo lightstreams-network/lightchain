@@ -16,6 +16,7 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/lightstreams-network/lightchain/prometheus"
 	"github.com/lightstreams-network/lightchain/tracer"
+	"path"
 )
 
 const (
@@ -70,7 +71,6 @@ func runCmd() *cobra.Command {
 
 			dataDir, _ := cmd.Flags().GetString(DataDirFlag.GetName())
 			shouldTrace, _ := cmd.Flags().GetBool(TraceFlag.Name)
-			traceLogFilePath, _ := cmd.Flags().GetString(TraceLogFlag.Name)
 			rpcListenPort, _ := cmd.Flags().GetUint(ConsensusRpcListenPortFlag.GetName())
 			p2pListenPort, _ := cmd.Flags().GetUint(ConsensusP2PListenPortFlag.GetName())
 			proxyListenPort, _ := cmd.Flags().GetUint(ConsensusProxyListenPortFlag.GetName())
@@ -102,7 +102,9 @@ func runCmd() *cobra.Command {
 				dbCfg.GethIpcPath(),
 			)
 
-			tracerCfg := tracer.NewConfig(shouldTrace, traceLogFilePath)
+			tracerCfg := tracer.NewConfig(shouldTrace, path.Join(dataDir, "tracer.log"))
+			tracerCfg.PrintWarning(logger);
+
 			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg)
 
 			n, err := node.NewNode(&nodeCfg)

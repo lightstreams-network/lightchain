@@ -171,7 +171,7 @@ func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx
 
 	abci.checkTxState.SetNonce(from, tx.Nonce() + 1)
 
-	abci.logger.Info("TX validated.", "hash", tx.Hash().String(), "state_nonce", abci.checkTxState.GetNonce(from))
+	abci.logger.Info("TX validated", "hash", tx.Hash().String(), "state_nonce", abci.checkTxState.GetNonce(from))
 
 	return tmtAbciTypes.ResponseCheckTx{Code: tmtAbciTypes.CodeTypeOK}
 }
@@ -230,7 +230,7 @@ func (abci *TendermintABCI) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDeliv
 		return res
 	}
 
-	abci.logger.Info("TX delivered.", "tx", tx.Hash().String())
+	abci.logger.Info("TX delivered", "tx", tx.Hash().String())
 
 	return tmtAbciTypes.ResponseDeliverTx{Code: tmtAbciTypes.CodeTypeOK}
 }
@@ -259,27 +259,23 @@ func (abci *TendermintABCI) EndBlock(req tmtAbciTypes.RequestEndBlock) tmtAbciTy
 // 		  to agree on the next block, because the hash is included in the next block!
 func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
 	abci.metrics.CommitBlockTotal.Add(1)
-	rootHash := abci.getCurrentBlock().Root()
-	blockHash, err := abci.db.Persist(abci.RewardReceiver())
+	block, err := abci.db.Persist(abci.RewardReceiver())
 	if err != nil {
 		abci.logger.Error("Error getting latest database state", "err", err)
 		abci.metrics.CommitErrBlockTotal.Add(1, "UNABLE_TO_PERSIST")
-		return tmtAbciTypes.ResponseCommit{Data: rootHash.Bytes()}
+		panic(err)
 	}
-	nextRootHash := abci.getCurrentBlock().Root()
 
 	ethState, err := abci.getCurrentDBState()
 	if err != nil {
 		abci.logger.Error("Error getting next latest state", "err", err)
 		abci.metrics.CommitErrBlockTotal.Add(1, "ErrGettingNextLastState")
-		return tmtAbciTypes.ResponseCommit{Data: nextRootHash.Bytes()}
 	}
-
-	abci.logger.Info("Committing state", "blockHash", blockHash.Hex())
-
 	abci.checkTxState = ethState.Copy()
 
-	return tmtAbciTypes.ResponseCommit{Data: nextRootHash.Bytes()}
+	abci.logger.Info("Block committed", "block", block.Hash().Hex(), "root", block.Root().Hex())
+
+	return tmtAbciTypes.ResponseCommit{Data: block.Root().Bytes()}
 }
 
 // ResetBlockState resets the in-memory block's processing state.

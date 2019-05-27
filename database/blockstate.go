@@ -28,7 +28,6 @@ type blockState struct {
 	txIndex      int
 	transactions []*ethTypes.Transaction
 	receipts     ethTypes.Receipts
-	allLogs      []*ethTypes.Log
 
 	totalUsedGas uint64
 	gp           *core.GasPool
@@ -60,42 +59,33 @@ func (bs *blockState) execTx(bc *core.BlockChain, config *eth.Config, chainConfi
 		return tmtAbciTypes.ResponseDeliverTx{Code: tmtCode.CodeTypeEncodingError, Log: fmt.Sprintf("Error applying state TX %v", err)}
 	}
 
-	logs := bs.state.GetLogs(tx.Hash())
-
 	bs.txIndex++
 
 	// The slices are allocated in updateBlockState
 	bs.transactions = append(bs.transactions, tx)
 	bs.receipts = append(bs.receipts, receipt)
-	bs.allLogs = append(bs.allLogs, logs...)
 
 	return tmtAbciTypes.ResponseDeliverTx{Code: tmtAbciTypes.CodeTypeOK}
 }
 
 // Persist the eth sate, update the header, make a new block and save it to disk.
 //
-// Returns final application root hash (last block hash).
-func (bs *blockState) persist(bc *core.BlockChain, db ethdb.Database) (common.Hash, error) {
-	hashArray, err := bs.state.Commit(false)
+// Returns the persisted Block.
+func (bs *blockState) persist(bc *core.BlockChain, db ethdb.Database) (ethTypes.Block, error) {
+	rootHash, err := bs.state.Commit(false)
 	if err != nil {
-		return common.Hash{}, err
+		return ethTypes.Block{}, err
 	}
-	bs.header.Root = hashArray
-
-	for _, log := range bs.allLogs {
-		log.BlockHash = hashArray
-	}
-
-	block := ethTypes.NewBlock(bs.header, bs.transactions, nil, bs.receipts)
-	blockHash := block.Hash()
+	bs.header.Root = rootHash
 
 	// Write block to disk
+	block := ethTypes.NewBlock(bs.header, bs.transactions, nil, bs.receipts)
 	_, err = bc.InsertChain([]*ethTypes.Block{block})
 	if err != nil {
-		return common.Hash{}, err
+		return ethTypes.Block{}, err
 	}
 
-	return blockHash, err
+	return *block, nil
 }
 
 func (bs *blockState) updateBlockState(config *params.ChainConfig, parentTime uint64, numTx uint64) {
@@ -104,5 +94,4 @@ func (bs *blockState) updateBlockState(config *params.ChainConfig, parentTime ui
 	bs.header.Difficulty = ethash.CalcDifficulty(config, parentTime, parentHeader)
 	bs.transactions = make([]*ethTypes.Transaction, 0, numTx)
 	bs.receipts = make([]*ethTypes.Receipt, 0, numTx)
-	bs.allLogs = make([]*ethTypes.Log, 0, numTx)
 }
