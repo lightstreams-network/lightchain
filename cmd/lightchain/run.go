@@ -21,8 +21,6 @@ import (
 const (
 	TendermintP2PListenPort   = uint(26656)
 	TendermintRpcListenPort   = uint(26657)
-	TendermintProxyListenPort = uint(26658)
-	TendermintProxyProtocol   = "socket"
 	TendermintProxyAppName    = "lightchain"
 )
 
@@ -36,17 +34,6 @@ var (
 		Name:  "tmt_p2p_port",
 		Value: TendermintP2PListenPort,
 		Usage: "Tendermint port used to achieve exchange messages across nodes",
-	}
-	ConsensusProxyListenPortFlag = cli.UintFlag{
-		Name:  "tmt_proxy_port",
-		Value: TendermintProxyListenPort,
-		Usage: "Lightchain RPC port used to receive incoming messages from Tendermint",
-	}
-	// ABCIProtocolFlag defines whether GRPC or SOCKET should be used for the ABCI connections
-	ConsensusProxyProtocolFlag = cli.StringFlag{
-		Name:  "abci_protocol",
-		Value: TendermintProxyProtocol,
-		Usage: "socket | grpc",
 	}
 	ConsensusProxyAppNameFlag = cli.StringFlag{
 		Name:  "abci_name",
@@ -149,6 +136,4 @@ func addRunCmdFlags(cmd *cobra.Command) {
 func addConsensusFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint(ConsensusRpcListenPortFlag.GetName(), ConsensusRpcListenPortFlag.Value, ConsensusRpcListenPortFlag.Usage)
 	cmd.Flags().Uint(ConsensusP2PListenPortFlag.GetName(), ConsensusP2PListenPortFlag.Value, ConsensusP2PListenPortFlag.Usage)
-	cmd.Flags().Uint(ConsensusProxyListenPortFlag.GetName(), ConsensusProxyListenPortFlag.Value, ConsensusProxyListenPortFlag.Usage)
-	cmd.Flags().String(ConsensusProxyProtocolFlag.GetName(), ConsensusProxyProtocolFlag.Value, ConsensusProxyProtocolFlag.Usage)
 }

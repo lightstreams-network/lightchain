@@ -128,7 +128,7 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, network.Network, error)
 	consensusCfg := consensus.NewConfig(
 		filepath.Join(dataDir, consensus.DataDirName),
 		TendermintRpcListenPort,
-		TendermintProxyListenPort,
+		TendermintP2PListenPort,
 		TendermintProxyAppName,
 		false,
 	)
