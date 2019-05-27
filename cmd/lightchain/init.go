@@ -139,12 +139,7 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, network.Network, error)
 	)
 
 	tracerCfg := tracer.NewConfig(shouldTrace, path.Join(dataDir, "tracer.log"))
-	if shouldTrace {
-		logger.Info("|--------")
-		logger.Info("| Danger: Tracing enabled is not recommended in production!")
-		logger.Info(fmt.Sprintf("| Tracing output is configured to be persisted at %v", tracerCfg.LogFilePath))
-		logger.Info("|--------")
-	}
+	tracerCfg.PrintWarning(logger);
 
 	return node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg), ntw, nil
 }
