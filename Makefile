@@ -35,4 +35,4 @@ gen-bindings: ## (Dev) Generate bindings
 .PHONY: docker
 docker: ## Build docker image for lightchain
 	@echo "Build docker image"
-	docker build -t lightchain:latest --build-arg version="$(VERSION_TAG)" .
+	docker build -t lightchain:latest" .

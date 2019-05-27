@@ -1,25 +1,31 @@
-FROM golang:1.10-stretch
+FROM golang:1.11-stretch as builder
 
-MAINTAINER Gabriel Garrido
+LABEL MAINTAINER "Gabriel Garrido"
 
-RUN apt-get update
-RUN apt-get install -y vim apt-utils git
+ENV GOOS=linux
+ENV GOARCH=amd64
 
-## Install project dependencies
-RUN go get -u github.com/golang/dep/cmd/dep
+RUN apt-get update && \
+	apt-get install -y apt-utils git
 
-# Install Lightchain
-RUN mkdir -p $GOPATH/src/github.com/lightstreams-network/lightchain
-COPY . $GOPATH/src/github.com/lightstreams-network/lightchain
-RUN cd $GOPATH/src/github.com/lightstreams-network/lightchain && \
-	make get_vendor_deps && \
-	make install && \
-	cd ${HOME} && \
-	rm -rf $GOPATH/src/github.com/lightstreams-network/lightchain
+RUN mkdir /app
+WORKDIR /app
 
-RUN cd $GOPATH/src/github.com/lightstreams-network/lightchain && \
-	lightchain init --datadir=/srv/lightchain
+COPY go.mod .
+COPY go.sum .
+# Get dependancies - will also be cached if we won't change mod/sum
+RUN go mod download
 
-CMD ["/bin/bash", "-c", "lightchain run --datadir=/srv/lightchain --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi=eth,net,web3,personal,admin"]
+COPY . .
+
+# Build the binary
+RUN make build
+
+# deployment stage
+FROM scratch
+WORKDIR /app
+COPY --from=builder /app/build/lightchain /app/build/lightchain
+
+CMD ["/app/build/lightchain run --datadir=/srv/lightchain --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi=eth,net,web3,personal,admin"]
 
 EXPOSE 8545 26657 26656

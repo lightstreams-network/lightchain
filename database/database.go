@@ -6,18 +6,18 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/eth"
+	"github.com/ethereum/go-ethereum/eth/downloader"
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/node"
 	"github.com/ethereum/go-ethereum/p2p"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/ethereum/go-ethereum/eth/downloader"
 
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
-	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
-	dbAPI "github.com/lightstreams-network/lightchain/database/api"
 	consensusAPI "github.com/lightstreams-network/lightchain/consensus/api"
+	dbAPI "github.com/lightstreams-network/lightchain/database/api"
+	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
-	
+
 	"github.com/lightstreams-network/lightchain/database/metrics"
 	"github.com/lightstreams-network/lightchain/database/web3"
 )
@@ -89,7 +89,7 @@ func (db *Database) Persist(receiver common.Address) (common.Hash, error) {
 }
 
 // ResetBlockState resets the in-memory block's processing state.
-func (db *Database) ResetBlockState(receiver common.Address) error { 
+func (db *Database) ResetBlockState(receiver common.Address) error {
 	db.logger.Debug("Resetting ethereum DB state", "receiver", receiver.Hex())
 	return db.ethState.ResetBlockState(receiver)
 }
