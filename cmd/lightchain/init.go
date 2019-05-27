@@ -17,6 +17,7 @@ import (
 	"github.com/lightstreams-network/lightchain/prometheus"
 	"github.com/lightstreams-network/lightchain/tracer"
 	"github.com/lightstreams-network/lightchain/fs"
+	"path"
 )
 
 var (
@@ -82,7 +83,6 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, network.Network, error)
 	dataDir, _ := cmd.Flags().GetString(DataDirFlag.Name)
 	forceInit, _ := cmd.Flags().GetBool(ForceFlag.Name)
 	shouldTrace, _ := cmd.Flags().GetBool(TraceFlag.Name)
-	traceLogFilePath, _ := cmd.Flags().GetString(TraceLogFlag.Name)
 
 	// To prevent accidental data dir like "/" and disasters
 	if len(dataDir) < 3 {
@@ -109,16 +109,6 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, network.Network, error)
 		}
 	}
 
-	if shouldTrace {
-		logger.Info("|--------")
-		logger.Info("| Danger: Tracing enabled is not recommended in production!")
-		logger.Info(fmt.Sprintf("| Tracing output is configured to be persisted at %v", traceLogFilePath))
-		logger.Info("|--------")
-
-		if err := fs.RemoveFile(traceLogFilePath); err != nil {
-			return node.Config{}, "", fmt.Errorf("unable to remove trace log file '%s'. %s", traceLogFilePath, err)
-		}
-	}
 
 	ntw, err := chooseNetwork(cmd)
 	if err != nil {
@@ -148,7 +138,13 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, network.Network, error)
 		dbCfg.GethIpcPath(),
 	)
 
-	tracerCfg := tracer.NewConfig(shouldTrace, traceLogFilePath)
+	tracerCfg := tracer.NewConfig(shouldTrace, path.Join(dataDir, "tracer.log"))
+	if shouldTrace {
+		logger.Info("|--------")
+		logger.Info("| Danger: Tracing enabled is not recommended in production!")
+		logger.Info(fmt.Sprintf("| Tracing output is configured to be persisted at %v", tracerCfg.LogFilePath))
+		logger.Info("|--------")
+	}
 
 	return node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg), ntw, nil
 }

@@ -8,7 +8,6 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"path"
 	"github.com/lightstreams-network/lightchain/log"
-	"path/filepath"
 	"runtime/debug"
 
 	ethLog "github.com/ethereum/go-ethereum/log"
@@ -35,11 +34,6 @@ var (
 	TraceFlag = cli.BoolFlag{
 		Name:  "trace",
 		Usage: "Whenever to be asserting and reporting blockchain state in real-time (testing, debugging purposes)",
-	}
-
-	TraceLogFlag = cli.BoolFlag{
-		Name:  "tracelog",
-		Usage: "The filepath to a log file where all tracing output will be persisted",
 	}
 )
 
@@ -85,7 +79,6 @@ func addDefaultFlags(cmd *cobra.Command) {
 	cmd.Flags().String(LogLvlFlag.Name, LogLvlFlag.Value, LogLvlFlag.Usage)
 
 	cmd.Flags().Bool(TraceFlag.Name, false, TraceFlag.Usage)
-	cmd.Flags().String(TraceLogFlag.Name, filepath.Join(os.TempDir(), "tracer.log"), TraceLogFlag.Usage)
 }
 
 func incorrectUsageErr() error {
