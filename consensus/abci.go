@@ -70,6 +70,11 @@ func NewTendermintABCI(db *database.Database, ethRPCClient *rpc.Client, metrics 
 		metrics:           metrics,
 	}
 
+	err = abci.ResetBlockState()
+	if err != nil {
+		return nil, err
+	}
+
 	return abci, nil
 }
 
