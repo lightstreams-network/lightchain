@@ -259,27 +259,23 @@ func (abci *TendermintABCI) EndBlock(req tmtAbciTypes.RequestEndBlock) tmtAbciTy
 // 		  to agree on the next block, because the hash is included in the next block!
 func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
 	abci.metrics.CommitBlockTotal.Add(1)
-	rootHash := abci.getCurrentBlock().Root()
-	blockHash, err := abci.db.Persist(abci.RewardReceiver())
+	rootHash, err := abci.db.Persist(abci.RewardReceiver())
 	if err != nil {
 		abci.logger.Error("Error getting latest database state", "err", err)
 		abci.metrics.CommitErrBlockTotal.Add(1, "UNABLE_TO_PERSIST")
-		return tmtAbciTypes.ResponseCommit{Data: rootHash.Bytes()}
+		panic(err)
 	}
-	nextRootHash := abci.getCurrentBlock().Root()
 
 	ethState, err := abci.getCurrentDBState()
 	if err != nil {
 		abci.logger.Error("Error getting next latest state", "err", err)
 		abci.metrics.CommitErrBlockTotal.Add(1, "ErrGettingNextLastState")
-		return tmtAbciTypes.ResponseCommit{Data: nextRootHash.Bytes()}
 	}
 
-	abci.logger.Info("Committing state", "blockHash", blockHash.Hex())
-
+	blockHash := abci.getCurrentBlock().Header().Hash()
 	abci.checkTxState = ethState.Copy()
-
-	return tmtAbciTypes.ResponseCommit{Data: nextRootHash.Bytes()}
+	abci.logger.Info("Committing state", "root", rootHash.Hex(), "block", blockHash.Hex())
+	return tmtAbciTypes.ResponseCommit{Data: rootHash.Bytes()}
 }
 
 // ResetBlockState resets the in-memory block's processing state.

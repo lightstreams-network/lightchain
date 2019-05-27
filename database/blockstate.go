@@ -74,28 +74,26 @@ func (bs *blockState) execTx(bc *core.BlockChain, config *eth.Config, chainConfi
 
 // Persist the eth sate, update the header, make a new block and save it to disk.
 //
-// Returns final application root hash (last block hash).
-func (bs *blockState) persist(bc *core.BlockChain, db ethdb.Database) (common.Hash, error) {
-	hashArray, err := bs.state.Commit(false)
+// Returns final application root hash (last block app state hash).
+func (bs *blockState) persist(bc *core.BlockChain, db ethdb.Database) (rootHash common.Hash, err error) {
+	rootHash, err = bs.state.Commit(false)
 	if err != nil {
 		return common.Hash{}, err
 	}
-	bs.header.Root = hashArray
 
+	bs.header.Root = rootHash
 	for _, log := range bs.allLogs {
-		log.BlockHash = hashArray
+		log.BlockHash = bs.header.Root
 	}
 
-	block := ethTypes.NewBlock(bs.header, bs.transactions, nil, bs.receipts)
-	blockHash := block.Hash()
-
 	// Write block to disk
+	block := ethTypes.NewBlock(bs.header, bs.transactions, nil, bs.receipts)
 	_, err = bc.InsertChain([]*ethTypes.Block{block})
 	if err != nil {
 		return common.Hash{}, err
 	}
 
-	return blockHash, err
+	return rootHash, nil
 }
 
 func (bs *blockState) updateBlockState(config *params.ChainConfig, parentTime uint64, numTx uint64) {
