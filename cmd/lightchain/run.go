@@ -23,6 +23,7 @@ const (
 	TendermintRpcListenPort   = uint(26657)
 	TendermintProxyListenPort = uint(26658)
 	TendermintProxyProtocol   = "socket"
+	TendermintProxyAppName    = "lightchain"
 )
 
 var (
@@ -45,6 +46,11 @@ var (
 	ConsensusProxyProtocolFlag = cli.StringFlag{
 		Name:  "abci_protocol",
 		Value: TendermintProxyProtocol,
+		Usage: "socket | grpc",
+	}
+	ConsensusProxyAppNameFlag = cli.StringFlag{
+		Name:  "abci_name",
+		Value: TendermintProxyAppName,
 		Usage: "socket | grpc",
 	}
 	PrometheusFlag = cli.BoolFlag{
@@ -73,8 +79,7 @@ func runCmd() *cobra.Command {
 			traceLogFilePath, _ := cmd.Flags().GetString(TraceLogFlag.Name)
 			rpcListenPort, _ := cmd.Flags().GetUint(ConsensusRpcListenPortFlag.GetName())
 			p2pListenPort, _ := cmd.Flags().GetUint(ConsensusP2PListenPortFlag.GetName())
-			proxyListenPort, _ := cmd.Flags().GetUint(ConsensusProxyListenPortFlag.GetName())
-			proxyProtocol, _ := cmd.Flags().GetString(ConsensusProxyProtocolFlag.GetName())
+			proxyAppName, _ := cmd.Flags().GetString(ConsensusProxyAppNameFlag.GetName())
 			enablePrometheus, _ := cmd.Flags().GetBool(PrometheusFlag.GetName())
 			databaseDataDir := filepath.Join(dataDir, database.DataDirPath)
 
@@ -82,8 +87,7 @@ func runCmd() *cobra.Command {
 				filepath.Join(dataDir, consensus.DataDirName),
 				rpcListenPort,
 				p2pListenPort,
-				proxyListenPort,
-				proxyProtocol,
+				proxyAppName,
 				enablePrometheus,
 			)
 

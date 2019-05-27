@@ -18,19 +18,17 @@ const DataDirName = "consensus"
 //
 // - rpcListenPort 26657
 // - p2pListenPort 26656
-// - ProxyListenPort 26658
-//
+// - proxyAppName lightchain
 type Config struct {
-	dataDir         string
-	tendermintCfg   *config.Config
-	rpcListenPort   uint
-	p2pListenPort   uint
-	proxyListenPort uint
-	proxyProtocol   string
-	metrics         bool
+	dataDir       string
+	tendermintCfg *config.Config
+	rpcListenPort uint
+	p2pListenPort uint
+	proxyAppName  string
+	metrics       bool
 }
 
-func NewConfig(dataDir string, rpcListenPort uint, p2pListenPort uint, proxyListenPort uint, proxyProtocol string, metrics bool) Config {
+func NewConfig(dataDir string, rpcListenPort uint, p2pListenPort uint, proxyAppName string, metrics bool) Config {
 	tendermintCfg := config.DefaultConfig()
 
 	applyTendermintConfig(filepath.Join(dataDir, "config"), tendermintCfg)
@@ -38,15 +36,14 @@ func NewConfig(dataDir string, rpcListenPort uint, p2pListenPort uint, proxyList
 	tendermintCfg.SetRoot(dataDir)
 	tendermintCfg.RPC.ListenAddress = fmt.Sprintf("tcp://0.0.0.0:%d", rpcListenPort)
 	tendermintCfg.P2P.ListenAddress = fmt.Sprintf("tcp://0.0.0.0:%d", p2pListenPort)
-	tendermintCfg.ProxyApp = "lightchain"
+	tendermintCfg.ProxyApp = proxyAppName
 
 	return Config{
 		dataDir,
 		tendermintCfg,
 		rpcListenPort,
 		p2pListenPort,
-		proxyListenPort,
-		proxyProtocol,
+		proxyAppName,
 		metrics,
 	}
 }

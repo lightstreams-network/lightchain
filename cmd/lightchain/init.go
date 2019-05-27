@@ -129,8 +129,7 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, network.Network, error)
 		filepath.Join(dataDir, consensus.DataDirName),
 		TendermintRpcListenPort,
 		TendermintProxyListenPort,
-		TendermintP2PListenPort,
-		TendermintProxyProtocol,
+		TendermintProxyAppName,
 		false,
 	)
 
