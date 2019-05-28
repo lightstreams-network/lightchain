@@ -8,7 +8,6 @@ ENV GOARCH=amd64
 RUN apt-get update && \
 	apt-get install -y apt-utils git
 
-RUN mkdir /app
 WORKDIR /app
 
 COPY go.mod .
