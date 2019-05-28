@@ -103,7 +103,9 @@ func runCmd() *cobra.Command {
 			)
 
 			tracerCfg := tracer.NewConfig(shouldTrace, path.Join(dataDir, "tracer.log"))
-			tracerCfg.PrintWarning(logger);
+			if shouldTrace {
+				tracerCfg.PrintWarning(logger)
+			}
 
 			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg)
 
