@@ -4,6 +4,8 @@ contract HelloBlockchainWorld {
     address public owner;
     uint public helloCount;
 
+    event HelloCountIncremented(uint newCount);
+
     constructor() public {
         owner = msg.sender;
     }
@@ -19,6 +21,9 @@ contract HelloBlockchainWorld {
 
     function incrementHelloCount() onlyOwner public returns (uint) {
         helloCount = helloCount + 1;
+
+        emit HelloCountIncremented(helloCount);
+
         return helloCount;
     }
 }
