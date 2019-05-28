@@ -17,7 +17,8 @@
     "ganache-cli": "^6.4.1",
     "mocha": "^5.2.0",
     "truffle": "^5.0.8",
-    "web3": "^1.0.0-beta.55"
+    "web3": "^1.0.0-beta.55",
+    "web3-eth-debug": "^1.0.0-beta.55"
   },
   "devDependencies": {}
 }
