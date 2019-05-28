@@ -61,12 +61,14 @@ contract('SmartContract', () => {
   it("should be allowed to perform a smart contract transaction and gas should be reduced from the balance", async () => {
     const instance = await HelloBlockchainWorld.deployed();
     const weiBNBalancePreTxBN = web3.utils.toBN(await web3.eth.getBalance(ROOT_ACCOUNT));
-
+    
     try {
+      const estimatedGas = await instance.incrementHelloCount.estimateGas();
       const tx = await instance.incrementHelloCount({
         from: ROOT_ACCOUNT,
-        gas: "100000", // Shouldn't take more than 100 000 to perform a TX
+        gas: estimatedGas,
       });
+
       const weiBNBalancePostTxBN = web3.utils.toBN(await web3.eth.getBalance(ROOT_ACCOUNT));
       const txGasCostBN = await calculateGasCostBN(tx.receipt.gasUsed);
       const expectedBalanceBN = weiBNBalancePreTxBN.sub(txGasCostBN);
