@@ -13,10 +13,10 @@ import (
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/database"
 	"github.com/lightstreams-network/lightchain/log"
-	"github.com/tendermint/tendermint/libs/common"
 	"github.com/lightstreams-network/lightchain/prometheus"
 	"github.com/lightstreams-network/lightchain/tracer"
 	"path"
+	"github.com/tendermint/tendermint/libs/common"
 )
 
 const (
@@ -107,22 +107,22 @@ func runCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			go func() {
-				logger.Debug("Starting lightchain node...")
-				if err := n.Start(); err != nil {
-					logger.Error(fmt.Errorf("lightchain node could not be started: %v", err).Error())
-					os.Exit(1)
-				}
-			}()
-
-			common.TrapSignal(func() {
+			common.TrapSignal(logger, func() {
 				if err := n.Stop(); err != nil {
 					logger.Error(fmt.Errorf("error stopping lightchain node. %v", err).Error())
 					os.Exit(1)
 				}
+
+				os.Exit(0)
 			})
 
-			os.Exit(0)
+			logger.Debug("Starting lightchain node...")
+			if err := n.Start(); err != nil {
+				logger.Error(fmt.Errorf("lightchain node could not be started: %v", err).Error())
+				os.Exit(1)
+			}
+
+			select {}
 		},
 	}
 
