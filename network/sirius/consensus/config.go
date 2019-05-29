@@ -185,13 +185,13 @@ cache_size = 10000
 
 wal_file = "data/cs.wal/wal"
 
-timeout_propose = "3s"
-timeout_propose_delta = "500ms"
-timeout_prevote = "1s"
-timeout_prevote_delta = "500ms"
-timeout_precommit = "1s"
-timeout_precommit_delta = "500ms"
-timeout_commit = "5s"
+timeout_propose = "50s"
+timeout_propose_delta = "1s"
+timeout_prevote = "10s"
+timeout_prevote_delta = "1s"
+timeout_precommit = "10s"
+timeout_precommit_delta = "1s"
+timeout_commit = "60s"
 
 # Make progress as soon as we have all the precommits (as if TimeoutCommit = 0)
 skip_timeout_commit = false
@@ -201,7 +201,7 @@ create_empty_blocks = true
 create_empty_blocks_interval = "5s"
 
 # Reactor sleep duration parameters
-peer_gossip_sleep_duration = "100ms"
+peer_gossip_sleep_duration = "500ms"
 peer_query_maj23_sleep_duration = "2s"
 
 # Block time parameters. Corresponds to the minimum time increment between consecutive blocks.
