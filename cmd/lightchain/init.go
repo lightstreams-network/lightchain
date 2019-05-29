@@ -115,13 +115,17 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, network.Network, error)
 		return node.Config{}, "", err
 	}
 
-	consensusCfg := consensus.NewConfig(
+	consensusCfg, err := consensus.NewConfig(
 		filepath.Join(dataDir, consensus.DataDirName),
 		TendermintRpcListenPort,
 		TendermintP2PListenPort,
 		TendermintProxyAppName,
 		false,
 	)
+
+	if err != nil {
+		return node.Config{}, "", err
+	}
 
 	dbDataDir := filepath.Join(dataDir, database.DataDirPath)
 	dbCfg, err := database.NewConfig(dbDataDir, false, newNodeClientCtx(dbDataDir, cmd))

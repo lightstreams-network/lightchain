@@ -28,10 +28,13 @@ type Config struct {
 	metrics       bool
 }
 
-func NewConfig(dataDir string, rpcListenPort uint, p2pListenPort uint, proxyAppName string, metrics bool) Config {
+func NewConfig(dataDir string, rpcListenPort uint, p2pListenPort uint, proxyAppName string, metrics bool) (Config, error) {
 	tendermintCfg := config.DefaultConfig()
 
-	applyTendermintConfig(filepath.Join(dataDir, "config"), tendermintCfg)
+	err := applyTendermintConfig(filepath.Join(dataDir, "config"), tendermintCfg)
+	if err != nil {
+		return Config{}, err
+	}
 
 	tendermintCfg.SetRoot(dataDir)
 	tendermintCfg.RPC.ListenAddress = fmt.Sprintf("tcp://0.0.0.0:%d", rpcListenPort)
@@ -45,7 +48,7 @@ func NewConfig(dataDir string, rpcListenPort uint, p2pListenPort uint, proxyAppN
 		p2pListenPort,
 		proxyAppName,
 		metrics,
-	}
+	}, nil
 }
 
 func (c Config) TendermintConfigFilePath() string {
