@@ -62,7 +62,7 @@ func (n *Node) Start(ethRPCClient *ethRpc.Client, db *database.Database) error {
 	}
 
 	n.logger.Debug("Creating tendermint node...")
-	tendermint, err := tmtNode.NewNode(
+	n.tendermint, err = tmtNode.NewNode(
 		n.cfg.tendermintCfg,
 		privval.LoadOrGenFilePV(n.cfg.tendermintCfg.PrivValidatorKeyFile(), n.cfg.tendermintCfg.PrivValidatorStateFile()),
 		n.nodeKey,
@@ -76,7 +76,6 @@ func (n *Node) Start(ethRPCClient *ethRpc.Client, db *database.Database) error {
 		return err
 	}
 
-	n.tendermint = tendermint
 	n.logger.Info("Starting tendermint node...")
 	if err := n.tendermint.Start(); err != nil {
 		return err
@@ -85,6 +84,14 @@ func (n *Node) Start(ethRPCClient *ethRpc.Client, db *database.Database) error {
 	n.logger.Debug("Consensus node started", "nodeInfo", n.tendermint.Switch().NodeInfo())
 
 	return nil
+}
+
+func (n *Node) IsRunning() bool {
+	if n.tendermint == nil {
+		return false
+	}
+
+	return n.tendermint.IsRunning();
 }
 
 func (n *Node) Stop() error {

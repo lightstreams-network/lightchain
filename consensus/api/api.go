@@ -3,40 +3,38 @@ package api
 import (
 	eth "github.com/ethereum/go-ethereum"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
-	tmtTypes "github.com/tendermint/tendermint/rpc/core/types"
-	tmtRpcClient "github.com/tendermint/tendermint/rpc/lib/client"
-	tmtLog "github.com/tendermint/tendermint/libs/log"
-	"fmt"
+	tmtcTypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmtTypes "github.com/tendermint/tendermint/types"
+	tmtCore "github.com/tendermint/tendermint/rpc/core"
 	"bytes"
-	"github.com/lightstreams-network/lightchain/log"
+	"fmt"
 )
 
 // API is a main consensus interface exposing functionalities to `database` and other packages.
 type API interface {
 	SyncProgress() (eth.SyncProgress, error)
 	BroadcastTx(tx ethTypes.Transaction) error
-	Status() (tmtTypes.ResultStatus, error)
+	Status() (tmtcTypes.ResultStatus, error)
 }
 
-type rpcApi struct {
-	client tmtRpcClient.HTTPClient
-	logger tmtLog.Logger
+type consensusApi struct {
+	isRunning func() bool
+	status func() (*tmtcTypes.ResultStatus, error)
+	broadcastTx func (tx tmtTypes.Tx) (*tmtcTypes.ResultBroadcastTx, error)
 }
 
-var _ API = &rpcApi{}
+var _ API = &consensusApi{}
 
-func NewRPCApi(rpcListenPort uint) API {
-	tendermintLAddr := fmt.Sprintf("tcp://127.0.0.1:%d", rpcListenPort)
-	client := tmtRpcClient.NewURIClient(tendermintLAddr)
-	tmtTypes.RegisterAmino(client.Codec())
-	logger := log.NewLogger().With("module", "consensus_api")
-
-	return &rpcApi{client, logger}
+func NewConsensusApi(isRunning func() bool) API {
+	return &consensusApi{
+		isRunning: isRunning,
+		status: tmtCore.Status, 
+		broadcastTx: tmtCore.BroadcastTxSync,
+	}
 }
 
-func (a *rpcApi) SyncProgress() (eth.SyncProgress, error) {
-	status := tmtTypes.ResultStatus{}
-	_, err := a.client.Call("status", map[string]interface{} {}, &status)
+func (a *consensusApi) SyncProgress() (eth.SyncProgress, error) {
+	status, err := a.status()
 	if err != nil {
 		return eth.SyncProgress{}, err
 	}
@@ -53,7 +51,7 @@ func (a *rpcApi) SyncProgress() (eth.SyncProgress, error) {
 		// would expose this information in the status.
 		highestBlock = currentBlock + 1
 	}
-	
+
 	return eth.SyncProgress{
 		0,
 		currentBlock,
@@ -63,18 +61,17 @@ func (a *rpcApi) SyncProgress() (eth.SyncProgress, error) {
 	}, nil
 }
 
-func (a *rpcApi) BroadcastTx(tx ethTypes.Transaction) error {
-	syncInfo := new(tmtTypes.SyncInfo)
+func (a *consensusApi) BroadcastTx(tx ethTypes.Transaction) error {
+	if !a.isRunning() {
+		return fmt.Errorf("Consensus node is not running")
+	}
+
 	buf := new(bytes.Buffer)
 	if err := tx.EncodeRLP(buf); err != nil {
 		return err
 	}
 
-	params := map[string]interface{} {
-		"tx": buf.Bytes(),
-	}
-
-	_, err := a.client.Call("broadcast_tx_sync", params, syncInfo)
+	_, err := a.broadcastTx(buf.Bytes())
 	if err != nil {
 		return err
 	}
@@ -82,11 +79,14 @@ func (a *rpcApi) BroadcastTx(tx ethTypes.Transaction) error {
 	return nil
 }
 
-func (a *rpcApi) Status() (tmtTypes.ResultStatus, error) {
-	status := new(tmtTypes.ResultStatus)
-	_, err := a.client.Call("status", map[string]interface{}{}, &status)
+func (a *consensusApi) Status() (tmtcTypes.ResultStatus, error) {
+	if !a.isRunning() {
+		return tmtcTypes.ResultStatus{}, fmt.Errorf("Consensus node is not running")
+	}
+	
+	status, err := tmtCore.Status()
 	if err != nil {
-		return tmtTypes.ResultStatus{}, err
+		return tmtcTypes.ResultStatus{}, err
 	}
 
 	return *status, nil
