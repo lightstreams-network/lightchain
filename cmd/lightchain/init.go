@@ -99,13 +99,18 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, network.Network, error)
 			return node.Config{}, "", fmt.Errorf("unable to initialize lightchain node. %s", err.Error())
 		}
 
-		if forceInit {
-			logger.Info(fmt.Sprintf("Forcing '%s' data dir removal...", dataDir))
-			if err := fs.RemoveAll(dataDir); err != nil {
-				return node.Config{}, "", fmt.Errorf("unable to remove data dir '%s'. %s", dataDir, err)
-			}
-		} else {
+		if !forceInit {
 			return node.Config{}, "", fmt.Errorf("unable to initialize lightchain node. %s already exists", dataDir)
+		}
+
+		isConfirmed := fs.AskForConfirmation(fmt.Sprintf("Are you sure to erase %s ?", dataDir))
+		if !isConfirmed {
+			return node.Config{}, "", fmt.Errorf("unable to initialize lightchain node. %s already exists", dataDir)
+		}
+
+		logger.Info(fmt.Sprintf("Removing '%s' folder ...", dataDir))
+		if err := fs.RemoveAll(dataDir); err != nil {
+			return node.Config{}, "", fmt.Errorf("unable to remove data dir '%s'. %s", dataDir, err)
 		}
 	}
 
