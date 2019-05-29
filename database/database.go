@@ -123,7 +123,7 @@ func (db *Database) APIs() []rpc.API {
 	newAPIs := []rpc.API{}
 
 	for _, v := range ethAPIs {
-		if isDefaultAPI(v.Namespace) {
+		if isDisabledAPI(v.Namespace) {
 			continue
 		}
 
@@ -187,6 +187,6 @@ func (db *Database) updateExecuteTxMetrics(tx *ethTypes.Transaction) {
 	db.metrics.TxsSizeTotal.Add(float64(tx.Size()))
 }
 
-func isDefaultAPI(namespace string) bool {
-	return namespace == "miner" || namespace == "debug" || namespace == "admin"
+func isDisabledAPI(namespace string) bool {
+	return namespace == "miner" || namespace == "admin"
 }

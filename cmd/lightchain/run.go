@@ -22,8 +22,7 @@ import (
 const (
 	TendermintP2PListenPort   = uint(26656)
 	TendermintRpcListenPort   = uint(26657)
-	TendermintProxyListenPort = uint(26658)
-	TendermintProxyProtocol   = "socket"
+	TendermintProxyAppName    = "lightchain"
 )
 
 var (
@@ -37,15 +36,9 @@ var (
 		Value: TendermintP2PListenPort,
 		Usage: "Tendermint port used to achieve exchange messages across nodes",
 	}
-	ConsensusProxyListenPortFlag = cli.UintFlag{
-		Name:  "tmt_proxy_port",
-		Value: TendermintProxyListenPort,
-		Usage: "Lightchain RPC port used to receive incoming messages from Tendermint",
-	}
-	// ABCIProtocolFlag defines whether GRPC or SOCKET should be used for the ABCI connections
-	ConsensusProxyProtocolFlag = cli.StringFlag{
-		Name:  "abci_protocol",
-		Value: TendermintProxyProtocol,
+	ConsensusProxyAppNameFlag = cli.StringFlag{
+		Name:  "abci_name",
+		Value: TendermintProxyAppName,
 		Usage: "socket | grpc",
 	}
 	PrometheusFlag = cli.BoolFlag{
@@ -73,8 +66,7 @@ func runCmd() *cobra.Command {
 			shouldTrace, _ := cmd.Flags().GetBool(TraceFlag.Name)
 			rpcListenPort, _ := cmd.Flags().GetUint(ConsensusRpcListenPortFlag.GetName())
 			p2pListenPort, _ := cmd.Flags().GetUint(ConsensusP2PListenPortFlag.GetName())
-			proxyListenPort, _ := cmd.Flags().GetUint(ConsensusProxyListenPortFlag.GetName())
-			proxyProtocol, _ := cmd.Flags().GetString(ConsensusProxyProtocolFlag.GetName())
+			proxyAppName, _ := cmd.Flags().GetString(ConsensusProxyAppNameFlag.GetName())
 			enablePrometheus, _ := cmd.Flags().GetBool(PrometheusFlag.GetName())
 			databaseDataDir := filepath.Join(dataDir, database.DataDirPath)
 
@@ -82,8 +74,7 @@ func runCmd() *cobra.Command {
 				filepath.Join(dataDir, consensus.DataDirName),
 				rpcListenPort,
 				p2pListenPort,
-				proxyListenPort,
-				proxyProtocol,
+				proxyAppName,
 				enablePrometheus,
 			)
 
@@ -103,7 +94,10 @@ func runCmd() *cobra.Command {
 			)
 
 			tracerCfg := tracer.NewConfig(shouldTrace, path.Join(dataDir, "tracer.log"))
-			tracerCfg.PrintWarning(logger);
+
+			if shouldTrace {
+				tracerCfg.PrintWarning(logger)
+			}
 
 			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg)
 
@@ -147,6 +141,4 @@ func addRunCmdFlags(cmd *cobra.Command) {
 func addConsensusFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint(ConsensusRpcListenPortFlag.GetName(), ConsensusRpcListenPortFlag.Value, ConsensusRpcListenPortFlag.Usage)
 	cmd.Flags().Uint(ConsensusP2PListenPortFlag.GetName(), ConsensusP2PListenPortFlag.Value, ConsensusP2PListenPortFlag.Usage)
-	cmd.Flags().Uint(ConsensusProxyListenPortFlag.GetName(), ConsensusProxyListenPortFlag.Value, ConsensusProxyListenPortFlag.Usage)
-	cmd.Flags().String(ConsensusProxyProtocolFlag.GetName(), ConsensusProxyProtocolFlag.Value, ConsensusProxyProtocolFlag.Usage)
 }

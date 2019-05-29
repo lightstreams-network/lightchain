@@ -118,9 +118,8 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, network.Network, error)
 	consensusCfg := consensus.NewConfig(
 		filepath.Join(dataDir, consensus.DataDirName),
 		TendermintRpcListenPort,
-		TendermintProxyListenPort,
 		TendermintP2PListenPort,
-		TendermintProxyProtocol,
+		TendermintProxyAppName,
 		false,
 	)
 
@@ -139,7 +138,10 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, network.Network, error)
 	)
 
 	tracerCfg := tracer.NewConfig(shouldTrace, path.Join(dataDir, "tracer.log"))
-	tracerCfg.PrintWarning(logger);
+
+	if shouldTrace {
+		tracerCfg.PrintWarning(logger)
+	}
 
 	return node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg), ntw, nil
 }
