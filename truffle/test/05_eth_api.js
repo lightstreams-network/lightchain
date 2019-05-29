@@ -63,11 +63,13 @@ describe('Ethereum API', () => {
   it("should assert whether debug trace logs are not expected ones", async () => {
     const instance = await HelloBlockchainWorld.deployed();
   
+    const curCountBN = await instance.helloCount.call();
+    const curCount = parseInt(curCountBN.toString());
     const tx = await instance.incrementHelloCount({
       from: ROOT_ACCOUNT
     });
     
     const txTraces = await _debug.getTransactionTrace(tx.tx, {});
-    assert.equal(parseInt(txTraces.returnValue, 16), 1, "Method output does not match expected value");
+    assert.equal(parseInt(txTraces.returnValue, 16), curCount + 1, "Method output does not match expected value");
   });
 });
