@@ -84,7 +84,7 @@ func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDel
 //
 // Returns the persisted Block.
 func (db *Database) Persist(receiver common.Address) (ethTypes.Block, error) {
-	db.logger.Info("Persisting DB state", "data", db.ethState.blockState)
+	db.logger.Info("Persisting DB Block", "data", db.ethState.blockState)
 	db.metrics.PersistedTxsTotal.Add(float64(len(db.ethState.blockState.transactions)))
 	db.metrics.ChaindbHeight.Set(float64(db.ethState.blockState.header.Number.Uint64()))
 
@@ -93,13 +93,13 @@ func (db *Database) Persist(receiver common.Address) (ethTypes.Block, error) {
 
 // ResetBlockState resets the in-memory block's processing state.
 func (db *Database) ResetBlockState(receiver common.Address) error {
-	db.logger.Debug("Resetting ethereum DB state", "receiver", receiver.Hex())
+	db.logger.Debug("Resetting DB BlockState", "receiver", receiver.Hex())
 	return db.ethState.ResetBlockState(receiver)
 }
 
 // UpdateBlockState uses the tendermint header to update the eth header.
 func (db *Database) UpdateBlockState(tmHeader *tmtAbciTypes.Header) {
-	db.logger.Debug("Updating ethereum DB state")
+	db.logger.Debug("Updating DB BlockState")
 	db.ethState.UpdateBlockState(
 		db.eth.APIBackend.ChainConfig(),
 		uint64(tmHeader.Time.Unix()),

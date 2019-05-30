@@ -20,11 +20,10 @@ COPY . .
 # Build the binary
 RUN make build
 
-# deployment stage
-FROM scratch
-WORKDIR /app
-COPY --from=builder /app/build/lightchain /app/build/lightchain
+WORKDIR /app/build
+RUN mkdir -p /srv/lightchain && \
+		./lightchain init --datadir=/srv/lightchain --force
 
-CMD ["/app/build/lightchain run --datadir=/srv/lightchain --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi=eth,net,web3,personal,admin"]
+CMD ["./lightchain", "run", "--datadir=/srv/lightchain", "--rpc", "--rpcaddr=0.0.0.0", "--rpcport=8545", "--rpcapi=eth,net,web3,personal,admin"]
 
 EXPOSE 8545 26657 26656

@@ -13,10 +13,10 @@ import (
 	"github.com/lightstreams-network/lightchain/consensus"
 	"github.com/lightstreams-network/lightchain/database"
 	"github.com/lightstreams-network/lightchain/log"
-	"github.com/tendermint/tendermint/libs/common"
 	"github.com/lightstreams-network/lightchain/prometheus"
 	"github.com/lightstreams-network/lightchain/tracer"
 	"path"
+	"github.com/tendermint/tendermint/libs/common"
 )
 
 const (
@@ -70,13 +70,17 @@ func runCmd() *cobra.Command {
 			enablePrometheus, _ := cmd.Flags().GetBool(PrometheusFlag.GetName())
 			databaseDataDir := filepath.Join(dataDir, database.DataDirPath)
 
-			consensusCfg := consensus.NewConfig(
+			consensusCfg, err := consensus.NewConfig(
 				filepath.Join(dataDir, consensus.DataDirName),
 				rpcListenPort,
 				p2pListenPort,
 				proxyAppName,
 				enablePrometheus,
 			)
+			if err != nil {
+				logger.Error(fmt.Errorf("consensus node config could not be created: %v", err).Error())
+				os.Exit(1)
+			}
 
 			// Fake cli.context required by Ethereum node
 			ctx := newNodeClientCtx(databaseDataDir, cmd)
@@ -107,22 +111,22 @@ func runCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			go func() {
-				logger.Debug("Starting lightchain node...")
-				if err := n.Start(); err != nil {
-					logger.Error(fmt.Errorf("lightchain node could not be started: %v", err).Error())
-					os.Exit(1)
-				}
-			}()
-
-			common.TrapSignal(func() {
+			common.TrapSignal(logger, func() {
 				if err := n.Stop(); err != nil {
 					logger.Error(fmt.Errorf("error stopping lightchain node. %v", err).Error())
 					os.Exit(1)
 				}
+
+				os.Exit(0)
 			})
 
-			os.Exit(0)
+			logger.Debug("Starting lightchain node...")
+			if err := n.Start(); err != nil {
+				logger.Error(fmt.Errorf("lightchain node could not be started: %v", err).Error())
+				os.Exit(1)
+			}
+
+			select {}
 		},
 	}
 
