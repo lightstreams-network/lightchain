@@ -191,7 +191,7 @@ timeout_prevote = "2s"
 timeout_prevote_delta = "500ms"
 timeout_precommit = "2s"
 timeout_precommit_delta = "500ms"
-timeout_commit = "1s"
+timeout_commit = "2s"
 
 # Make progress as soon as we have all the precommits (as if TimeoutCommit = 0)
 skip_timeout_commit = false
