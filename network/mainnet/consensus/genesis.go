@@ -8,7 +8,7 @@ const Genesis = `
         "block": {
             "max_bytes": "22020096",
             "max_gas": "-1",
-			"time_iota_ms": "1000"
+	    "time_iota_ms": "1000"
         },
         "evidence": {
             "max_age": "100000"
