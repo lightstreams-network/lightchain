@@ -185,11 +185,11 @@ cache_size = 10000
 
 wal_file = "data/cs.wal/wal"
 
-timeout_propose = "3s"
+timeout_propose = "8s"
 timeout_propose_delta = "500ms"
-timeout_prevote = "1s"
+timeout_prevote = "2s"
 timeout_prevote_delta = "500ms"
-timeout_precommit = "1s"
+timeout_precommit = "2s"
 timeout_precommit_delta = "500ms"
 timeout_commit = "1s"
 
@@ -198,7 +198,7 @@ skip_timeout_commit = false
 
 # EmptyBlocks mode and possible interval between empty blocks
 create_empty_blocks = true
-create_empty_blocks_interval = "2s"
+create_empty_blocks_interval = "10s"
 
 # Reactor sleep duration parameters
 peer_gossip_sleep_duration = "100ms"
