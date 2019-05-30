@@ -1,4 +1,4 @@
-FROM golang:1.12-stretch as builder
+FROM golang:1.12-stretch
 
 LABEL MAINTAINER "Gabriel Garrido"
 
