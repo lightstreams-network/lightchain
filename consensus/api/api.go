@@ -4,6 +4,7 @@ import (
 	eth "github.com/ethereum/go-ethereum"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	tmtcTypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmtrpctypes "github.com/tendermint/tendermint/rpc/lib/types"
 	tmtTypes "github.com/tendermint/tendermint/types"
 	tmtCore "github.com/tendermint/tendermint/rpc/core"
 	"bytes"
@@ -19,8 +20,8 @@ type API interface {
 
 type consensusApi struct {
 	isRunning func() bool
-	status func() (*tmtcTypes.ResultStatus, error)
-	broadcastTx func (tx tmtTypes.Tx) (*tmtcTypes.ResultBroadcastTx, error)
+	status func(ctx *tmtrpctypes.Context) (*tmtcTypes.ResultStatus, error)
+	broadcastTx func (ctx *tmtrpctypes.Context, tx tmtTypes.Tx) (*tmtcTypes.ResultBroadcastTx, error)
 }
 
 var _ API = &consensusApi{}
@@ -34,7 +35,7 @@ func NewConsensusApi(isRunning func() bool) API {
 }
 
 func (a *consensusApi) SyncProgress() (eth.SyncProgress, error) {
-	status, err := a.status()
+	status, err := a.status(nil)
 	if err != nil {
 		return eth.SyncProgress{}, err
 	}
@@ -71,7 +72,7 @@ func (a *consensusApi) BroadcastTx(tx ethTypes.Transaction) error {
 		return err
 	}
 
-	_, err := a.broadcastTx(buf.Bytes())
+	_, err := a.broadcastTx(nil, buf.Bytes())
 	if err != nil {
 		return err
 	}
@@ -84,7 +85,7 @@ func (a *consensusApi) Status() (tmtcTypes.ResultStatus, error) {
 		return tmtcTypes.ResultStatus{}, fmt.Errorf("Consensus node is not running")
 	}
 	
-	status, err := tmtCore.Status()
+	status, err := tmtCore.Status(nil)
 	if err != nil {
 		return tmtcTypes.ResultStatus{}, err
 	}
