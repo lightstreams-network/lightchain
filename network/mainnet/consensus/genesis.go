@@ -5,9 +5,10 @@ const Genesis = `
     "genesis_time": "2019-03-06T15:20:31.254715867Z",
     "chain_id": "lightstreams-mainnet",
     "consensus_params": {
-        "block_size": {
+        "block": {
             "max_bytes": "22020096",
-            "max_gas": "-1"
+            "max_gas": "-1",
+            "time_iota_ms": "1000"
         },
         "evidence": {
             "max_age": "100000"
