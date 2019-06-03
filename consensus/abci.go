@@ -290,7 +290,7 @@ func (abci *TendermintABCI) ResetBlockState() error {
 
 // RewardReceiver returns the receiving address based on the selected strategy
 func (abci *TendermintABCI) RewardReceiver() common.Address {
-	return common.Address{}
+	return common.HexToAddress("")
 }
 
 // Query for data from the application at current or past height.
