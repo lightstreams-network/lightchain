@@ -188,13 +188,13 @@ make docker_aws
 Once that is completed, you just need to run the following command
 which will create your container with a running instance of lightchain.  
 ```
-docker run -v "${HOST_LIGHTCHAIN_DATADIR}:/srv/lightchain \
+docker run -v "${HOST_DATADIR}:/srv/lightchain \
 	-e "NETWORK=sirius" \
 	-p 8545:8545 -p 26657:26657 -p 26656:26656 \
 	-it lightchain:latest
 ```
 
-Where `${HOST_LIGHTCHAIN_DATADIR}` is the path in the host disk to
+Where `${HOST_DATADIR}` is the path in the host disk to
 persist lightchain data. In case a volume is not used the node data
 will be lost after the container is closed.
 
