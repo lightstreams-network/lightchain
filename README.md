@@ -180,12 +180,25 @@ First, create a new docker image, which will be tagged as `lightchain:latest`
 ```
 make docker
 ```
+or in case you prefer to fetch the latest version published on AWS, tagged as `lightchain:latest-aws`
+```
+make docker_aws
+```
 
 Once that is completed, you just need to run the following command
-which will create your container with a running instance of lightchain
+which will create your container with a running instance of lightchain.  
 ```
-docker run -p 8545:8545 -p 26657:26657 -p 26656:26656 -it lightchain:latest
+docker run -v "${HOST_LIGHTCHAIN_DATADIR}:/srv/lightchain \
+	-e "NETWORK=sirius" \
+	-p 8545:8545 -p 26657:26657 -p 26656:26656 \
+	-it lightchain:latest
 ```
+
+Where `${HOST_LIGHTCHAIN_DATADIR}` is the path in the host disk to
+persist lightchain data. In case a volume is not used the node data
+will be lost after the container is closed.
+
+Alternatively to `sirius`, as NETWORK, you can also choose `mainnet` and `standalone`. 
 
 As you can see several ports has been mapped to your local environment:
 - `8545` which exposes the rpc api of Ethereum

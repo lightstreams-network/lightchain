@@ -22,6 +22,8 @@ RUN mkdir -p /srv/lightchain && \
 
 RUN rm -rf $GOPATH/src/github.com/lightstreams-network/lightchain
 
-CMD ["/bin/bash", "-c", "lightchain run --datadir=/srv/lightchain --rpc --rpcaddr=0.0.0.0 --rpcport=8545 --rpcapi=eth,net,web3,personal,admin"]
+COPY ./scripts/docker.sh /root/init.sh
+RUN chmod a+x /root/init.sh
+ENTRYPOINT ["/root/init.sh"]
 
 EXPOSE 8545 26657 26656

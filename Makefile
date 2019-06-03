@@ -53,3 +53,8 @@ get_vendor_deps: check-tools ## Download dependencies
 docker: ## Build docker image for lightchain
 	@echo "Build docker image"
 	docker build -t lightchain:latest --build-arg version="$(VERSION_TAG)" .
+
+.PHONY: docker_aws
+docker_aws: ## Build docker image for lightchain
+	@echo "Build docker image"
+	docker build -t lightchain:latest-aws -f ./Dockerfile.aws .
