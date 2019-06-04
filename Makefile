@@ -52,4 +52,9 @@ get_vendor_deps: check-tools ## Download dependencies
 .PHONY: docker
 docker: ## Build docker image for lightchain
 	@echo "Build docker image"
-	docker build -t lightchain:latest --build-arg version="$(VERSION_TAG)" .
+	docker build -t lightchain:latest -f ./Dockerfile .
+
+.PHONY: docker-dev
+docker-dev: ## Build docker image for lightchain
+	@echo "Build docker image"
+	docker build -t lightchain:latest-dev -f ./Dockerfile.dev --build-arg version="$(VERSION_TAG)"  .
