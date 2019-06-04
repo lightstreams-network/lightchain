@@ -12,6 +12,8 @@ import (
 	tmtLog "github.com/tendermint/tendermint/libs/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/lightstreams-network/lightchain/database/metrics"
+	"github.com/lightstreams-network/lightchain/governance"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // Node is the main object.
@@ -56,11 +58,13 @@ func NewNode(cfg *Config, consensusAPI conAPI.API, registry *prometheus.Registry
 		logger,
 	}
 
+	validators := governance.New(common.HexToAddress("0x643A240F4B417B70173C051d94eB90006EEc13C3"), cfg.GethIpcPath())
+
 	logger.Debug("Binding ethereum events to rpc client...")
 	err = ethereum.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {
 		logger.Debug(fmt.Sprintf("Registering database..."))
 
-		n.database, err = NewDatabase(ctx, &cfg.GethCfg.EthCfg, consensusAPI, logger, trackedMetrics)
+		n.database, err = NewDatabase(ctx, &cfg.GethCfg.EthCfg, consensusAPI, validators, logger, trackedMetrics)
 		if err != nil {
 			return nil, err
 		}

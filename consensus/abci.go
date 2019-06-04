@@ -5,17 +5,21 @@ import (
 	"fmt"
 	"math/big"
 	"bytes"
+
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/lightstreams-network/lightchain/database"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/lightstreams-network/lightchain/log"
-	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/lightstreams-network/lightchain/consensus/metrics"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
+
 	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
+
+	"github.com/lightstreams-network/lightchain/database"
+	"github.com/lightstreams-network/lightchain/consensus/metrics"
+	"github.com/lightstreams-network/lightchain/log"
+	"github.com/tendermint/tendermint/crypto"
 )
 
 // maxTransactionSize is 32KB in order to prevent DOS attacks
@@ -30,12 +34,12 @@ const maxTransactionSize = 32768
 //    Info Connection - Info, SetOption, Query
 //
 // Flow:
-//		1. BeginBlock
-//		2. CheckTx
-//	    3. DeliverTx
-//		4. EndBlock
-//		5. Commit
-//		6. CheckTx (clean mempool from TXs not included in committed block)
+// 		1. BeginBlock
+// 		2. CheckTx
+// 	    3. DeliverTx
+// 		4. EndBlock
+// 		5. Commit
+// 		6. CheckTx (clean mempool from TXs not included in committed block)
 //
 // Tendermint runs CheckTx and DeliverTx concurrently with each other,
 // though on distinct ABCI connections - the mempool connection and the consensus connection.
@@ -45,11 +49,14 @@ type TendermintABCI struct {
 	db           *database.Database
 	checkTxState *state.StateDB
 	ethRPCClient *rpc.Client
-	logger       tmtLog.Logger
-	metrics      metrics.Metrics
 
-	getCurrentDBState func() (*state.StateDB, error)
-	getCurrentBlock   func() *ethTypes.Block
+	logger         tmtLog.Logger
+	metrics        metrics.Metrics
+	curBlockHeader *tmtAbciTypes.Header
+
+	getCurrentDBState   func() (*state.StateDB, error)
+	getCurrentBlock     func() *ethTypes.Block
+	getValidatorAddress func(pubKey string) (common.Address, error)
 }
 
 var _ tmtAbciTypes.Application = &TendermintABCI{}
@@ -61,13 +68,14 @@ func NewTendermintABCI(db *database.Database, ethRPCClient *rpc.Client, metrics 
 	}
 
 	abci := &TendermintABCI{
-		db:                db,
-		ethRPCClient:      ethRPCClient,
-		getCurrentDBState: db.Ethereum().BlockChain().State,
-		getCurrentBlock:   db.Ethereum().BlockChain().CurrentBlock,
-		checkTxState:      txState.Copy(),
-		logger:            log.NewLogger().With("engine", "consensus", "module", "ABCI"),
-		metrics:           metrics,
+		db:                  db,
+		ethRPCClient:        ethRPCClient,
+		getCurrentDBState:   db.Ethereum().BlockChain().State,
+		getCurrentBlock:     db.Ethereum().BlockChain().CurrentBlock,
+		getValidatorAddress: db.Validators().ValidatorAddress,
+		checkTxState:        txState.Copy(),
+		logger:              log.NewLogger().With("engine", "consensus", "module", "ABCI"),
+		metrics:             metrics,
 	}
 
 	err = abci.ResetBlockState()
@@ -97,10 +105,11 @@ func (abci *TendermintABCI) InitChain(req tmtAbciTypes.RequestInitChain) tmtAbci
 // for the validators.
 //
 // Response:
-//		- Optional Key-Value tags for filtering and indexing
+// 		- Optional Key-Value tags for filtering and indexing
 func (abci *TendermintABCI) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAbciTypes.ResponseBeginBlock {
 	abci.logger.Debug("Beginning new block", "hash", req.Hash)
 	abci.db.UpdateBlockState(&req.Header)
+	abci.curBlockHeader = &req.Header
 
 	return tmtAbciTypes.ResponseBeginBlock{}
 }
@@ -120,11 +129,11 @@ func (abci *TendermintABCI) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAb
 // and start sending CheckTx again.
 //
 // Response:
-//		- Response code
-//		- Optional Key-Value tags for filtering and indexing
+// 		- Response code
+// 		- Optional Key-Value tags for filtering and indexing
 func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx {
 	abci.metrics.CheckTxsTotal.Add(1)
-	
+
 	tx, err := decodeRLP(txBytes)
 	if err != nil {
 		abci.logger.Error("Unable to decode RLP TX", "err", err.Error())
@@ -174,7 +183,7 @@ func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx
 		abci.checkTxState.AddBalance(*to, tx.Value())
 	}
 
-	abci.checkTxState.SetNonce(from, tx.Nonce() + 1)
+	abci.checkTxState.SetNonce(from, tx.Nonce()+1)
 
 	abci.logger.Info("TX validated", "hash", tx.Hash().String(), "state_nonce", abci.checkTxState.GetNonce(from))
 
@@ -214,8 +223,8 @@ func (abci *TendermintABCI) doMempoolValidation(tx *ethTypes.Transaction, from c
 // DeliverTx executes the transaction against Ethereum block's work state.
 //
 // Response:
-//		- If the transaction is valid, returns CodeType.OK
-//		- Keys and values in Tags must be UTF-8 encoded strings
+// 		- If the transaction is valid, returns CodeType.OK
+// 		- Keys and values in Tags must be UTF-8 encoded strings
 // 		  E.g: ("account.owner": "Bob", "balance": "100.0", "time": "2018-01-02T12:30:00Z")
 func (abci *TendermintABCI) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDeliverTx {
 	abci.metrics.DeliverTxsTotal.Add(1)
@@ -246,10 +255,10 @@ func (abci *TendermintABCI) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDeliv
 //
 // Response:
 // 		- Validator updates returned for block H
-//			- apply to the NextValidatorsHash of block H+1
-//			- apply to the ValidatorsHash (and thus the validator set) for block H+2
-//			- apply to the RequestBeginBlock.LastCommitInfo (ie. the last validator set) for block H+3
-//		- Consensus params returned for block H apply for block H+1
+// 			- apply to the NextValidatorsHash of block H+1
+// 			- apply to the ValidatorsHash (and thus the validator set) for block H+2
+// 			- apply to the RequestBeginBlock.LastCommitInfo (ie. the last validator set) for block H+3
+// 		- Consensus params returned for block H apply for block H+1
 func (abci *TendermintABCI) EndBlock(req tmtAbciTypes.RequestEndBlock) tmtAbciTypes.ResponseEndBlock {
 	abci.logger.Debug(fmt.Sprintf("Ending new block at height '%d'", req.Height))
 
@@ -259,11 +268,12 @@ func (abci *TendermintABCI) EndBlock(req tmtAbciTypes.RequestEndBlock) tmtAbciTy
 // Commit persists the application state.
 //
 // Response:
-//		- Return a Merkle root hash of the application state.
-//	      It's critical that all application instances return the same hash. If not, they will not be able
+// 		- Return a Merkle root hash of the application state.
+// 	      It's critical that all application instances return the same hash. If not, they will not be able
 // 		  to agree on the next block, because the hash is included in the next block!
 func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
 	abci.metrics.CommitBlockTotal.Add(1)
+	
 	block, err := abci.db.Persist(abci.RewardReceiver())
 	if err != nil {
 		abci.logger.Error("Error getting latest database state", "err", err)
@@ -290,7 +300,21 @@ func (abci *TendermintABCI) ResetBlockState() error {
 
 // RewardReceiver returns the receiving address based on the selected strategy
 func (abci *TendermintABCI) RewardReceiver() common.Address {
-	return common.HexToAddress("")
+	if abci.curBlockHeader == nil {
+		abci.logger.Error("Missing block headers");
+		return common.HexToAddress("") 
+	}
+	
+	pubKeyAddr := crypto.Address(abci.curBlockHeader.GetProposerAddress())
+	address, err := abci.getValidatorAddress(pubKeyAddr.String())
+	if err != nil {
+		abci.logger.Error("Cannot fetch validator rewarded address", "pubkey", pubKeyAddr.String(), "err", err.Error())
+		return common.HexToAddress("")
+	}
+	
+	abci.logger.Info("Validator rewarded address", "pubkey", pubKeyAddr.String(), "address", address.String())
+
+	return address
 }
 
 // Query for data from the application at current or past height.

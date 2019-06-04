@@ -59,3 +59,8 @@ docker: ## Build docker image for lightchain
 docker-dev: ## Build docker image for lightchain
 	@echo "Build docker image"
 	docker build -t lightchain:latest-dev -f ./Dockerfile.dev --build-arg version="$(VERSION_TAG)"  .
+
+.PHONY: gen-bindings-governance
+gen-bindings-governance:
+	solc github.com/lightstreams-network/lightchain/=${GOPATH}/src/github.com/lightstreams-network/lightchain/ --abi --bin governance/contracts/Validators.sol -o governance/compiled/ --overwrite
+	abigen --bin=${GOPATH}/src/github.com/lightstreams-network/lightchain/governance/compiled/Validators.bin --abi=${GOPATH}/src/github.com/lightstreams-network/lightchain/governance/compiled/Validators.abi --pkg=bindings --out=${GOPATH}/src/github.com/lightstreams-network/lightchain/governance/bindings/Validators.go --type=Validators

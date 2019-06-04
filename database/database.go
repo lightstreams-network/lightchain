@@ -20,6 +20,7 @@ import (
 	
 	"github.com/lightstreams-network/lightchain/database/metrics"
 	"github.com/lightstreams-network/lightchain/database/web3"
+	"github.com/lightstreams-network/lightchain/governance"
 )
 
 // Database manages the underlying ethereum state for storage and processing
@@ -38,9 +39,10 @@ type Database struct {
 	consAPI consensusAPI.API
 	logger  tmtLog.Logger
 	metrics metrics.Metrics
+	validators governance.Validators
 }
 
-func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensusAPI.API, logger tmtLog.Logger, metrics metrics.Metrics) (*Database, error) {
+func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensusAPI.API, validators governance.Validators, logger tmtLog.Logger, metrics metrics.Metrics) (*Database, error) {
 	ethereum, err := eth.New(ctx, ethCfg)
 	if err != nil {
 		return nil, err
@@ -48,7 +50,6 @@ func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensus
 
 	currentBlock := ethereum.BlockChain().CurrentBlock()
 	ethereum.EventMux().Post(core.ChainHeadEvent{currentBlock})
-
 	ethereum.BlockChain().SetValidator(NullBlockValidator{})
 
 	db := &Database{
@@ -58,6 +59,7 @@ func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensus
 		consAPI:  consAPI,
 		logger:   logger,
 		metrics:  metrics,
+		validators: validators,
 	}
 
 	return db, nil
@@ -65,6 +67,10 @@ func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensus
 
 func (db *Database) Ethereum() *eth.Ethereum {
 	return db.eth
+}
+
+func (db *Database) Validators() governance.Validators {
+	return db.validators
 }
 
 func (db *Database) Config() *eth.Config {
