@@ -14,14 +14,6 @@ describe('Workload', () => {
   it("should create an account for testing purposes, not asserting", async () => {
     NEW_ACCOUNT_ADDR = await web3.eth.personal.newAccount(NEW_ACCOUNT_PASS);
     await web3.eth.personal.unlockAccount(NEW_ACCOUNT_ADDR, NEW_ACCOUNT_PASS, 1000);
-
-    const txReceipt = await web3.eth.sendTransaction({
-      from: ROOT_ACCOUNT,
-      to: NEW_ACCOUNT_ADDR,
-      value: convertPhtToWeiBN("0.1")
-    });
-
-    assert.equal(txReceipt.status, "0x1", 'tx receipt should return a successful status');
   });
 
   // // This Test is wasting 0.231 PHT from faucet account per execution
@@ -39,37 +31,49 @@ describe('Workload', () => {
         to: NEW_ACCOUNT_ADDR,
         value: weiAmountSentBN,
         gas: gasLimit
-      }).on('receipt', function(txReceipt) {
+      }).on('confirmation', function(confirmationNumber, txReceipt) {
         sentFundTxReceipt.push(txReceipt);
-        assert.equal(txReceipt.status, "0x1", "successful TX status expected");
-      })
-      .on('error', (error) => {
+      }).on('error', (error) => {
         console.error(error);
         sentFundTxReceipt.push(error);
         assert.equal(true, false, error)
       });
     }
-    
+
     let maxLoopIt = 10;
     do {
       await waitFor(1);
       --maxLoopIt;
-    } while(sentFundTxReceipt.length <  iterations && maxLoopIt > 0);
+    } while ( sentFundTxReceipt.length < iterations && maxLoopIt > 0 );
 
-    const gasCostBN = await calculateGasCostBN(gasLimit);
+    while ( sentFundTxReceipt.length > 0 ) {
+      const txReceipt = sentFundTxReceipt.pop();
+      assert.equal(txReceipt.status, true, "successful TX status expected");
+    }
+
+    const weiActualBalanceBN = web3.utils.toBN(await web3.eth.getBalance(NEW_ACCOUNT_ADDR));
+    const weiExpectedBalanceBN = weiAmountSentBN.mul(web3.utils.toBN(iterations));
+    assert.equal(weiActualBalanceBN.toString(), weiExpectedBalanceBN.toString(), "incorrect expected balance");
+
+    const weiBalancePostTxBN = web3.utils.toBN(await web3.eth.getBalance(ROOT_ACCOUNT));
+    const usedGasCost = await calculateGasCostBN(gasLimit * iterations);
+    const weiExpectedBalancePostTxBN = weiBalancePreTxBN.sub(usedGasCost).sub(weiExpectedBalanceBN).toString();
+    assert.equal(weiBalancePostTxBN.toString(), weiExpectedBalancePostTxBN.toString(), 'ROOT account balance is incorrect')
+  });
+
+  it("should refund received tokens", async () => {
+    const gasLimit = 21000;
 
     // Send back funds to faucet account less gas spent in send tx
+    const weiActualBalanceBN = web3.utils.toBN(await web3.eth.getBalance(NEW_ACCOUNT_ADDR));
+    const gasCostBN = await calculateGasCostBN(gasLimit);
     const txReceipt = await web3.eth.sendTransaction({
       from: NEW_ACCOUNT_ADDR,
       to: ROOT_ACCOUNT,
-      value: weiAmountSentBN.mul(web3.utils.toBN(iterations)).sub(gasCostBN),
+      value: weiActualBalanceBN.sub(gasCostBN),
       gas: gasLimit
     });
 
-    assert.equal(txReceipt.status, "0x1", "successful TX status expected");
-
-    const usedGasCost = await calculateGasCostBN(gasLimit * (iterations + 1));
-    const weiBalancePostTxBN = web3.utils.toBN(await web3.eth.getBalance(ROOT_ACCOUNT));
-    assert.equal(weiBalancePostTxBN.toString(), weiBalancePreTxBN.sub(usedGasCost).toString(), 'from account balance is incorrect')
-  });
+    assert.equal(txReceipt.status, true, "successful TX status expected");
+  })
 });

@@ -1,6 +1,5 @@
-const Tx = require('ethereumjs-tx');
 
-const { convertPhtToWeiBN, calculateGasCostBN, minimumGasPriceBN, extractEnvAccountAndPwd, toBN, fetchTxReceipt, waitFor } = require('./utils');
+const { convertPhtToWeiBN, calculateGasCostBN, extractEnvAccountAndPwd, fetchTxReceipt } = require('./utils');
 
 describe('TestSimplifiedUserBalanceDoubleSpend', () => {
     let ROOT_ACCOUNT = extractEnvAccountAndPwd(process.env.NETWORK).from;

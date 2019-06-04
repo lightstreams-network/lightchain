@@ -27,7 +27,7 @@ func (v Validators) ValidatorAddress(pubKey string) (common.Address, error) {
 	}
 	defer client.Close()
 
-	contractInstance, err := bindings.NewValidators(v.contract, client)
+	contractInstance, err := bindings.NewValidatorsCaller(v.contract, client)
 	if err != nil {
 		return common.Address{}, err
 	}

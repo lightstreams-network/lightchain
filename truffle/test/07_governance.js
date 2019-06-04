@@ -10,7 +10,7 @@ const { convertPhtToWeiBN, extractEnvAccountAndPwd } = require('./utils');
 
 const Validators = artifacts.require("Validators");
 
-contract('Governance', () => {
+describe('Governance', () => {
   let ROOT_ACCOUNT = extractEnvAccountAndPwd(process.env.NETWORK).from;
   
   let VALIDATOR1_KEY = "012C7DB9A70AA4940014A0CC279BFD18D8E1E224";

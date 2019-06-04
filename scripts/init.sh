@@ -21,6 +21,9 @@ while [ "$1" != "" ]; do
         --clean) 
             CLEAN=1 
         ;;
+        --reset) 
+            CLEAN=1 
+        ;;
         --standalone) 
             NETWORK="standalone"
         ;;

@@ -18,7 +18,10 @@ while [ "$1" != "" ]; do
         --debug) 
             IS_DEBUG=1 
         ;;
-        --clean) 
+        --clean)  
+            CLEAN=1 
+        ;;
+        --reset)  
             CLEAN=1 
         ;;
         --standalone) 
@@ -66,7 +69,7 @@ if [ -n "${CLEAN}" ]; then
 	    run "rm -rf ${DATA_DIR}"
 		run "$EXEC_BIN init ${INIT_ARGS}"
 		echo "Restoring ${NETWORK} private keys"
-		run "cp ./network/${NETWORK}/database/keystore/* ${DATA_DIR}/database/keystore/"		
+		run "rsync -avzh --ignore-errors ./network/${NETWORK}/database/keystore/ ${DATA_DIR}/database/keystore"
 		echo -e "################################ \n"
 	else
 		echo -e "Exiting"
