@@ -188,6 +188,8 @@ make docker_aws
 Once that is completed, you just need to run the following command
 which will create your container with a running instance of lightchain.  
 ```
+export HOST_DATADIR=${HOME}/.lightchain_docker
+
 docker run -v "${HOST_DATADIR}:/srv/lightchain \
 	-e "NETWORK=sirius" \
 	-p 8545:8545 -p 26657:26657 -p 26656:26656 \
