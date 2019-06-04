@@ -190,7 +190,7 @@ which will create your container with a running instance of lightchain.
 ```
 export HOST_DATADIR=${HOME}/.lightchain_docker
 
-docker run -v "${HOST_DATADIR}:/srv/lightchain \
+docker run -v "${HOST_DATADIR}:/srv/lightchain" \
 	-e "NETWORK=sirius" \
 	-p 8545:8545 -p 26657:26657 -p 26656:26656 \
 	-it lightchain:latest
