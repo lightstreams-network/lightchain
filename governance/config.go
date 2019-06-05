@@ -27,6 +27,10 @@ func NewConfig(address string) (Config) {
 	}
 }
 
+func (c Config) ContractAddress() common.Address {
+	return c.contractAddress
+}
+
 func NewConfigFromDisk(dataDir string) (Config, error) {
 	filePath := path.Join(dataDir, governanceFolder, "config.json")
 

@@ -59,7 +59,7 @@ func LightchainCmd() *cobra.Command {
 		Use:   "lightchain",
 		Short: "Lightstreams PoA blockchain node.",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return incorrectUsageErr()
+			return errorIncorrectCmdUsage()
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 		},
@@ -84,4 +84,8 @@ func addDefaultFlags(cmd *cobra.Command) {
 
 func incorrectUsageErr() error {
 	return fmt.Errorf("incorrect usage. More instructions also available at https://docs.lightstreams.network/cli-docs/lightchain/")
+}
+
+func errorIncorrectCmdUsage() error {
+	return fmt.Errorf("incorrect usage. See docs at '%s'", getDocsDirPath())
 }

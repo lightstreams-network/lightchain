@@ -69,9 +69,9 @@ fi
 
 
 if [ -n "${IS_DEBUG}" ]; then
-    EXEC_CMD="dlv --listen=:2345 --headless=true --api-version=2 exec ${EXEC_BIN} -- governance ${RUN_ARGS}"
+    EXEC_CMD="dlv --listen=:2345 --headless=true --api-version=2 exec ${EXEC_BIN} -- governance deploy ${RUN_ARGS}"
 else
-    EXEC_CMD="${EXEC_BIN} governance ${RUN_ARGS}"
+    EXEC_CMD="${EXEC_BIN} governance deploy ${RUN_ARGS}"
 fi
 
 run "$EXEC_CMD"
