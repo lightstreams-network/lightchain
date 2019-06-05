@@ -153,8 +153,7 @@ func newInitCmdConfig(cmd *cobra.Command) (node.Config, network.Network, error) 
 		tracerCfg.PrintWarning(logger)
 	}
 	
-	governanceCfg := governance.NewConfig("0x0")
-	err = governance.WriteConfigInDisk(dataDir, governanceCfg)
+	governanceCfg, err := governance.Init(ntw, dataDir)
 	if err != nil {
 		return node.Config{}, "", err
 	}

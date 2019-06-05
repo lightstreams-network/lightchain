@@ -18,6 +18,10 @@ import (
 	mainnetDatabase "github.com/lightstreams-network/lightchain/network/mainnet/database"
 	siriusDatabase "github.com/lightstreams-network/lightchain/network/sirius/database"
 	standaloneDatabase "github.com/lightstreams-network/lightchain/network/standalone/database"
+	
+	mainnetGovernance "github.com/lightstreams-network/lightchain/network/mainnet/governance"
+	siriusGovernance "github.com/lightstreams-network/lightchain/network/sirius/governance"
+
 	"github.com/tendermint/tendermint/version"
 )
 
@@ -36,6 +40,19 @@ const MainNetNetwork Network = "mainnet"
 const SiriusNetwork Network = "sirius"
 const StandaloneNetwork Network = "standalone"
 
+func NewNetworkFromId(networkId uint64) (Network, error) {
+	switch networkId {
+		case 161:
+			return StandaloneNetwork, nil
+		case 162:
+			return StandaloneNetwork, nil
+		case 163:
+			return StandaloneNetwork, nil
+		default:
+			return "", fmt.Errorf("NetworkId %d does not exists", networkId)
+	}
+		
+}
 
 func (n Network) ConsensusConfig() ([]byte, error) {
 	switch n {
@@ -85,6 +102,21 @@ func (n Network) DatabaseGenesis() ([]byte, error) {
 		return []byte(siriusDatabase.Genesis), nil
 	case StandaloneNetwork:
 		return []byte(standaloneDatabase.Genesis), nil
+	default:
+		return []byte{}, fmt.Errorf("invalid network selected %s", n)
+	}
+}
+
+func (n Network) GovernanceConfig() ([]byte, error) {
+	switch n {
+	case MainNetNetwork:
+		return []byte(mainnetGovernance.ConfigJson), nil
+	case SiriusNetwork:
+		return []byte(siriusGovernance.ConfigJson), nil
+	case StandaloneNetwork:
+		return []byte(`{
+	"contract_address": "0x0000000000000000000000000000000000000000"
+}`), nil
 	default:
 		return []byte{}, fmt.Errorf("invalid network selected %s", n)
 	}

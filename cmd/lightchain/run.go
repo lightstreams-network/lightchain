@@ -18,6 +18,7 @@ import (
 	"github.com/lightstreams-network/lightchain/governance"
 	"path"
 	"github.com/tendermint/tendermint/libs/common"
+	"github.com/lightstreams-network/lightchain/network"
 )
 
 const (
@@ -139,9 +140,22 @@ func newRunCmdConfig(cmd *cobra.Command) (node.Config, error){
 		tracerCfg.PrintWarning(logger)
 	}
 
-	governanceCfg, err := governance.NewConfigFromDisk(dataDir)
+	governanceCfg, err := governance.Load(dataDir)
 	if err != nil {
-		return node.Config{}, fmt.Errorf("governance config could not be loaded: %v", err)
+		logger.Error(fmt.Errorf("governance config could not be loaded: %v", err).Error())
+		networkId, err := dbCfg.NetworkId()
+		if err != nil {
+			return node.Config{}, nil
+		}
+
+		ntw, err := network.NewNetworkFromId(networkId)
+		if err != nil {
+			return node.Config{}, nil
+		}
+		governanceCfg, err = governance.Init(ntw, dataDir)
+		if err != nil {
+			return node.Config{}, nil
+		}
 	}
 
 	nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg, governanceCfg)

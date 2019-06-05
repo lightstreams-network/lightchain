@@ -64,6 +64,11 @@ if [ "${NETWORK}" = "standalone" ]; then
 	PASSWORD="WelcomeToSirius"
 fi
 
+if [ -z "${OWNER}" ]; then
+	echo "Missing argument --owner"
+	exit 1
+fi
+
 if [ "${ACTION}" = "validator-add" ]; then
 	if [ -z "${PUBKEY}" ]; then
 		echo "Missing value for --pubkey"

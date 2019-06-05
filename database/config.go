@@ -114,6 +114,14 @@ func DefaultEthNodeConfig(dataDir string) ethNode.Config {
 	return cfg
 }
 
+func (c Config) NetworkId() (uint64, error) {
+	genesis, err := readGenesisFile(c.genesisPath())
+	if err != nil {
+		return 0, err
+	}
+	return genesis.Config.ChainID.Uint64(), nil
+}
+
 func (c Config) GethIpcPath() string {
 	return filepath.Join(c.DataDir, GethIpcFile)
 }
