@@ -17,6 +17,7 @@ import (
 	"github.com/lightstreams-network/lightchain/prometheus"
 	"github.com/lightstreams-network/lightchain/tracer"
 	"github.com/lightstreams-network/lightchain/fs"
+	"github.com/lightstreams-network/lightchain/governance"
 	"path"
 )
 
@@ -59,7 +60,7 @@ func initCmd() *cobra.Command {
 }
 
 func initCmdRun(cmd *cobra.Command, args []string) {
-	nodeCfg, ntw, err := newNodeCfgFromCmd(cmd)
+	nodeCfg, ntw, err := newInitCmdConfig(cmd)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
@@ -74,7 +75,7 @@ func initCmdRun(cmd *cobra.Command, args []string) {
 	os.Exit(0)
 }
 
-func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, network.Network, error) {
+func newInitCmdConfig(cmd *cobra.Command) (node.Config, network.Network, error) {
 	lvlStr, _ := cmd.Flags().GetString(LogLvlFlag.Name)
 	if lvl, err := ethLog.LvlFromString(lvlStr); err == nil {
 		log.SetupLogger(lvl)
@@ -151,8 +152,14 @@ func newNodeCfgFromCmd(cmd *cobra.Command) (node.Config, network.Network, error)
 	if shouldTrace {
 		tracerCfg.PrintWarning(logger)
 	}
+	
+	governanceCfg := governance.NewConfig("0x0")
+	err = governance.WriteConfigInDisk(dataDir, governanceCfg)
+	if err != nil {
+		return node.Config{}, "", err
+	}
 
-	return node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg), ntw, nil
+	return node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg, governanceCfg), ntw, nil
 }
 
 func chooseNetwork(cmd *cobra.Command) (network.Network, error) {

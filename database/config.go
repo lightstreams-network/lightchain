@@ -13,9 +13,10 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"math/big"
+	"github.com/lightstreams-network/lightchain/database/txclient"
 )
 
-const MinGasPrice = 500000000000
+const MinGasPrice = txclient.GasPrice
 
 var (
 	DataDirPath = "database"

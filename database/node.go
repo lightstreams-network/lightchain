@@ -58,7 +58,7 @@ func NewNode(cfg *Config, consensusAPI conAPI.API, registry *prometheus.Registry
 		logger,
 	}
 
-	validators := governance.New(common.HexToAddress("0x643A240F4B417B70173C051d94eB90006EEc13C3"), cfg.GethIpcPath())
+	validators := governance.NewValidatorSet(common.HexToAddress("0x643A240F4B417B70173C051d94eB90006EEc13C3"), cfg.GethIpcPath())
 
 	logger.Debug("Binding ethereum events to rpc client...")
 	err = ethereum.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {
@@ -150,11 +150,11 @@ func registerEventHandlers(n *Node, events chan accounts.WalletEvent) error {
 		switch event.Kind {
 		case accounts.WalletArrived:
 			if err := event.Wallet.Open(""); err != nil {
-				n.logger.Error("New wallet appeared, failed to open", "url", event.Wallet.URL(), "err", err)
+				n.logger.Error("NewValidatorSet wallet appeared, failed to open", "url", event.Wallet.URL(), "err", err)
 			}
 		case accounts.WalletOpened:
 			status, _ := event.Wallet.Status()
-			n.logger.Info("New wallet appeared", "url", event.Wallet.URL(), "status", status)
+			n.logger.Info("NewValidatorSet wallet appeared", "url", event.Wallet.URL(), "status", status)
 
 			if event.Wallet.URL().Scheme == "ledger" {
 				event.Wallet.SelfDerive(accounts.DefaultLedgerBaseDerivationPath, stateReader)

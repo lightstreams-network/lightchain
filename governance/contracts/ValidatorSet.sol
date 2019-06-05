@@ -2,7 +2,7 @@ pragma solidity ^0.5.0;
 
 import "./Ownable.sol";
 
-contract Validators is Ownable {
+contract ValidatorSet is Ownable {
 
   mapping(bytes32 => address) public _validators;
   

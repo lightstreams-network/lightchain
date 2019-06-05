@@ -7,7 +7,7 @@ ROOT_PATH="$(cd "$(dirname "$0")" && pwd)/.."
 DATA_DIR="${HOME}/.lightchain"
 EXEC_BIN="./build/lightchain"
 APPENDED_ARGS=""
-NETWORK="sirius"
+NETWORK="standalone"
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -18,12 +18,6 @@ while [ "$1" != "" ]; do
         --debug) 
             IS_DEBUG=1 
         ;;
-        --clean) 
-            CLEAN=1 
-        ;;
-        --reset) 
-            CLEAN=1 
-        ;;
         --standalone) 
             NETWORK="standalone"
         ;;
@@ -33,53 +27,54 @@ while [ "$1" != "" ]; do
         --sirius) 
             NETWORK="sirius" 
         ;;
+        --owner) 
+            shift
+            OWNER=$1 
+        ;;
+        --password) 
+            shift
+            PASSWORD=$1 
+        ;;
         * )
             APPENDED_ARGS="${APPENDED_ARGS} $1"
     esac
     shift
 done
 
+if [ "${NETWORK}" = "standalone" ]; then
+	OWNER="0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e"
+	PASSWORD="WelcomeToSirius"
+fi
+
 DATA_DIR="${DATA_DIR}/${NETWORK}"
 INIT_ARGS="--datadir=${DATA_DIR} --${NETWORK}"
 
+RUN_ARGS="--datadir=${DATA_DIR}"
+RUN_ARGS="${RUN_ARGS} --owner ${OWNER}"
+
+if [ -n "${PASSWORD}" ]; then
+	RUN_ARGS="${RUN_ARGS} --password ${PASSWORD}"
+fi
 
 pushd "$ROOT_PATH"
 
 echo -e "Compiling latest version...."
 if [ -n "${IS_DEBUG}" ]; then
-	INIT_ARGS="${INIT_ARGS} --lvl=debug"
+	RUN_ARGS="${RUN_ARGS} --lvl=debug"
     run "make build-dev"
 else
-	INIT_ARGS="${INIT_ARGS} --lvl=info"
+	RUN_ARGS="${RUN_ARGS} --lvl=info"
     run "make build"
 fi
 
-if [ -n "${CLEAN}" ]; then
-	echo -e "You are about to wipe out ${DATA_DIR}"
-    read -p "Are you sure? [N/y]" -n 1 -r
-	echo    # (optional) move to a new line
-	if [[ $REPLY =~ ^[Yy]$ ]]; then
-	    echo -e "\t Restart environment"
-	    echo "################################"
-	    run "rm -rf ${DATA_DIR}"
-	    INIT_ARGS="${INIT_ARGS} --trace"
-		echo -e "################################ \n"
-	else
-		echo -e "Exiting"
-		exit 1
-	fi
-fi
 
 if [ -n "${IS_DEBUG}" ]; then
-    EXEC_CMD="dlv --listen=:2345 --headless=true --api-version=2 exec ${EXEC_BIN} -- init ${INIT_ARGS}"
+    EXEC_CMD="dlv --listen=:2345 --headless=true --api-version=2 exec ${EXEC_BIN} -- governance ${RUN_ARGS}"
 else
-    EXEC_CMD="${EXEC_BIN} init ${INIT_ARGS}"
+    EXEC_CMD="${EXEC_BIN} governance ${RUN_ARGS}"
 fi
 
 run "$EXEC_CMD"
-
-echo "Restoring ${NETWORK} private keys"
-run "rsync -avzh --ignore-errors ./network/${NETWORK}/database/keystore/ ${DATA_DIR}/database/keystore"		
 
 popd
 

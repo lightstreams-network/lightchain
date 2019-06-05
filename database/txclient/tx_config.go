@@ -2,8 +2,9 @@ package txclient
 
 import (
 	"time"
-	"github.com/lightstreams-network/lightchain/database"
 )
+
+const GasPrice = 500000000000
 
 const TxReceiptInterval = 1 * time.Second
 const TxReceiptTimeout = 30 * time.Second
@@ -25,7 +26,11 @@ func NewTxConfig(gasLimit uint64, gasPrice uint64, receiptTimeout time.Duration,
 }
 
 func NewTransferTxConfig() TxConfig {
-	return NewTxConfig(21000, database.MinGasPrice, TxReceiptTimeout, TxReceiptInterval)
+	return NewTxDefaultConfig(21000)
+}
+
+func NewTxDefaultConfig(gasLimit uint64) TxConfig {
+	return NewTxConfig(gasLimit, GasPrice, TxReceiptTimeout, TxReceiptInterval)
 }
 
 func (c TxConfig) TxReceiptTimeout() time.Duration {

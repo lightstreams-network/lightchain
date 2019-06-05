@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 func AskForConfirmation(s string) bool {
@@ -27,4 +28,14 @@ func AskForConfirmation(s string) bool {
 			return false
 		}
 	}
+}
+
+func PromptPassword(msg string) (string, error) {
+	fmt.Println(msg)
+	pwd, err := terminal.ReadPassword(0)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(string(pwd)), nil
 }

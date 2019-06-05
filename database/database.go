@@ -39,10 +39,10 @@ type Database struct {
 	consAPI consensusAPI.API
 	logger  tmtLog.Logger
 	metrics metrics.Metrics
-	validators governance.Validators
+	validators governance.ValidatorSet
 }
 
-func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensusAPI.API, validators governance.Validators, logger tmtLog.Logger, metrics metrics.Metrics) (*Database, error) {
+func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensusAPI.API, validators governance.ValidatorSet, logger tmtLog.Logger, metrics metrics.Metrics) (*Database, error) {
 	ethereum, err := eth.New(ctx, ethCfg)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (db *Database) Ethereum() *eth.Ethereum {
 	return db.eth
 }
 
-func (db *Database) Validators() governance.Validators {
+func (db *Database) Validators() governance.ValidatorSet {
 	return db.validators
 }
 

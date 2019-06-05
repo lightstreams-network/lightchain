@@ -70,6 +70,7 @@ func LightchainCmd() *cobra.Command {
 	lightchainCmd.AddCommand(initCmd())
 	lightchainCmd.AddCommand(runCmd())
 	lightchainCmd.AddCommand(simulateCmd())
+	lightchainCmd.AddCommand(governanceCmd())
 
 	return lightchainCmd
 }

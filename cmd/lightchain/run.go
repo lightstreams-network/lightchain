@@ -15,14 +15,15 @@ import (
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/lightstreams-network/lightchain/prometheus"
 	"github.com/lightstreams-network/lightchain/tracer"
+	"github.com/lightstreams-network/lightchain/governance"
 	"path"
 	"github.com/tendermint/tendermint/libs/common"
 )
 
 const (
-	TendermintP2PListenPort   = uint(26656)
-	TendermintRpcListenPort   = uint(26657)
-	TendermintProxyAppName    = "lightchain"
+	TendermintP2PListenPort = uint(26656)
+	TendermintRpcListenPort = uint(26657)
+	TendermintProxyAppName  = "lightchain"
 )
 
 var (
@@ -62,49 +63,12 @@ func runCmd() *cobra.Command {
 
 			logger.Info("Launching Lightchain node...")
 
-			dataDir, _ := cmd.Flags().GetString(DataDirFlag.GetName())
-			shouldTrace, _ := cmd.Flags().GetBool(TraceFlag.Name)
-			rpcListenPort, _ := cmd.Flags().GetUint(ConsensusRpcListenPortFlag.GetName())
-			p2pListenPort, _ := cmd.Flags().GetUint(ConsensusP2PListenPortFlag.GetName())
-			proxyAppName, _ := cmd.Flags().GetString(ConsensusProxyAppNameFlag.GetName())
-			enablePrometheus, _ := cmd.Flags().GetBool(PrometheusFlag.GetName())
-			databaseDataDir := filepath.Join(dataDir, database.DataDirPath)
-
-			consensusCfg, err := consensus.NewConfig(
-				filepath.Join(dataDir, consensus.DataDirName),
-				rpcListenPort,
-				p2pListenPort,
-				proxyAppName,
-				enablePrometheus,
-			)
+			nodeCfg, err := newRunCmdConfig(cmd)
 			if err != nil {
-				logger.Error(fmt.Errorf("consensus node config could not be created: %v", err).Error())
+				logger.Error(err.Error())
 				os.Exit(1)
 			}
-
-			// Fake cli.context required by Ethereum node
-			ctx := newNodeClientCtx(databaseDataDir, cmd)
-			dbCfg, err := database.NewConfig(databaseDataDir, enablePrometheus, ctx)
-			if err != nil {
-				logger.Error(fmt.Errorf("database node config could not be created: %v", err).Error())
-				os.Exit(1)
-			}
-
-			prometheusCfg := prometheus.NewConfig(
-				enablePrometheus,
-				prometheus.DefaultPrometheusAddr,
-				prometheus.DefaultPrometheusNamespace,
-				dbCfg.GethIpcPath(),
-			)
-
-			tracerCfg := tracer.NewConfig(shouldTrace, path.Join(dataDir, "tracer.log"))
-
-			if shouldTrace {
-				tracerCfg.PrintWarning(logger)
-			}
-
-			nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg)
-
+			
 			n, err := node.NewNode(&nodeCfg)
 			if err != nil {
 				logger.Error(fmt.Errorf("lightchain node could not be instantiated: %v", err).Error())
@@ -133,6 +97,55 @@ func runCmd() *cobra.Command {
 	addRunCmdFlags(runCmd)
 
 	return runCmd
+}
+
+func newRunCmdConfig(cmd *cobra.Command) (node.Config, error){
+	dataDir, _ := cmd.Flags().GetString(DataDirFlag.GetName())
+	shouldTrace, _ := cmd.Flags().GetBool(TraceFlag.Name)
+	rpcListenPort, _ := cmd.Flags().GetUint(ConsensusRpcListenPortFlag.GetName())
+	p2pListenPort, _ := cmd.Flags().GetUint(ConsensusP2PListenPortFlag.GetName())
+	proxyAppName, _ := cmd.Flags().GetString(ConsensusProxyAppNameFlag.GetName())
+	enablePrometheus, _ := cmd.Flags().GetBool(PrometheusFlag.GetName())
+	databaseDataDir := filepath.Join(dataDir, database.DataDirPath)
+
+	consensusCfg, err := consensus.NewConfig(
+		filepath.Join(dataDir, consensus.DataDirName),
+		rpcListenPort,
+		p2pListenPort,
+		proxyAppName,
+		enablePrometheus,
+	)
+	if err != nil {
+		return node.Config{}, fmt.Errorf("consensus node config could not be created: %v", err)
+	}
+
+	// Fake cli.context required by Ethereum node
+	ctx := newNodeClientCtx(databaseDataDir, cmd)
+	dbCfg, err := database.NewConfig(databaseDataDir, enablePrometheus, ctx)
+	if err != nil {
+		return node.Config{}, fmt.Errorf("database node config could not be loaded: %v", err)
+	}
+
+	prometheusCfg := prometheus.NewConfig(
+		enablePrometheus,
+		prometheus.DefaultPrometheusAddr,
+		prometheus.DefaultPrometheusNamespace,
+		dbCfg.GethIpcPath(),
+	)
+
+	tracerCfg := tracer.NewConfig(shouldTrace, path.Join(dataDir, "tracer.log"))
+
+	if shouldTrace {
+		tracerCfg.PrintWarning(logger)
+	}
+
+	governanceCfg, err := governance.NewConfigFromDisk(dataDir)
+	if err != nil {
+		return node.Config{}, fmt.Errorf("governance config could not be loaded: %v", err)
+	}
+
+	nodeCfg := node.NewConfig(dataDir, consensusCfg, dbCfg, prometheusCfg, tracerCfg, governanceCfg)
+	return nodeCfg, nil
 }
 
 func addRunCmdFlags(cmd *cobra.Command) {

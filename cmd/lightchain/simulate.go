@@ -40,7 +40,7 @@ func simulateCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			nodeCfg, ntw, err := newNodeCfgFromCmd(cmd)
+			nodeCfg, ntw, err := newInitCmdConfig(cmd)
 			if err != nil {
 				logger.Error(err.Error())
 				os.Exit(1)
