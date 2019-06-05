@@ -8,6 +8,16 @@ DATA_DIR="${HOME}/.lightchain"
 EXEC_BIN="./build/lightchain"
 APPENDED_ARGS=""
 NETWORK="standalone"
+PUBKEY=""
+ADDRESS=""
+
+ACTION="$1"
+shift
+
+if [ "${ACTION}" != "deploy" ] && [ "${ACTION}" != "validator-add" ]; then
+	echo "Invalid action value '${ACTION}'. Valid values: [deploy|validator-add]"
+	exit 1
+fi
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -26,6 +36,14 @@ while [ "$1" != "" ]; do
         ;;
         --sirius) 
             NETWORK="sirius" 
+        ;;
+        --pubkey) 
+            shift
+            PUBKEY=$1 
+        ;;
+        --address) 
+            shift
+            ADDRESS=$1 
         ;;
         --owner) 
             shift
@@ -46,11 +64,28 @@ if [ "${NETWORK}" = "standalone" ]; then
 	PASSWORD="WelcomeToSirius"
 fi
 
+if [ "${ACTION}" = "validator-add" ]; then
+	if [ -z "${PUBKEY}" ]; then
+		echo "Missing value for --pubkey"
+		exit 1
+	fi
+	
+	if [ -z "${ADDRESS}" ]; then
+		echo "Missing value for --address"
+		exit 1
+	fi
+fi
+
 DATA_DIR="${DATA_DIR}/${NETWORK}"
 INIT_ARGS="--datadir=${DATA_DIR} --${NETWORK}"
 
 RUN_ARGS="--datadir=${DATA_DIR}"
 RUN_ARGS="${RUN_ARGS} --owner ${OWNER}"
+
+if [ "${ACTION}" = "validator-add" ]; then
+	RUN_ARGS="${RUN_ARGS} --pubkey ${PUBKEY}"
+	RUN_ARGS="${RUN_ARGS} --address ${ADDRESS}"
+fi
 
 if [ -n "${PASSWORD}" ]; then
 	RUN_ARGS="${RUN_ARGS} --password ${PASSWORD}"
@@ -69,9 +104,9 @@ fi
 
 
 if [ -n "${IS_DEBUG}" ]; then
-    EXEC_CMD="dlv --listen=:2345 --headless=true --api-version=2 exec ${EXEC_BIN} -- governance deploy ${RUN_ARGS}"
+    EXEC_CMD="dlv --listen=:2345 --headless=true --api-version=2 exec ${EXEC_BIN} -- governance ${ACTION} ${RUN_ARGS}"
 else
-    EXEC_CMD="${EXEC_BIN} governance deploy ${RUN_ARGS}"
+    EXEC_CMD="${EXEC_BIN} governance ${ACTION} ${RUN_ARGS}"
 fi
 
 run "$EXEC_CMD"

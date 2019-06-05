@@ -12,6 +12,7 @@ import (
 	ethLog "github.com/ethereum/go-ethereum/log"
 	"github.com/lightstreams-network/lightchain/fs"
 	"github.com/lightstreams-network/lightchain/governance"
+	"time"
 )
 
 
@@ -23,7 +24,7 @@ func governanceDeployCmd() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			log.SetupLogger(ethLog.LvlDebug)
+			log.SetupLogger(ethLog.LvlInfo)
 			logger.Info("Simulating Lightchain node activity to verify state and collect stats...")
 			
 			owner, _ := cmd.Flags().GetString(OwnerAccountFlag.Name)
@@ -59,14 +60,19 @@ func governanceDeployCmd() *cobra.Command {
 				logger.Error(err.Error())
 				os.Exit(1)
 			}
-			defer n.Stop()
 
 			scAddress, err := deployValidatorSetContract(nodeCfg, common.HexToAddress(owner), password)
 			if err != nil {
 				logger.Error(err.Error())
-			} else {
-				logger.Info(fmt.Sprintf("Smart contract was deployed successfully: %s.", scAddress.String()))				
+				n.Stop()
+				os.Exit(1)
 			}
+
+			logger.Info("Wait few seconds for block to persist...")
+			time.Sleep(time.Second * 2)
+			n.Stop()
+
+			fmt.Printf("\n\nSmart contract was succesfully deployed at %s . \n\n", scAddress.String())
 		},
 	}
 	

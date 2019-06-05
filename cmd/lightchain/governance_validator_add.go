@@ -13,6 +13,7 @@ import (
 	ethLog "github.com/ethereum/go-ethereum/log"
 	"github.com/lightstreams-network/lightchain/fs"
 	"github.com/lightstreams-network/lightchain/governance"
+	"time"
 )
 
 var (
@@ -35,7 +36,7 @@ func governanceValidatorAddCmd() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			log.SetupLogger(ethLog.LvlDebug)
+			log.SetupLogger(ethLog.LvlInfo)
 			logger.Info("Simulating Lightchain node activity to verify state and collect stats...")
 			
 			owner, _ := cmd.Flags().GetString(OwnerAccountFlag.Name)
@@ -83,14 +84,19 @@ func governanceValidatorAddCmd() *cobra.Command {
 				logger.Error(err.Error())
 				os.Exit(1)
 			}
-			defer n.Stop()
 
 			err = addValidator(nodeCfg, common.HexToAddress(owner), password, validatorPubKey, common.HexToAddress(validatorAddress))
 			if err != nil {
 				logger.Error(err.Error())
-			} else {
-				logger.Info(fmt.Sprintf("Validator %s was added linked to %s into ValidatorSet contract successfully", validatorPubKey, validatorAddress))
+				n.Stop()
+				os.Exit(1)
 			}
+			
+			logger.Info("Wait few seconds for block to persist...")
+			time.Sleep(time.Second * 2)
+			n.Stop()
+
+			fmt.Printf("\n\nValidator %s was linked to %s successfully .\n\n", validatorPubKey, validatorAddress)
 		},
 	}
 	

@@ -36,13 +36,13 @@ type Database struct {
 
 	ethState *EthState
 
-	consAPI consensusAPI.API
-	logger  tmtLog.Logger
-	metrics metrics.Metrics
-	validators governance.ValidatorSet
+	consAPI      consensusAPI.API
+	logger       tmtLog.Logger
+	metrics      metrics.Metrics
+	validatorSet governance.ValidatorSet
 }
 
-func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensusAPI.API, validators governance.ValidatorSet, logger tmtLog.Logger, metrics metrics.Metrics) (*Database, error) {
+func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensusAPI.API, validatorSet governance.ValidatorSet, logger tmtLog.Logger, metrics metrics.Metrics) (*Database, error) {
 	ethereum, err := eth.New(ctx, ethCfg)
 	if err != nil {
 		return nil, err
@@ -53,13 +53,13 @@ func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensus
 	ethereum.BlockChain().SetValidator(NullBlockValidator{})
 
 	db := &Database{
-		eth:      ethereum,
-		ethCfg:   ethCfg,
-		ethState: NewEthState(ethereum, ethCfg, logger),
-		consAPI:  consAPI,
-		logger:   logger,
-		metrics:  metrics,
-		validators: validators,
+		eth:          ethereum,
+		ethCfg:       ethCfg,
+		ethState:     NewEthState(ethereum, ethCfg, logger),
+		consAPI:      consAPI,
+		logger:       logger,
+		metrics:      metrics,
+		validatorSet: validatorSet,
 	}
 
 	return db, nil
@@ -70,7 +70,7 @@ func (db *Database) Ethereum() *eth.Ethereum {
 }
 
 func (db *Database) Validators() governance.ValidatorSet {
-	return db.validators
+	return db.validatorSet
 }
 
 func (db *Database) Config() *eth.Config {

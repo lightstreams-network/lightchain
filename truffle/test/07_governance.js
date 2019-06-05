@@ -8,7 +8,7 @@
 
 const { convertPhtToWeiBN, extractEnvAccountAndPwd } = require('./utils');
 
-const Validators = artifacts.require("Validators");
+const ValidatorSet = artifacts.require("ValidatorSet");
 
 describe('Governance', () => {
   let ROOT_ACCOUNT = extractEnvAccountAndPwd(process.env.NETWORK).from;
@@ -30,7 +30,7 @@ describe('Governance', () => {
   });
 
   it("should add an new validator ", async () => {
-    const instance = await Validators.deployed();
+    const instance = await ValidatorSet.deployed();
 
     const estimatedGas = await instance.addValidator.estimateGas(VALIDATOR1_KEY, VALIDATOR1_ADDR);
     const tx = await instance.addValidator(VALIDATOR1_KEY, VALIDATOR1_ADDR, {
@@ -46,7 +46,7 @@ describe('Governance', () => {
   });
 
   it("should not allow to add a new validator ", async () => {
-    const instance = await Validators.deployed();
+    const instance = await ValidatorSet.deployed();
     await web3.eth.personal.unlockAccount(VALIDATOR1_ADDR, COMMON_ACCOUNT_PASS, 1000);
 
     let txReceipt;
@@ -66,7 +66,7 @@ describe('Governance', () => {
   });
   
   it("should not allow to remove a validator ", async () => {
-    const instance = await Validators.deployed();
+    const instance = await ValidatorSet.deployed();
     await web3.eth.personal.unlockAccount(VALIDATOR1_ADDR, COMMON_ACCOUNT_PASS, 1000);
 
     let txReceipt;
@@ -86,7 +86,7 @@ describe('Governance', () => {
   });
   
   it("should remove validator", async () => {
-    const instance = await Validators.deployed();
+    const instance = await ValidatorSet.deployed();
 
     const tx = await instance.removeValidator(VALIDATOR1_KEY, VALIDATOR1_ADDR, {
       from: ROOT_ACCOUNT
