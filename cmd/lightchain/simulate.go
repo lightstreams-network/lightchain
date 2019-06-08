@@ -103,7 +103,7 @@ func simulateTransferTx(nodeCfg node.Config) *types.Transaction {
 }
 
 func assertPostSimulationState(nodeCfg node.Config, tx *types.Transaction) {
-	tracer, err := database.NewTracer(nodeCfg.TracerCfg(), nodeCfg.DbCfg().ChainDbDir())
+	tracer, err := database.NewTracer(nodeCfg.TracerCfg(), nodeCfg.DbCfg().ChainDbDir(), nodeCfg.DbCfg().GethIpcPath())
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)

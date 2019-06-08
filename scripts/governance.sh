@@ -53,6 +53,9 @@ while [ "$1" != "" ]; do
             shift
             PASSWORD=$1 
         ;;
+        --trace) 
+            TRACER="true"
+        ;;
         * )
             APPENDED_ARGS="${APPENDED_ARGS} $1"
     esac
@@ -103,6 +106,10 @@ if [ -n "${IS_DEBUG}" ]; then
 else
 	RUN_ARGS="${RUN_ARGS} --lvl=info"
     run "make build"
+fi
+
+if [ -n "${TRACER}" ]; then
+RUN_ARGS="${RUN_ARGS} --trace"
 fi
 
 

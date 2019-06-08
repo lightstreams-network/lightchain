@@ -160,3 +160,22 @@ func (v ValidatorSet) ValidatorAddress(pubKey string) (common.Address, error) {
 	address, err := contractInstance.ValidatorAddress(&bind.CallOpts{}, pubKey)
 	return address, err
 }
+
+func (v ValidatorSet) IsOwner(owner common.Address) (bool, error) {
+	client, err := ethclient.Dial(v.gethIpc)
+	if err != nil {
+		return false, err
+	}
+	defer client.Close()
+
+	contractInstance, err := bindings.NewValidatorSetCaller(v.contract, client)
+	if err != nil {
+		return false, err
+	}
+
+	isOwner, err := contractInstance.IsOwner(&bind.CallOpts{
+		From: owner,
+	})
+	
+	return isOwner, err
+}

@@ -12,6 +12,7 @@ import (
 	"bytes"
 	"math/big"
 	"github.com/lightstreams-network/lightchain/database/web3"
+	"github.com/lightstreams-network/lightchain/governance"
 )
 
 // Tracer is used to trace and assert behaviour of lightchain `database` pkg.
@@ -24,6 +25,9 @@ type Tracer interface {
 
 	// AssertPostTxSimulationState validates if the state saved in disk after TX simulation is correct.
 	AssertPostTxSimulationState(from common.Address, tx *types.Transaction)
+
+	// Asserts if a validator set contract is not deployed in the passed address
+	AssertPersistedValidatorSetContract(contractAddress common.Address, ownerAddress common.Address)
 }
 
 var _ Tracer = EthDBTracer{}
@@ -31,6 +35,7 @@ var _ Tracer = EthDBTracer{}
 type EthDBTracer struct {
 	stdtracer.Tracer
 	chainDataDir string
+	getIpcPath   string
 }
 
 // NewTracer creates a new Tracer instance.
@@ -39,14 +44,14 @@ type EthDBTracer struct {
 //
 // DANGER: Tracing is not recommended in production due decrease in performance!
 // 		   Use tracing only to debug bugs and for testing purposes.
-func NewTracer(cfg stdtracer.Config, chainDataDir string) (Tracer, error) {
+func NewTracer(cfg stdtracer.Config, chainDataDir string, getIpcPath string) (Tracer, error) {
 	trc, err := stdtracer.NewTracer(cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	if cfg.ShouldTrace {
-		return EthDBTracer{trc, chainDataDir}, nil
+		return EthDBTracer{trc, chainDataDir, getIpcPath}, nil
 	}
 
 	return nullEthDBTracer{}, nil
@@ -195,6 +200,35 @@ func (t EthDBTracer) AssertPostTxSimulationState(from common.Address, tx *types.
 			"correct sender nonce",
 			"expected_nonce", expectedNonce,
 			"actual_nonce", fromNonce,
+		)
+	}
+}
+
+func (t EthDBTracer) AssertPersistedValidatorSetContract(contractAddress common.Address, ownerAddress common.Address) {
+	t.Logger.Infow("Tracing whether ValidatorSet smart contract was deployed...",
+		"address", contractAddress.String(),
+		"owner", ownerAddress.String())
+
+	validatorSetContract := governance.NewValidatorSet(contractAddress, t.getIpcPath)
+	isOwner, err := validatorSetContract.IsOwner(ownerAddress)
+	if err != nil {
+		t.Logger.Errorw(
+			"error happened",
+			"msg", err.Error(),
+		)
+	}
+
+	if isOwner {
+		t.Logger.Infow(
+			"Correct ValidatorSet owner",
+			"address", contractAddress,
+			"owner", ownerAddress,
+		);
+	} else {
+		t.Logger.Errorw(
+			"incorrect ValidatorSet contract owner",
+			"expected value", true,
+			"actual value", isOwner,
 		)
 	}
 }

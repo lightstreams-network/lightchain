@@ -13,6 +13,7 @@ import (
 	"github.com/lightstreams-network/lightchain/fs"
 	"github.com/lightstreams-network/lightchain/governance"
 	"time"
+	"github.com/lightstreams-network/lightchain/database"
 )
 
 
@@ -61,18 +62,22 @@ func governanceValidatorSetDeployCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			scAddress, err := deployValidatorSetContract(nodeCfg, common.HexToAddress(owner), password)
+			validatorSetContractAddress, err := deployValidatorSetContract(nodeCfg, common.HexToAddress(owner), password)
 			if err != nil {
 				logger.Error(err.Error())
 				n.Stop()
 				os.Exit(1)
 			}
-
+			
 			logger.Info("Wait few seconds for block to persist...")
 			time.Sleep(time.Second * 2)
-			n.Stop()
 
-			fmt.Printf("\n\nSmart contract was succesfully deployed at %s . \n\n", scAddress.String())
+			if nodeCfg.TracerCfg().ShouldTrace {
+				assertPostDeployState(nodeCfg, validatorSetContractAddress, common.HexToAddress(owner))
+			}
+
+			n.Stop()
+			fmt.Printf("\n\nSmart contract was succesfully deployed at %s . \n\n", validatorSetContractAddress.String())
 		},
 	}
 	
@@ -96,4 +101,14 @@ func deployValidatorSetContract(nodeCfg node.Config, owner common.Address, passw
 	}
 	
 	return address, nil
+}
+
+
+func assertPostDeployState(nodeCfg node.Config, contractAddress common.Address, owner common.Address) {
+	tracer, err := database.NewTracer(nodeCfg.TracerCfg(), nodeCfg.DbCfg().ChainDbDir(), nodeCfg.DbCfg().GethIpcPath())
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	tracer.AssertPersistedValidatorSetContract(contractAddress, owner)
 }

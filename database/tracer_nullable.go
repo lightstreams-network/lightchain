@@ -20,3 +20,6 @@ func (t nullEthDBTracer) AssertPersistedGenesisBlock(genesis core.Genesis) {
 
 func (t nullEthDBTracer) AssertPostTxSimulationState(from common.Address, tx *types.Transaction) {
 }
+
+func (t nullEthDBTracer) AssertPersistedValidatorSetContract(contractAddress common.Address, ownerAddress common.Address) {
+}

@@ -66,7 +66,7 @@ func Init(cfg Config, ntw network.Network, trcCfg stdtracer.Config) error {
 
 	logger.Info("Successfully persisted genesis block!", "hash", hash)
 
-	trc, err := NewTracer(trcCfg, cfg.ChainDbDir())
+	trc, err := NewTracer(trcCfg, cfg.ChainDbDir(), cfg.GethIpcPath())
 	trc.AssertPersistedGenesisBlock(*genesis)
 	
 	return nil
