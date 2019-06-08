@@ -16,10 +16,10 @@ import (
 )
 
 
-func governanceDeployCmd() *cobra.Command {
+func governanceValidatorSetRemoveCmd() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "deploy",
-		Short: "Launch a lightchain node and deploy governance smart contract",
+		Use:   "validatorset-remove",
+		Short: "Launch a lightchain node and add a new validator to ValidatorSet contract",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return nil
 		},
@@ -43,6 +43,18 @@ func governanceDeployCmd() *cobra.Command {
 				}
 			}
 			
+			validatorPubKey, _ := cmd.Flags().GetString(ValidatorPubKeyFlag.Name)
+			if validatorPubKey == "" {
+				logger.Error(fmt.Sprintf("Missing value for argument %v", ValidatorPubKeyFlag.Name))
+				os.Exit(1)
+			}
+			
+			validatorAddress, _ := cmd.Flags().GetString(ValidatorAddressFlag.Name)
+			if validatorAddress == "" {
+				logger.Error(fmt.Sprintf("Missing value for argument %v", ValidatorAddressFlag.Name))
+				os.Exit(1)
+			}
+			
 			
 			nodeCfg, err := newRunCmdConfig(cmd)
 			if err != nil {
@@ -61,39 +73,36 @@ func governanceDeployCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			scAddress, err := deployValidatorSetContract(nodeCfg, common.HexToAddress(owner), password)
+			err = removeValidator(nodeCfg, common.HexToAddress(owner), password, validatorPubKey, common.HexToAddress(validatorAddress))
 			if err != nil {
 				logger.Error(err.Error())
 				n.Stop()
 				os.Exit(1)
 			}
-
+			
 			logger.Info("Wait few seconds for block to persist...")
 			time.Sleep(time.Second * 2)
 			n.Stop()
 
-			fmt.Printf("\n\nSmart contract was succesfully deployed at %s . \n\n", scAddress.String())
+			fmt.Printf("\n\nValidator %s was removed successfully .\n\n", validatorPubKey, validatorAddress)
 		},
 	}
 	
 	addRunCmdFlags(cmd)
 	addGovernanceCmdFlags(cmd)
+	cmd.Flags().String(ValidatorPubKeyFlag.GetName(), "", OwnerAccountFlag.Usage)
+	cmd.Flags().String(ValidatorAddressFlag.GetName(), "", ValidatorAddressFlag.Usage)
 	
 	return cmd
 }
 
-func deployValidatorSetContract(nodeCfg node.Config, owner common.Address, password string) (common.Address, error) {
-	logger.Info("Deploying ValidatorSet contract...")
 
+func removeValidator(nodeCfg node.Config, owner common.Address, password string, pubKey string, validatorAddr common.Address) error {
 	txAuth, err := authy.FindInKeystoreDir(nodeCfg.DbCfg().KeystoreDir(), owner, password)
 	if err != nil {
-		return common.Address{}, err
+		return err
 	}
 
-	address, err := governance.DeployContract(txAuth, nodeCfg.DbCfg().GethIpcPath())
-	if err != nil {
-		return common.Address{}, err
-	}
-	
-	return address, nil
+	instance := governance.NewValidatorSet(nodeCfg.GovernanceCfg().ContractAddress(), nodeCfg.DbCfg().GethIpcPath())
+	return instance.RemoveValidator(txAuth, pubKey, validatorAddr)
 }

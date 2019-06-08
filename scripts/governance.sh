@@ -14,8 +14,8 @@ ADDRESS=""
 ACTION="$1"
 shift
 
-if [ "${ACTION}" != "deploy" ] && [ "${ACTION}" != "validator-add" ]; then
-	echo "Invalid action value '${ACTION}'. Valid values: [deploy|validator-add]"
+if [ "${ACTION}" != "validatorset-deploy" ] && [ "${ACTION}" != "validatorset-add" ] && [ "${ACTION}" != "validatorset-remove" ] && [ "${ACTION}" != "validatorset-list" ]; then
+	echo "Invalid action value '${ACTION}'. Valid values: [validatorset-deploy|validatorset-add|validatorset-remove|validatorset-list]"
 	exit 1
 fi
 
@@ -69,7 +69,13 @@ if [ -z "${OWNER}" ]; then
 	exit 1
 fi
 
-if [ "${ACTION}" = "validator-add" ]; then
+DATA_DIR="${DATA_DIR}/${NETWORK}"
+INIT_ARGS="--datadir=${DATA_DIR} --${NETWORK}"
+
+RUN_ARGS="--datadir=${DATA_DIR}"
+RUN_ARGS="${RUN_ARGS} --owner ${OWNER}"
+
+if [ "${ACTION}" == "validatorset-add" ] || [ "${ACTION}" == "validatorset-remove" ]; then
 	if [ -z "${PUBKEY}" ]; then
 		echo "Missing value for --pubkey"
 		exit 1
@@ -79,15 +85,7 @@ if [ "${ACTION}" = "validator-add" ]; then
 		echo "Missing value for --address"
 		exit 1
 	fi
-fi
 
-DATA_DIR="${DATA_DIR}/${NETWORK}"
-INIT_ARGS="--datadir=${DATA_DIR} --${NETWORK}"
-
-RUN_ARGS="--datadir=${DATA_DIR}"
-RUN_ARGS="${RUN_ARGS} --owner ${OWNER}"
-
-if [ "${ACTION}" = "validator-add" ]; then
 	RUN_ARGS="${RUN_ARGS} --pubkey ${PUBKEY}"
 	RUN_ARGS="${RUN_ARGS} --address ${ADDRESS}"
 fi

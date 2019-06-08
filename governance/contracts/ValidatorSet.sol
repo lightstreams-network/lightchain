@@ -61,6 +61,12 @@ contract ValidatorSet is Ownable {
   function validatorPubKey(uint index) public view returns (string memory) {
     return _validatorPubKeys[index];
   }
+
+  function setFreezeStatus(bool _value) onlyOwner public {
+    _freeze = _value;
+    emit Freeze();
+  }
+  
   
   function calculateValidatorItemKey(string memory _pubKey) pure internal returns (bytes32) {
     return sha256(bytes(_pubKey));
@@ -68,11 +74,6 @@ contract ValidatorSet is Ownable {
 
   function validatorSetSize() public view returns (uint) {
     return uint(_validatorPubKeys.length);
-  }
-
-  function freeze(bool _value) onlyOwner public {
-    _freeze = _value;
-    emit Freeze();
   }
 
   function _setNextVersionAddress(address _value) onlyOwner public {

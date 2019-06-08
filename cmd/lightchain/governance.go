@@ -14,6 +14,14 @@ var (
 		Name:  "password",
 		Usage: "Passphrase to decrypt owner account",
 	}
+	ValidatorPubKeyFlag = cli.StringFlag{
+		Name:  "pubkey",
+		Usage: "PubKey of validator to append in the ValidatorSet contract",
+	}
+	ValidatorAddressFlag = cli.StringFlag{
+		Name:  "address",
+		Usage: "Validator ethereum address to link to added validator",
+	}
 )
 
 func governanceCmd() *cobra.Command {
@@ -27,8 +35,10 @@ func governanceCmd() *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(governanceDeployCmd())
-	cmd.AddCommand(governanceValidatorAddCmd())
+	cmd.AddCommand(governanceValidatorSetDeployCmd())
+	cmd.AddCommand(governanceValidatorSetAddCmd())
+	cmd.AddCommand(governanceValidatorSetRemoveCmd())
+	cmd.AddCommand(governanceValidatorSetListCmd())
 
 	return cmd
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/lightstreams-network/lightchain/governance/bindings"
 	"github.com/lightstreams-network/lightchain/database/txclient"
 	"context"
+	"math/big"
 )
 
 const deployContractGasLimit = 2000000
@@ -79,6 +80,69 @@ func (v ValidatorSet) AddValidator(txAuth authy.Auth, pubKey string, address com
 	}
 
 	return nil
+}
+
+func (v ValidatorSet) RemoveValidator(txAuth authy.Auth, pubKey string, address common.Address) (error) {
+	client, err := ethclient.Dial(v.gethIpc)
+	if err != nil {
+		return err
+	}
+
+	defer client.Close()
+
+	contractInstance, err := bindings.NewValidatorSet(v.contract, client)
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	cfg := txclient.NewTxDefaultConfig(deployContractGasLimit)
+	txOps, err := txclient.GenerateTxOpts(ctx, client, txAuth, cfg)
+	if err != nil {
+		return err
+	}
+
+	tx, err := contractInstance.RemoveValidator(txOps, pubKey, address)
+	if err != nil {
+		return err
+	}
+	
+	_, err = txclient.FetchReceipt(client, tx, cfg)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (v ValidatorSet) FetchPubKeySet(address common.Address) ([]string, error) {
+	client, err := ethclient.Dial(v.gethIpc)
+	if err != nil {
+		return nil, err
+	}
+
+	defer client.Close()
+
+	contractInstance, err := bindings.NewValidatorSet(v.contract, client)
+	if err != nil {
+		return nil, err
+	}
+
+	validatorSetSizeBN, err := contractInstance.ValidatorSetSize(&bind.CallOpts{})
+	if err != nil {
+		return nil, err
+	}
+	validatorSetSize :=int(validatorSetSizeBN.Int64())
+	var validatorSet []string
+	for i := 0; i < validatorSetSize; i++ {
+		validatorPubKey, err := contractInstance.ValidatorPubKey(&bind.CallOpts{}, big.NewInt(int64(i)))
+		if err != nil {
+			return nil, err
+		}
+		validatorSet = append(validatorSet, validatorPubKey)
+	}
+
+	return validatorSet, nil
 }
 
 func (v ValidatorSet) ValidatorAddress(pubKey string) (common.Address, error) {

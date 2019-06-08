@@ -4,7 +4,6 @@ import (
 	"os"
 	"fmt"
 	"github.com/spf13/cobra"
-	"gopkg.in/urfave/cli.v1"
 	
 	"github.com/lightstreams-network/lightchain/node"
 	"github.com/lightstreams-network/lightchain/authy"
@@ -16,21 +15,9 @@ import (
 	"time"
 )
 
-var (
-	ValidatorKeyFlag = cli.StringFlag{
-		Name:  "pubkey",
-		Usage: "PubKey of validator to append in the ValidatorSet contract",
-	}
-	ValidatorAddressFlag = cli.StringFlag{
-		Name:  "address",
-		Usage: "Validator ethereum address to link to added validator",
-	}
-)
-
-
-func governanceValidatorAddCmd() *cobra.Command {
+func governanceValidatorSetAddCmd() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "validator-add",
+		Use:   "validatorset-add",
 		Short: "Launch a lightchain node and add a new validator to ValidatorSet contract",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return nil
@@ -55,18 +42,17 @@ func governanceValidatorAddCmd() *cobra.Command {
 				}
 			}
 			
-			validatorPubKey, _ := cmd.Flags().GetString(ValidatorKeyFlag.Name)
-			if owner == "" {
-				logger.Error(fmt.Sprintf("Missing value for argument %v", ValidatorKeyFlag.Name))
+			validatorPubKey, _ := cmd.Flags().GetString(ValidatorPubKeyFlag.Name)
+			if validatorPubKey == "" {
+				logger.Error(fmt.Sprintf("Missing value for argument '%v'", ValidatorPubKeyFlag.Name))
 				os.Exit(1)
 			}
 			
 			validatorAddress, _ := cmd.Flags().GetString(ValidatorAddressFlag.Name)
-			if owner == "" {
-				logger.Error(fmt.Sprintf("Missing value for argument %v", ValidatorAddressFlag.Name))
+			if validatorAddress == "" {
+				logger.Error(fmt.Sprintf("Missing value for argument '%v'", ValidatorAddressFlag.Name))
 				os.Exit(1)
 			}
-			
 			
 			nodeCfg, err := newRunCmdConfig(cmd)
 			if err != nil {
@@ -96,13 +82,13 @@ func governanceValidatorAddCmd() *cobra.Command {
 			time.Sleep(time.Second * 2)
 			n.Stop()
 
-			fmt.Printf("\n\nValidator %s was linked to %s successfully .\n\n", validatorPubKey, validatorAddress)
+			fmt.Printf("\n\nValidator %s:%s was added successfully .\n\n", validatorPubKey, validatorAddress)
 		},
 	}
 	
 	addRunCmdFlags(cmd)
 	addGovernanceCmdFlags(cmd)
-	cmd.Flags().String(ValidatorKeyFlag.GetName(), "", OwnerAccountFlag.Usage)
+	cmd.Flags().String(ValidatorPubKeyFlag.GetName(), "", OwnerAccountFlag.Usage)
 	cmd.Flags().String(ValidatorAddressFlag.GetName(), "", ValidatorAddressFlag.Usage)
 	
 	return cmd

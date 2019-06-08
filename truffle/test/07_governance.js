@@ -106,8 +106,6 @@ describe('Governance', () => {
     const instance = await ValidatorSet.deployed();
 
     const tx = await instance.addValidator(VALIDATOR3_KEY, VALIDATOR3_ADDR);
-
-    console.log("Transaction: ", tx.tx);
     assert.equal(tx.receipt.status, true, "successful TX status expected");
 
     const validatorPubKeys = [];
@@ -124,7 +122,7 @@ describe('Governance', () => {
   it("should fail to modify validator after freeze", async() => {
     const instance = await ValidatorSet.deployed();
 
-    const tx = await instance.freeze(true);
+    const tx = await instance.setFreezeStatus(true);
     assert.equal(tx.receipt.status, true, "successful TX status expected");
     return assert.isRejected(instance.addValidator(VALIDATOR1_KEY, VALIDATOR1_ADDR));
   });
