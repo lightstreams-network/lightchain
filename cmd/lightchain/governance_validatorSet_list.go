@@ -44,6 +44,7 @@ func governanceValidatorSetListCmd() *cobra.Command {
 			validatorAddress, err := cmd.Flags().GetString(ValidatorAddressFlag.Name)
 			if err != nil {
 				logger.Error(err.Error())
+				n.Stop()
 				os.Exit(1)
 			}
 			
@@ -54,7 +55,8 @@ func governanceValidatorSetListCmd() *cobra.Command {
 				os.Exit(1)
 			}
 			
-			logger.Info(fmt.Sprintf("Active validator pub keys: %+v", pubKeys))
+			n.Stop()
+			fmt.Printf("Active validator pub keys: %+v \n", pubKeys)
 		},
 	}
 	

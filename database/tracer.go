@@ -1,18 +1,23 @@
 package database
 
 import (
+	"bytes"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/state"
-
-	stdtracer "github.com/lightstreams-network/lightchain/tracer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"bytes"
-	"math/big"
+	
+	tmtConfig "github.com/tendermint/tendermint/config"
+	tmtDb "github.com/tendermint/tendermint/libs/db"
+	tmtBC "github.com/tendermint/tendermint/blockchain"
+	
 	"github.com/lightstreams-network/lightchain/database/web3"
 	"github.com/lightstreams-network/lightchain/governance"
+	stdtracer "github.com/lightstreams-network/lightchain/tracer"
 )
 
 // Tracer is used to trace and assert behaviour of lightchain `database` pkg.
@@ -28,6 +33,9 @@ type Tracer interface {
 
 	// Asserts if a validator set contract is not deployed in the passed address
 	AssertPersistedValidatorSetContract(contractAddress common.Address, ownerAddress common.Address)
+	
+	// Asserts if a validator was not rewarded correctly after proposing the block
+	AssertPersistedValidatorSetAddValidator(tmtCfg tmtConfig.Config, validatorPubKey string, rewardedAddress common.Address)
 }
 
 var _ Tracer = EthDBTracer{}
@@ -231,4 +239,51 @@ func (t EthDBTracer) AssertPersistedValidatorSetContract(contractAddress common.
 			"actual value", isOwner,
 		)
 	}
+}
+
+func (t EthDBTracer) AssertPersistedValidatorSetAddValidator(tmtCfg tmtConfig.Config, validatorPubKey string, rewardedAddress common.Address) {
+	t.Logger.Infow("Tracing whether validator is rewarded correctly...",
+		"pubkey", validatorPubKey,
+		"address", rewardedAddress)
+
+	stateDB := tmtDb.NewDB("blockstore", tmtDb.DBBackendType(tmtCfg.DBBackend), tmtCfg.DBDir())
+	blockStore := tmtBC.NewBlockStore(stateDB)
+	defer stateDB.Close()
+
+	chainDb, err := ethdb.NewLDBDatabase(t.chainDataDir, 0, 0)
+	if err != nil {
+		t.Logger.Errorw("unable to open LDB db", "err", err)
+		return
+	}
+	defer chainDb.Close()
+	
+	headHash := rawdb.ReadHeadBlockHash(chainDb)
+	headNumber := rawdb.ReadHeaderNumber(chainDb, headHash)
+	block := rawdb.ReadBlock(chainDb, headHash, *headNumber)
+	cBlock := blockStore.LoadBlock(int64(*headNumber))
+	
+	if cBlock.ProposerAddress.String() != validatorPubKey {
+		t.Logger.Warnw(
+			"Invalid assertion due to block proposer does not match",
+			"expected", validatorPubKey,
+			"actual", cBlock.ProposerAddress.String(),
+		);
+		return
+	}
+
+	if block.Coinbase().String() == rewardedAddress.String() {
+		t.Logger.Infow(
+			"Correct rewarded address for block proposer validator",
+			"block", block.Number(),
+			"address", rewardedAddress.String(),
+		);
+	} else {
+		t.Logger.Errorw(
+			"incorrect ValidatorSet contract owner",
+			"block", block.Number(),
+			"expected value", rewardedAddress.String(),
+			"actual value", block.Coinbase().String(),
+		)
+	}
+	
 }

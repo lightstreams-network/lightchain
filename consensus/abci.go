@@ -312,7 +312,7 @@ func (abci *TendermintABCI) RewardReceiver() common.Address {
 		return common.HexToAddress("")
 	}
 	
-	abci.logger.Info("Validator rewarded address", "pubkey", pubKeyAddr.String(), "address", address.String())
+	abci.logger.Info("Block proposer validator is rewarded", "pubkey", pubKeyAddr.String(), "address", address.String())
 
 	return address
 }

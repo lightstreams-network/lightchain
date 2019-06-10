@@ -4,6 +4,7 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	tmtConfig "github.com/tendermint/tendermint/config"
 )
 
 var _ Tracer = nullEthDBTracer{}
@@ -22,4 +23,7 @@ func (t nullEthDBTracer) AssertPostTxSimulationState(from common.Address, tx *ty
 }
 
 func (t nullEthDBTracer) AssertPersistedValidatorSetContract(contractAddress common.Address, ownerAddress common.Address) {
+}
+
+func (t nullEthDBTracer) AssertPersistedValidatorSetAddValidator(tmtCfg tmtConfig.Config, validatorPubKey string, rewardedAddress common.Address) {
 }

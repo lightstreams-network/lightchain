@@ -90,6 +90,7 @@ func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDel
 //
 // Returns the persisted Block.
 func (db *Database) Persist(receiver common.Address) (ethTypes.Block, error) {
+	db.ethState.blockState.header.Coinbase = receiver
 	db.logger.Info("Persisting DB Block", "data", db.ethState.blockState)
 	db.metrics.PersistedTxsTotal.Add(float64(len(db.ethState.blockState.transactions)))
 	db.metrics.ChaindbHeight.Set(float64(db.ethState.blockState.header.Number.Uint64()))

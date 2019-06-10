@@ -84,7 +84,7 @@ func governanceValidatorSetRemoveCmd() *cobra.Command {
 			time.Sleep(time.Second * 2)
 			n.Stop()
 
-			fmt.Printf("\n\nValidator %s was removed successfully .\n\n", validatorPubKey, validatorAddress)
+			fmt.Printf("\n\nValidator %s:%s was removed successfully.\n\n", validatorPubKey, validatorAddress)
 		},
 	}
 	

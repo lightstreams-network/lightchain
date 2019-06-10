@@ -73,6 +73,7 @@ func governanceValidatorSetDeployCmd() *cobra.Command {
 			time.Sleep(time.Second * 2)
 
 			if nodeCfg.TracerCfg().ShouldTrace {
+				logger.Info("Running tracer assertion over deployed validatorSet smart contract...")
 				assertPostDeployState(nodeCfg, validatorSetContractAddress, common.HexToAddress(owner))
 			}
 

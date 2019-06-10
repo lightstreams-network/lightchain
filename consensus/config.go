@@ -59,6 +59,11 @@ func (c Config) RPCListenPort() uint {
 	return c.rpcListenPort
 }
 
+
+func (c Config) TendermintCfg() config.Config {
+	return *c.tendermintCfg;
+}
+
 func applyTendermintConfig(configPath string, tmtCfg *config.Config) error {
 	viper.AddConfigPath(configPath) // search root directory /config
 	// If a config file is found, read it in.
