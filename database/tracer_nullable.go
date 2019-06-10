@@ -25,5 +25,8 @@ func (t nullEthDBTracer) AssertPostTxSimulationState(from common.Address, tx *ty
 func (t nullEthDBTracer) AssertPersistedValidatorSetContract(contractAddress common.Address, ownerAddress common.Address) {
 }
 
-func (t nullEthDBTracer) AssertPersistedValidatorSetAddValidator(tmtCfg tmtConfig.Config, validatorPubKey string, rewardedAddress common.Address) {
+func (t nullEthDBTracer) AssertPostAddingValidatorRewarding(tmtCfg tmtConfig.Config, validatorPubKey string, rewardedAddress common.Address) {
+}
+
+func (t nullEthDBTracer) AssertPostRemovalValidatorRewarding(tmtCfg tmtConfig.Config, validatorPubKey string, rewardedAddress common.Address) {
 }

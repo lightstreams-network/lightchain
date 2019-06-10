@@ -80,7 +80,7 @@ func governanceValidatorSetAddCmd() *cobra.Command {
 			}
 			
 			logger.Info("Wait few seconds for block to persist...")
-			time.Sleep(time.Second * 5)
+			time.Sleep(time.Second * 2)
 			n.Stop()
 
 			if nodeCfg.TracerCfg().ShouldTrace {
@@ -118,5 +118,5 @@ func assertPostAddValidatorState(nodeCfg node.Config, validatorPubKey string, va
 		os.Exit(1)
 	}
 
-	tracer.AssertPersistedValidatorSetAddValidator(nodeCfg.ConsensusCfg().TendermintCfg(), validatorPubKey, validatorAddress)
+	tracer.AssertPostAddingValidatorRewarding(nodeCfg.ConsensusCfg().TendermintCfg(), validatorPubKey, validatorAddress)
 }

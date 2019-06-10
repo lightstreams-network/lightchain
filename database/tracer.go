@@ -35,7 +35,10 @@ type Tracer interface {
 	AssertPersistedValidatorSetContract(contractAddress common.Address, ownerAddress common.Address)
 	
 	// Asserts if a validator was not rewarded correctly after proposing the block
-	AssertPersistedValidatorSetAddValidator(tmtCfg tmtConfig.Config, validatorPubKey string, rewardedAddress common.Address)
+	AssertPostAddingValidatorRewarding(tmtCfg tmtConfig.Config, validatorPubKey string, rewardedAddress common.Address)
+	
+	// Asserts if a validator was rewarded correctly after it was removed 
+	AssertPostRemovalValidatorRewarding(tmtCfg tmtConfig.Config, validatorPubKey string, rewardedAddress common.Address)
 }
 
 var _ Tracer = EthDBTracer{}
@@ -241,7 +244,7 @@ func (t EthDBTracer) AssertPersistedValidatorSetContract(contractAddress common.
 	}
 }
 
-func (t EthDBTracer) AssertPersistedValidatorSetAddValidator(tmtCfg tmtConfig.Config, validatorPubKey string, rewardedAddress common.Address) {
+func (t EthDBTracer) AssertPostAddingValidatorRewarding(tmtCfg tmtConfig.Config, validatorPubKey string, rewardedAddress common.Address) {
 	t.Logger.Infow("Tracing whether validator is rewarded correctly...",
 		"pubkey", validatorPubKey,
 		"address", rewardedAddress)
@@ -279,11 +282,58 @@ func (t EthDBTracer) AssertPersistedValidatorSetAddValidator(tmtCfg tmtConfig.Co
 		);
 	} else {
 		t.Logger.Errorw(
-			"incorrect ValidatorSet contract owner",
+			"Incorrect rewarded address for block proposer validator",
 			"block", block.Number(),
 			"expected value", rewardedAddress.String(),
 			"actual value", block.Coinbase().String(),
 		)
 	}
+}
+
+
+func (t EthDBTracer) AssertPostRemovalValidatorRewarding(tmtCfg tmtConfig.Config, validatorPubKey string, rewardedAddress common.Address) {
+	t.Logger.Infow("Tracing whether validator is not rewarded anymore being removed...",
+		"pubkey", validatorPubKey,
+		"address", rewardedAddress)
+
+	stateDB := tmtDb.NewDB("blockstore", tmtDb.DBBackendType(tmtCfg.DBBackend), tmtCfg.DBDir())
+	blockStore := tmtBC.NewBlockStore(stateDB)
+	defer stateDB.Close()
+
+	chainDb, err := ethdb.NewLDBDatabase(t.chainDataDir, 0, 0)
+	if err != nil {
+		t.Logger.Errorw("unable to open LDB db", "err", err)
+		return
+	}
+	defer chainDb.Close()
 	
+	headHash := rawdb.ReadHeadBlockHash(chainDb)
+	headNumber := rawdb.ReadHeaderNumber(chainDb, headHash)
+	block := rawdb.ReadBlock(chainDb, headHash, *headNumber)
+	cBlock := blockStore.LoadBlock(int64(*headNumber))
+	
+	if cBlock.ProposerAddress.String() != validatorPubKey {
+		t.Logger.Warnw(
+			"Invalid assertion due to block proposer does not match",
+			"expected", validatorPubKey,
+			"actual", cBlock.ProposerAddress.String(),
+		);
+		return
+	}
+
+	emptyAddress := common.HexToAddress("")
+	if block.Coinbase().String() == emptyAddress.String() {
+		t.Logger.Infow(
+			"Correct rewarded address for block proposer validator",
+			"block", block.Number(),
+			"address", emptyAddress.String(),
+		);
+	} else {
+		t.Logger.Errorw(
+			"Incorrect rewarded address for block proposer validator",
+			"block", block.Number(),
+			"expected value", emptyAddress.String(),
+			"actual value", block.Coinbase().String(),
+		)
+	}
 }

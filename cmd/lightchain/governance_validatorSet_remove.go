@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"fmt"
+	"time"
 	"github.com/spf13/cobra"
 	
 	"github.com/lightstreams-network/lightchain/node"
@@ -12,7 +13,7 @@ import (
 	ethLog "github.com/ethereum/go-ethereum/log"
 	"github.com/lightstreams-network/lightchain/fs"
 	"github.com/lightstreams-network/lightchain/governance"
-	"time"
+	"github.com/lightstreams-network/lightchain/database"
 )
 
 
@@ -83,6 +84,11 @@ func governanceValidatorSetRemoveCmd() *cobra.Command {
 			logger.Info("Wait few seconds for block to persist...")
 			time.Sleep(time.Second * 2)
 			n.Stop()
+			
+			if nodeCfg.TracerCfg().ShouldTrace {
+				logger.Info("Running tracer assertion over added validator action...")
+				assertPostRemoveValidatorState(nodeCfg, validatorPubKey, common.HexToAddress(validatorAddress))
+			}
 
 			fmt.Printf("\n\nValidator %s:%s was removed successfully.\n\n", validatorPubKey, validatorAddress)
 		},
@@ -105,4 +111,14 @@ func removeValidator(nodeCfg node.Config, owner common.Address, password string,
 
 	instance := governance.NewValidatorSet(nodeCfg.GovernanceCfg().ContractAddress(), nodeCfg.DbCfg().GethIpcPath())
 	return instance.RemoveValidator(txAuth, pubKey, validatorAddr)
+}
+
+func assertPostRemoveValidatorState(nodeCfg node.Config, validatorPubKey string, validatorAddress common.Address) {
+	tracer, err := database.NewTracer(nodeCfg.TracerCfg(), nodeCfg.DbCfg().ChainDbDir(), nodeCfg.DbCfg().GethIpcPath())
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
+	tracer.AssertPostRemovalValidatorRewarding(nodeCfg.ConsensusCfg().TendermintCfg(), validatorPubKey, validatorAddress)
 }
