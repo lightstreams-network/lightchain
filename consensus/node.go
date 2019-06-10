@@ -13,6 +13,7 @@ import (
 	tmtNode "github.com/tendermint/tendermint/node"
 	tmtP2P "github.com/tendermint/tendermint/p2p"
 	tmtCommon "github.com/tendermint/tendermint/libs/common"
+	tmtDbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/lightstreams-network/lightchain/consensus/metrics"
 )
@@ -23,6 +24,7 @@ type Node struct {
 	cfg        *Config
 	logger     tmtLog.Logger
 	metrics    metrics.Metrics
+	dbs        map[string]tmtDbm.DB
 }
 
 func NewNode(cfg *Config, registry *prometheus.Registry) (*Node, error) {
@@ -37,7 +39,7 @@ func NewNode(cfg *Config, registry *prometheus.Registry) (*Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var trackedMetrics metrics.Metrics
 	if cfg.metrics {
 		trackedMetrics = metrics.NewMetrics(registry)
@@ -45,12 +47,13 @@ func NewNode(cfg *Config, registry *prometheus.Registry) (*Node, error) {
 		trackedMetrics = metrics.NewNullMetrics()
 	}
 
-	return &Node {
+	return &Node{
 		nil,
 		nodeKey,
 		cfg,
 		logger,
 		trackedMetrics,
+		make(map[string]tmtDbm.DB),
 	}, nil
 }
 
@@ -68,7 +71,7 @@ func (n *Node) Start(ethRPCClient *ethRpc.Client, db *database.Database) error {
 		n.nodeKey,
 		proxy.NewLocalClientCreator(abci),
 		tmtNode.DefaultGenesisDocProviderFunc(n.cfg.tendermintCfg),
-		tmtNode.DefaultDBProvider,
+		n.defaultDBProvider,
 		tmtNode.DefaultMetricsProvider(n.cfg.tendermintCfg.Instrumentation),
 		n.logger,
 	)
@@ -103,6 +106,18 @@ func (n *Node) Stop() error {
 		<-n.tendermint.Quit()
 		n.logger.Info("Tendermint node stopped")
 	}
+	
+	for ctxID, db := range n.dbs {
+		n.logger.Info(fmt.Sprintf("Closing database '%s'...", ctxID))
+		db.Close()
+	}
 
 	return nil
+}
+
+func (n *Node) defaultDBProvider(ctx *tmtNode.DBContext) (tmtDbm.DB, error) {
+	dbType := tmtDbm.DBBackendType(ctx.Config.DBBackend)
+	n.logger.Info(fmt.Sprintf("Loading database '%s'...", ctx.ID))
+	n.dbs[ctx.ID] = tmtDbm.NewDB(ctx.ID, dbType, ctx.Config.DBDir())
+	return n.dbs[ctx.ID], nil
 }
