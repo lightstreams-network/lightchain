@@ -15,14 +15,14 @@ import (
 const deployContractGasLimit = 2000000
 
 type ValidatorSet struct {
-	contract common.Address
-	gethIpc string
+	contractAddress common.Address
+	gethIpc         string
 }
 
 func NewValidatorSet(contractAddress common.Address, gethIpc string) ValidatorSet {
 	return ValidatorSet{
-		contract: contractAddress,
-		gethIpc: gethIpc,
+		contractAddress: contractAddress,
+		gethIpc:         gethIpc,
 	}
 }
 
@@ -57,7 +57,7 @@ func (v ValidatorSet) AddValidator(txAuth authy.Auth, pubKey string, address com
 
 	defer client.Close()
 
-	contractInstance, err := bindings.NewValidatorSet(v.contract, client)
+	contractInstance, err := bindings.NewValidatorSet(v.contractAddress, client)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (v ValidatorSet) RemoveValidator(txAuth authy.Auth, pubKey string, address 
 
 	defer client.Close()
 
-	contractInstance, err := bindings.NewValidatorSet(v.contract, client)
+	contractInstance, err := bindings.NewValidatorSet(v.contractAddress, client)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (v ValidatorSet) FetchPubKeySet(address common.Address) ([]string, error) {
 
 	defer client.Close()
 
-	contractInstance, err := bindings.NewValidatorSet(v.contract, client)
+	contractInstance, err := bindings.NewValidatorSet(v.contractAddress, client)
 	if err != nil {
 		return nil, err
 	}
@@ -146,13 +146,17 @@ func (v ValidatorSet) FetchPubKeySet(address common.Address) ([]string, error) {
 }
 
 func (v ValidatorSet) ValidatorAddress(pubKey string) (common.Address, error) {
+	if v.contractAddress.String() == common.HexToAddress("0x0").String() {
+		return common.Address{}, nil
+	}
+
 	client, err := ethclient.Dial(v.gethIpc)
 	if err != nil {
 		return common.Address{}, err
 	}
 	defer client.Close()
 
-	contractInstance, err := bindings.NewValidatorSetCaller(v.contract, client)
+	contractInstance, err := bindings.NewValidatorSetCaller(v.contractAddress, client)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -168,7 +172,7 @@ func (v ValidatorSet) IsOwner(owner common.Address) (bool, error) {
 	}
 	defer client.Close()
 
-	contractInstance, err := bindings.NewValidatorSetCaller(v.contract, client)
+	contractInstance, err := bindings.NewValidatorSetCaller(v.contractAddress, client)
 	if err != nil {
 		return false, err
 	}
