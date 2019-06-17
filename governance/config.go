@@ -12,9 +12,9 @@ type jsonConfig struct {
 	ContractAddress string `json:"contract_address"`
 }
 
-func NewConfig(address string) (Config) {
+func NewConfig(address common.Address) (Config) {
 	return Config{
-		contractAddress: common.HexToAddress(address),
+		contractAddress: address,
 	}
 }
 

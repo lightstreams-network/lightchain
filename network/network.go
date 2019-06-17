@@ -45,9 +45,9 @@ func NewNetworkFromId(networkId uint64) (Network, error) {
 		case 161:
 			return StandaloneNetwork, nil
 		case 162:
-			return StandaloneNetwork, nil
+			return SiriusNetwork, nil
 		case 163:
-			return StandaloneNetwork, nil
+			return MainNetNetwork, nil
 		default:
 			return "", fmt.Errorf("NetworkId %d does not exists", networkId)
 	}

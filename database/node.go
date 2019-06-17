@@ -26,7 +26,7 @@ type Node struct {
 }
 
 // NewNode creates a new node.
-func NewNode(cfg *Config, consensusAPI conAPI.API, registry *prometheus.Registry, validateSetAddress common.Address) (*Node, error) {
+func NewNode(cfg *Config, consensusAPI conAPI.API, registry *prometheus.Registry, validatorSetAddress common.Address) (*Node, error) {
 	logger := log.NewLogger().With("engine", "database")
 
 	// @TODO Investigate why Genesis file is not automatically loaded
@@ -58,8 +58,8 @@ func NewNode(cfg *Config, consensusAPI conAPI.API, registry *prometheus.Registry
 		logger,
 	}
 
-	logger.Info("Validator set loaded from contract", "address", validateSetAddress.String())
-	validatorSet := governance.NewValidatorSet(validateSetAddress, cfg.GethIpcPath())
+	logger.Info("Validator set loaded from contract", "address", validatorSetAddress.String())
+	validatorSet := governance.NewValidatorSet(validatorSetAddress, cfg.GethIpcPath())
 
 	logger.Debug("Binding ethereum events to rpc client...")
 	err = ethereum.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {

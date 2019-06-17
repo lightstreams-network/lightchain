@@ -12,14 +12,15 @@ import (
 	ethLog "github.com/ethereum/go-ethereum/log"
 	"github.com/lightstreams-network/lightchain/fs"
 	"github.com/lightstreams-network/lightchain/governance"
-	"github.com/lightstreams-network/lightchain/database"
 	"time"
+	"github.com/lightstreams-network/lightchain/database"
 )
 
-func governanceValidatorSetAddCmd() *cobra.Command {
+
+func governanceValidatorSetDeployCmd() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "validatorset-add",
-		Short: "Launch a lightchain node and add a new validator to ValidatorSet contract",
+		Use:   "validatorset-deploy",
+		Short: "Launch a lightchain node and deploy governance smart contract",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return nil
 		},
@@ -43,19 +44,8 @@ func governanceValidatorSetAddCmd() *cobra.Command {
 				}
 			}
 			
-			validatorPubKey, _ := cmd.Flags().GetString(ValidatorPubKeyFlag.Name)
-			if validatorPubKey == "" {
-				logger.Error(fmt.Sprintf("Missing value for argument '%v'", ValidatorPubKeyFlag.Name))
-				os.Exit(1)
-			}
 			
-			validatorAddress, _ := cmd.Flags().GetString(ValidatorAddressFlag.Name)
-			if validatorAddress == "" {
-				logger.Error(fmt.Sprintf("Missing value for argument '%v'", ValidatorAddressFlag.Name))
-				os.Exit(1)
-			}
-			
-			nodeCfg, err := newRunCmdConfig(cmd)
+			nodeCfg, err := loadRunCmdConfig(cmd)
 			if err != nil {
 				logger.Error(err.Error())
 				os.Exit(1)
@@ -72,7 +62,7 @@ func governanceValidatorSetAddCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = addValidator(nodeCfg, common.HexToAddress(owner), password, validatorPubKey, common.HexToAddress(validatorAddress))
+			validatorSetContractAddress, err := deployValidatorSetContract(nodeCfg, common.HexToAddress(owner), password)
 			if err != nil {
 				logger.Error(err.Error())
 				n.Stop()
@@ -81,42 +71,45 @@ func governanceValidatorSetAddCmd() *cobra.Command {
 			
 			logger.Info("Wait few seconds for block to persist...")
 			time.Sleep(time.Second * 2)
-			n.Stop()
 
 			if nodeCfg.TracerCfg().ShouldTrace {
-				logger.Info("Running tracer assertion over added validator action...")
-				assertPostAddValidatorState(nodeCfg, validatorPubKey, common.HexToAddress(validatorAddress))
+				logger.Info("Running tracer assertion over deployed validatorSet smart contract...")
+				assertPostDeployState(nodeCfg, validatorSetContractAddress, common.HexToAddress(owner))
 			}
 
-			fmt.Printf("\n\nValidator %s:%s was added successfully.\n\n", validatorPubKey, validatorAddress)
+			n.Stop()
+			fmt.Printf("\n\nSmart contract was succesfully deployed at %s . \n\n", validatorSetContractAddress.String())
 		},
 	}
 	
 	addRunCmdFlags(cmd)
 	addGovernanceCmdFlags(cmd)
-	cmd.Flags().String(ValidatorPubKeyFlag.GetName(), "", OwnerAccountFlag.Usage)
-	cmd.Flags().String(ValidatorAddressFlag.GetName(), "", ValidatorAddressFlag.Usage)
 	
 	return cmd
 }
 
+func deployValidatorSetContract(nodeCfg node.Config, owner common.Address, password string) (common.Address, error) {
+	logger.Info("Deploying ValidatorSet contract...")
 
-func addValidator(nodeCfg node.Config, owner common.Address, password string, pubKey string, validatorAddr common.Address) error {
 	txAuth, err := authy.FindInKeystoreDir(nodeCfg.DbCfg().KeystoreDir(), owner, password)
 	if err != nil {
-		return err
+		return common.Address{}, err
 	}
 
-	instance := governance.NewValidatorSet(nodeCfg.GovernanceCfg().ContractAddress(), nodeCfg.DbCfg().GethIpcPath())
-	return instance.AddValidator(txAuth, pubKey, validatorAddr)
+	address, err := governance.DeployContract(txAuth, nodeCfg.DbCfg().GethIpcPath())
+	if err != nil {
+		return common.Address{}, err
+	}
+	
+	return address, nil
 }
 
-func assertPostAddValidatorState(nodeCfg node.Config, validatorPubKey string, validatorAddress common.Address) {
+
+func assertPostDeployState(nodeCfg node.Config, contractAddress common.Address, owner common.Address) {
 	tracer, err := database.NewTracer(nodeCfg.TracerCfg(), nodeCfg.DbCfg().ChainDbDir(), nodeCfg.DbCfg().GethIpcPath())
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
-
-	tracer.AssertPostAddingValidatorRewarding(nodeCfg.ConsensusCfg().TendermintCfg(), validatorPubKey, validatorAddress)
+	tracer.AssertPersistedValidatorSetContract(contractAddress, owner)
 }

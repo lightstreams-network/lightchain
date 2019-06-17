@@ -36,7 +36,7 @@ const maxTransactionSize = 32768
 // Flow:
 // 		1. BeginBlock
 // 		2. CheckTx
-// 	    3. DeliverTx
+// 		3. DeliverTx
 // 		4. EndBlock
 // 		5. Commit
 // 		6. CheckTx (clean mempool from TXs not included in committed block)
@@ -301,15 +301,15 @@ func (abci *TendermintABCI) ResetBlockState() error {
 // RewardReceiver returns the receiving address based on the selected strategy
 func (abci *TendermintABCI) RewardReceiver() common.Address {
 	if abci.curBlockHeader == nil {
-		abci.logger.Error("Missing block headers");
-		return common.HexToAddress("") 
+		abci.logger.Error("Missing block header");
+		return common.Address{}
 	}
 	
 	pubKeyAddr := crypto.Address(abci.curBlockHeader.GetProposerAddress())
 	address, err := abci.getValidatorAddress(pubKeyAddr.String())
 	if err != nil {
-		abci.logger.Error("Cannot fetch validator rewarded address", "pubkey", pubKeyAddr.String(), "err", err.Error())
-		return common.HexToAddress("")
+		abci.logger.Error(fmt.Sprintf("Cannot fetch validator rewarded address %s (%s)", pubKeyAddr.String(), err.Error()))
+		return common.Address{}
 	}
 	
 	abci.logger.Info("Rewarding Block proposer validator...", "pubkey", pubKeyAddr.String(), "address", address.String())

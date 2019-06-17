@@ -57,7 +57,7 @@ func governanceValidatorSetRemoveCmd() *cobra.Command {
 			}
 			
 			
-			nodeCfg, err := newRunCmdConfig(cmd)
+			nodeCfg, err := loadRunCmdConfig(cmd)
 			if err != nil {
 				logger.Error(err.Error())
 				os.Exit(1)

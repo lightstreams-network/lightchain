@@ -64,7 +64,7 @@ func runCmd() *cobra.Command {
 
 			logger.Info("Launching Lightchain node...")
 
-			nodeCfg, err := newRunCmdConfig(cmd)
+			nodeCfg, err := loadRunCmdConfig(cmd)
 			if err != nil {
 				logger.Error(err.Error())
 				os.Exit(1)
@@ -100,7 +100,7 @@ func runCmd() *cobra.Command {
 	return runCmd
 }
 
-func newRunCmdConfig(cmd *cobra.Command) (node.Config, error){
+func loadRunCmdConfig(cmd *cobra.Command) (node.Config, error){
 	dataDir, _ := cmd.Flags().GetString(DataDirFlag.GetName())
 	shouldTrace, _ := cmd.Flags().GetBool(TraceFlag.Name)
 	rpcListenPort, _ := cmd.Flags().GetUint(ConsensusRpcListenPortFlag.GetName())
@@ -145,16 +145,16 @@ func newRunCmdConfig(cmd *cobra.Command) (node.Config, error){
 		logger.Error(fmt.Errorf("governance config could not be loaded: %v", err).Error())
 		networkId, err := dbCfg.NetworkId()
 		if err != nil {
-			return node.Config{}, nil
+			return node.Config{}, err
 		}
 
 		ntw, err := network.NewNetworkFromId(networkId)
 		if err != nil {
-			return node.Config{}, nil
+			return node.Config{}, err
 		}
 		governanceCfg, err = governance.Init(ntw, dataDir)
 		if err != nil {
-			return node.Config{}, nil
+			return node.Config{}, err
 		}
 	}
 

@@ -54,7 +54,6 @@ func (v ValidatorSet) AddValidator(txAuth authy.Auth, pubKey string, address com
 	if err != nil {
 		return err
 	}
-
 	defer client.Close()
 
 	contractInstance, err := bindings.NewValidatorSet(v.contractAddress, client)
@@ -87,7 +86,6 @@ func (v ValidatorSet) RemoveValidator(txAuth authy.Auth, pubKey string, address 
 	if err != nil {
 		return err
 	}
-
 	defer client.Close()
 
 	contractInstance, err := bindings.NewValidatorSet(v.contractAddress, client)
@@ -120,7 +118,6 @@ func (v ValidatorSet) FetchPubKeySet(address common.Address) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	defer client.Close()
 
 	contractInstance, err := bindings.NewValidatorSet(v.contractAddress, client)

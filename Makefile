@@ -62,5 +62,5 @@ docker-dev: ## Build docker image for lightchain
 
 .PHONY: gen-bindings-governance
 gen-bindings-governance:
-	solc github.com/lightstreams-network/lightchain/=${GOPATH}/src/github.com/lightstreams-network/lightchain/ --abi --bin governance/contracts/ValidatorSet.sol -o governance/compiled/ --overwrite
-	abigen --bin=${GOPATH}/src/github.com/lightstreams-network/lightchain/governance/compiled/ValidatorSet.bin --abi=${GOPATH}/src/github.com/lightstreams-network/lightchain/governance/compiled/ValidatorSet.abi --pkg=bindings --out=${GOPATH}/src/github.com/lightstreams-network/lightchain/governance/bindings/ValidatorSet.go --type=ValidatorSet
+	solc github.com/lightstreams-network/lightchain/=${GOPATH}/src/github.com/lightstreams-network/lightchain/ --abi --bin governance/contracts/ValidatorSet.sol -o governance/build/ --overwrite
+	abigen --bin=${GOPATH}/src/github.com/lightstreams-network/lightchain/governance/build/ValidatorSet.bin --abi=${GOPATH}/src/github.com/lightstreams-network/lightchain/governance/build/ValidatorSet.abi --pkg=bindings --out=${GOPATH}/src/github.com/lightstreams-network/lightchain/governance/bindings/ValidatorSet.go --type=ValidatorSet

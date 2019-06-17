@@ -321,7 +321,7 @@ func (t EthDBTracer) AssertPostRemovalValidatorRewarding(tmtCfg tmtConfig.Config
 		return
 	}
 
-	emptyAddress := common.HexToAddress("")
+	emptyAddress := common.Address{}
 	if block.Coinbase().String() == emptyAddress.String() {
 		t.Logger.Infow(
 			"Correct rewarded address for block proposer validator",

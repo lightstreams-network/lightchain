@@ -24,7 +24,7 @@ func governanceValidatorSetListCmd() *cobra.Command {
 			log.SetupLogger(ethLog.LvlInfo)
 			logger.Info("Simulating Lightchain node activity to verify state and collect stats...")
 			
-			nodeCfg, err := newRunCmdConfig(cmd)
+			nodeCfg, err := loadRunCmdConfig(cmd)
 			if err != nil {
 				logger.Error(err.Error())
 				os.Exit(1)
