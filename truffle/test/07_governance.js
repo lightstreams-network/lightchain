@@ -16,9 +16,9 @@ const ValidatorSet = artifacts.require("ValidatorSet");
 describe('Governance', () => {
   let ROOT_ACCOUNT = extractEnvAccountAndPwd(process.env.NETWORK).from;
   
-  let VALIDATOR1_KEY = "012C7DB9A70AA4940014A0CC279BFD18D8E1E224";
-  let VALIDATOR2_KEY = "012C7DB9A70AA4940014A0CC279BFD18D8E1E225";
-  let VALIDATOR3_KEY = "012C7DB9A70AA4940014A0CC279BFD18D8E1E226";
+  let VALIDATOR1_KEY = "0x012C7DB9A70AA4940014A0CC279BFD18D8E1E224";
+  let VALIDATOR2_KEY = "0x012C7DB9A70AA4940014A0CC279BFD18D8E1E225";
+  let VALIDATOR3_KEY = "0x012C7DB9A70AA4940014A0CC279BFD18D8E1E226";
   
   let VALIDATOR1_ADDR;
   let VALIDATOR2_ADDR;
@@ -35,7 +35,7 @@ describe('Governance', () => {
   it("should add a validator ", async () => {
     const instance = await ValidatorSet.deployed();
 
-    const tx = await instance.addValidator(VALIDATOR1_KEY, VALIDATOR1_ADDR);
+    const tx = await instance.addValidator(web3.utils.hexToBytes(VALIDATOR1_KEY), VALIDATOR1_ADDR);
     assert.equal(tx.receipt.status, true, "successful TX status expected");
     
     const validatorSetLengthBN = await instance.validatorSetSize.call();
