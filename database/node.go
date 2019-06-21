@@ -59,7 +59,7 @@ func NewNode(cfg *Config, consensusAPI conAPI.API, registry *prometheus.Registry
 	}
 
 	logger.Info("Validator set loaded from contract", "address", validatorSetAddress.String())
-	validatorSet := governance.NewValidatorSet(validatorSetAddress, cfg.GethIpcPath())
+	validatorSet := governance.NewValidatorSet(validatorSetAddress)
 
 	logger.Debug("Binding ethereum events to rpc client...")
 	err = ethereum.Register(func(ctx *ethNode.ServiceContext) (ethNode.Service, error) {

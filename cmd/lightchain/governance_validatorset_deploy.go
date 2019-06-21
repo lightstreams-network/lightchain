@@ -14,6 +14,7 @@ import (
 	"github.com/lightstreams-network/lightchain/governance"
 	"time"
 	"github.com/lightstreams-network/lightchain/database"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 
@@ -96,7 +97,13 @@ func deployValidatorSetContract(nodeCfg node.Config, owner common.Address, passw
 		return common.Address{}, err
 	}
 
-	address, err := governance.DeployContract(txAuth, nodeCfg.DbCfg().GethIpcPath())
+	client, err := ethclient.Dial(nodeCfg.DbCfg().GethIpcPath())
+	if err != nil {
+		return common.Address{}, err
+	}
+	defer client.Close()
+
+	address, err := governance.DeployContract(client, txAuth)
 	if err != nil {
 		return common.Address{}, err
 	}

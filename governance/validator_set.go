@@ -5,34 +5,27 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/lightstreams-network/lightchain/authy"
-	
+
 	"github.com/lightstreams-network/lightchain/governance/bindings"
 	"github.com/lightstreams-network/lightchain/database/txclient"
 	"context"
 	"math/big"
+	"encoding/hex"
 )
 
 const deployContractGasLimit = 2000000
 
 type ValidatorSet struct {
 	contractAddress common.Address
-	gethIpc         string
 }
 
-func NewValidatorSet(contractAddress common.Address, gethIpc string) ValidatorSet {
+func NewValidatorSet(contractAddress common.Address) ValidatorSet {
 	return ValidatorSet{
 		contractAddress: contractAddress,
-		gethIpc:         gethIpc,
 	}
 }
 
-func DeployContract(txAuth authy.Auth, gethIpc string) (common.Address, error) {
-	client, err := ethclient.Dial(gethIpc)
-	if err != nil {
-		return common.Address{}, err
-	}
-	defer client.Close()
-	
+func DeployContract(client *ethclient.Client, txAuth authy.Auth) (common.Address, error) {
 	ctx := context.Background()
 	cfg := txclient.NewTxDefaultConfig(deployContractGasLimit)
 
@@ -49,13 +42,7 @@ func DeployContract(txAuth authy.Auth, gethIpc string) (common.Address, error) {
 	return addr, nil
 }
 
-func (v ValidatorSet) AddValidator(txAuth authy.Auth, pubKey string, address common.Address) (error) {
-	client, err := ethclient.Dial(v.gethIpc)
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-
+func (v ValidatorSet) AddValidator(client *ethclient.Client, txAuth authy.Auth, pubKey string, address common.Address) (error) {
 	contractInstance, err := bindings.NewValidatorSet(v.contractAddress, client)
 	if err != nil {
 		return err
@@ -68,11 +55,11 @@ func (v ValidatorSet) AddValidator(txAuth authy.Auth, pubKey string, address com
 		return err
 	}
 
-	tx, err := contractInstance.AddValidator(txOps, pubKey, address)
+	tx, err := contractInstance.AddValidator(txOps, convertToBytes(pubKey), address)
 	if err != nil {
 		return err
 	}
-	
+
 	_, err = txclient.FetchReceipt(client, tx, cfg)
 	if err != nil {
 		return err
@@ -81,13 +68,7 @@ func (v ValidatorSet) AddValidator(txAuth authy.Auth, pubKey string, address com
 	return nil
 }
 
-func (v ValidatorSet) RemoveValidator(txAuth authy.Auth, pubKey string, address common.Address) (error) {
-	client, err := ethclient.Dial(v.gethIpc)
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-
+func (v ValidatorSet) RemoveValidator(client *ethclient.Client, txAuth authy.Auth, pubKey string, address common.Address) (error) {
 	contractInstance, err := bindings.NewValidatorSet(v.contractAddress, client)
 	if err != nil {
 		return err
@@ -100,11 +81,11 @@ func (v ValidatorSet) RemoveValidator(txAuth authy.Auth, pubKey string, address 
 		return err
 	}
 
-	tx, err := contractInstance.RemoveValidator(txOps, pubKey, address)
+	tx, err := contractInstance.RemoveValidator(txOps, convertToBytes(pubKey), address)
 	if err != nil {
 		return err
 	}
-	
+
 	_, err = txclient.FetchReceipt(client, tx, cfg)
 	if err != nil {
 		return err
@@ -113,13 +94,7 @@ func (v ValidatorSet) RemoveValidator(txAuth authy.Auth, pubKey string, address 
 	return nil
 }
 
-func (v ValidatorSet) FetchPubKeySet(address common.Address) ([]string, error) {
-	client, err := ethclient.Dial(v.gethIpc)
-	if err != nil {
-		return nil, err
-	}
-	defer client.Close()
-
+func (v ValidatorSet) FetchPubKeySet(client *ethclient.Client, address common.Address) ([]string, error) {
 	contractInstance, err := bindings.NewValidatorSet(v.contractAddress, client)
 	if err != nil {
 		return nil, err
@@ -129,46 +104,34 @@ func (v ValidatorSet) FetchPubKeySet(address common.Address) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	validatorSetSize :=int(validatorSetSizeBN.Int64())
+	validatorSetSize := int(validatorSetSizeBN.Int64())
 	var validatorSet []string
 	for i := 0; i < validatorSetSize; i++ {
 		validatorPubKey, err := contractInstance.ValidatorPubKey(&bind.CallOpts{}, big.NewInt(int64(i)))
 		if err != nil {
 			return nil, err
 		}
-		validatorSet = append(validatorSet, validatorPubKey)
+		validatorSet = append(validatorSet, hex.EncodeToString(validatorPubKey[:]))
 	}
 
 	return validatorSet, nil
 }
 
-func (v ValidatorSet) ValidatorAddress(pubKey string) (common.Address, error) {
+func (v ValidatorSet) ValidatorAddress(client *ethclient.Client, pubKey string) (common.Address, error) {
 	if v.contractAddress.String() == common.HexToAddress("0x0").String() {
 		return common.Address{}, nil
 	}
-
-	client, err := ethclient.Dial(v.gethIpc)
-	if err != nil {
-		return common.Address{}, err
-	}
-	defer client.Close()
 
 	contractInstance, err := bindings.NewValidatorSetCaller(v.contractAddress, client)
 	if err != nil {
 		return common.Address{}, err
 	}
 
-	address, err := contractInstance.ValidatorAddress(&bind.CallOpts{}, pubKey)
+	address, err := contractInstance.ValidatorAddress(&bind.CallOpts{}, convertToBytes(pubKey))
 	return address, err
 }
 
-func (v ValidatorSet) IsOwner(owner common.Address) (bool, error) {
-	client, err := ethclient.Dial(v.gethIpc)
-	if err != nil {
-		return false, err
-	}
-	defer client.Close()
-
+func (v ValidatorSet) IsOwner(client *ethclient.Client, owner common.Address) (bool, error) {
 	contractInstance, err := bindings.NewValidatorSetCaller(v.contractAddress, client)
 	if err != nil {
 		return false, err
@@ -177,6 +140,12 @@ func (v ValidatorSet) IsOwner(owner common.Address) (bool, error) {
 	isOwner, err := contractInstance.IsOwner(&bind.CallOpts{
 		From: owner,
 	})
-	
+
 	return isOwner, err
+}
+
+func convertToBytes(pubKey string) [20]byte {
+	var pubKeyBytes [20]byte
+	copy(pubKeyBytes[:], pubKey)
+	return pubKeyBytes
 }

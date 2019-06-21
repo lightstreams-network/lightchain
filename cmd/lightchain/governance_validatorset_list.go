@@ -10,6 +10,7 @@ import (
 	ethLog "github.com/ethereum/go-ethereum/log"
 	"github.com/lightstreams-network/lightchain/governance"
 	"fmt"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 
@@ -70,7 +71,12 @@ func governanceValidatorSetListCmd() *cobra.Command {
 
 
 func listValidatorSet(nodeCfg node.Config, validatorAddr common.Address) ([]string, error) {
-
-	instance := governance.NewValidatorSet(nodeCfg.GovernanceCfg().ContractAddress(), nodeCfg.DbCfg().GethIpcPath())
-	return instance.FetchPubKeySet(validatorAddr)
+	client, err := ethclient.Dial(nodeCfg.DbCfg().GethIpcPath())
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+	
+	instance := governance.NewValidatorSet(nodeCfg.GovernanceCfg().ContractAddress())
+	return instance.FetchPubKeySet(client, validatorAddr)
 }

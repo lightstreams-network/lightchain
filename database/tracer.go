@@ -18,6 +18,7 @@ import (
 	"github.com/lightstreams-network/lightchain/database/web3"
 	"github.com/lightstreams-network/lightchain/governance"
 	stdtracer "github.com/lightstreams-network/lightchain/tracer"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 // Tracer is used to trace and assert behaviour of lightchain `database` pkg.
@@ -220,8 +221,18 @@ func (t EthDBTracer) AssertPersistedValidatorSetContract(contractAddress common.
 		"address", contractAddress.String(),
 		"owner", ownerAddress.String())
 
-	validatorSetContract := governance.NewValidatorSet(contractAddress, t.getIpcPath)
-	isOwner, err := validatorSetContract.IsOwner(ownerAddress)
+	client, err := ethclient.Dial(t.getIpcPath)
+	if err != nil {
+		t.Logger.Errorw(
+			"cannot connect to geth",
+			"ipc", t.getIpcPath,
+		)
+		return
+	}
+	defer client.Close()
+
+	validatorSetContract := governance.NewValidatorSet(contractAddress)
+	isOwner, err := validatorSetContract.IsOwner(client, ownerAddress)
 	if err != nil {
 		t.Logger.Errorw(
 			"error happened",
@@ -324,13 +335,13 @@ func (t EthDBTracer) AssertPostRemovalValidatorRewarding(tmtCfg tmtConfig.Config
 	emptyAddress := common.Address{}
 	if block.Coinbase().String() == emptyAddress.String() {
 		t.Logger.Infow(
-			"Correct rewarded address for block proposer validator",
+			"Empty rewarded address for block proposer validator",
 			"block", block.Number(),
 			"address", emptyAddress.String(),
 		);
 	} else {
 		t.Logger.Errorw(
-			"Incorrect rewarded address for block proposer validator",
+			"Not empty rewarded address for block proposer validator",
 			"block", block.Number(),
 			"expected value", emptyAddress.String(),
 			"actual value", block.Coinbase().String(),

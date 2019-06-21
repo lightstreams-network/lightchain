@@ -20,6 +20,7 @@ import (
 	"github.com/lightstreams-network/lightchain/consensus/metrics"
 	"github.com/lightstreams-network/lightchain/log"
 	"github.com/tendermint/tendermint/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 // maxTransactionSize is 32KB in order to prevent DOS attacks
@@ -56,7 +57,7 @@ type TendermintABCI struct {
 
 	getCurrentDBState   func() (*state.StateDB, error)
 	getCurrentBlock     func() *ethTypes.Block
-	getValidatorAddress func(pubKey string) (common.Address, error)
+	getValidatorAddress func(client *ethclient.Client, pubKey string) (common.Address, error)
 }
 
 var _ tmtAbciTypes.Application = &TendermintABCI{}
@@ -72,7 +73,7 @@ func NewTendermintABCI(db *database.Database, ethRPCClient *rpc.Client, metrics 
 		ethRPCClient:        ethRPCClient,
 		getCurrentDBState:   db.Ethereum().BlockChain().State,
 		getCurrentBlock:     db.Ethereum().BlockChain().CurrentBlock,
-		getValidatorAddress: db.Validators().ValidatorAddress,
+		getValidatorAddress: db.ValidatorSet().ValidatorAddress,
 		checkTxState:        txState.Copy(),
 		logger:              log.NewLogger().With("engine", "consensus", "module", "ABCI"),
 		metrics:             metrics,
@@ -91,7 +92,7 @@ func NewTendermintABCI(db *database.Database, ethRPCClient *rpc.Client, metrics 
 // Can be used to define validators set and consensus params on the application side.
 //
 // Response:
-//     - If `ResponseInitChain.Validators` is empty, the initial validator set will be the `RequestInitChain.Validators`
+//     - If `ResponseInitChain.ValidatorSet` is empty, the initial validator set will be the `RequestInitChain.ValidatorSet`
 func (abci *TendermintABCI) InitChain(req tmtAbciTypes.RequestInitChain) tmtAbciTypes.ResponseInitChain {
 	abci.logger.Debug("Initializing chain", "chain_id", req.ChainId)
 
@@ -306,7 +307,8 @@ func (abci *TendermintABCI) RewardReceiver() common.Address {
 	}
 	
 	pubKeyAddr := crypto.Address(abci.curBlockHeader.GetProposerAddress())
-	address, err := abci.getValidatorAddress(pubKeyAddr.String())
+	client := ethclient.NewClient(abci.ethRPCClient)
+	address, err := abci.getValidatorAddress(client, pubKeyAddr.String())
 	if err != nil {
 		abci.logger.Error(fmt.Sprintf("Cannot fetch validator rewarded address %s (%s)", pubKeyAddr.String(), err.Error()))
 		return common.Address{}

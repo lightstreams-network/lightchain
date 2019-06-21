@@ -14,6 +14,7 @@ import (
 	"github.com/lightstreams-network/lightchain/fs"
 	"github.com/lightstreams-network/lightchain/governance"
 	"github.com/lightstreams-network/lightchain/database"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 
@@ -109,8 +110,14 @@ func removeValidator(nodeCfg node.Config, owner common.Address, password string,
 		return err
 	}
 
-	instance := governance.NewValidatorSet(nodeCfg.GovernanceCfg().ContractAddress(), nodeCfg.DbCfg().GethIpcPath())
-	return instance.RemoveValidator(txAuth, pubKey, validatorAddr)
+	client, err := ethclient.Dial(nodeCfg.DbCfg().GethIpcPath())
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+	
+	instance := governance.NewValidatorSet(nodeCfg.GovernanceCfg().ContractAddress())
+	return instance.RemoveValidator(client, txAuth, pubKey, validatorAddr)
 }
 
 func assertPostRemoveValidatorState(nodeCfg node.Config, validatorPubKey string, validatorAddress common.Address) {

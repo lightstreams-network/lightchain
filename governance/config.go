@@ -6,15 +6,17 @@ import (
 
 type Config struct {
 	contractAddress common.Address
+	gethIpc         string
 }
 
 type jsonConfig struct {
 	ContractAddress string `json:"contract_address"`
 }
 
-func NewConfig(address common.Address) (Config) {
+func NewConfig(address common.Address, gethIpc string) (Config) {
 	return Config{
 		contractAddress: address,
+		gethIpc: gethIpc,
 	}
 }
 

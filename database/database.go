@@ -69,7 +69,7 @@ func (db *Database) Ethereum() *eth.Ethereum {
 	return db.eth
 }
 
-func (db *Database) Validators() governance.ValidatorSet {
+func (db *Database) ValidatorSet() governance.ValidatorSet {
 	return db.validatorSet
 }
 

@@ -14,6 +14,7 @@ import (
 	"github.com/lightstreams-network/lightchain/governance"
 	"github.com/lightstreams-network/lightchain/database"
 	"time"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 func governanceValidatorSetAddCmd() *cobra.Command {
@@ -107,8 +108,14 @@ func addValidator(nodeCfg node.Config, owner common.Address, password string, pu
 		return err
 	}
 
-	instance := governance.NewValidatorSet(nodeCfg.GovernanceCfg().ContractAddress(), nodeCfg.DbCfg().GethIpcPath())
-	return instance.AddValidator(txAuth, pubKey, validatorAddr)
+	client, err := ethclient.Dial(nodeCfg.DbCfg().GethIpcPath())
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	instance := governance.NewValidatorSet(nodeCfg.GovernanceCfg().ContractAddress())
+	return instance.AddValidator(client, txAuth, pubKey, validatorAddr)
 }
 
 func assertPostAddValidatorState(nodeCfg node.Config, validatorPubKey string, validatorAddress common.Address) {
