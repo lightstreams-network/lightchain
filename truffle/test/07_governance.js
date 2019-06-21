@@ -16,9 +16,9 @@ const ValidatorSet = artifacts.require("ValidatorSet");
 describe('Governance', () => {
   let ROOT_ACCOUNT = extractEnvAccountAndPwd(process.env.NETWORK).from;
   
-  let VALIDATOR1_KEY = "0x012C7DB9A70AA4940014A0CC279BFD18D8E1E224";
-  let VALIDATOR2_KEY = "0x012C7DB9A70AA4940014A0CC279BFD18D8E1E225";
-  let VALIDATOR3_KEY = "0x012C7DB9A70AA4940014A0CC279BFD18D8E1E226";
+  let VALIDATOR1_KEY = "0x012C7DB9A70AA4940014A0CC279BFD18D8E1E224".toLowerCase();
+  let VALIDATOR2_KEY = "0x012C7DB9A70AA4940014A0CC279BFD18D8E1E225".toLowerCase();
+  let VALIDATOR3_KEY = "0x012C7DB9A70AA4940014A0CC279BFD18D8E1E226".toLowerCase();
   
   let VALIDATOR1_ADDR;
   let VALIDATOR2_ADDR;
@@ -35,7 +35,7 @@ describe('Governance', () => {
   it("should add a validator ", async () => {
     const instance = await ValidatorSet.deployed();
 
-    const tx = await instance.addValidator(web3.utils.hexToBytes(VALIDATOR1_KEY), VALIDATOR1_ADDR);
+    const tx = await instance.addValidator(VALIDATOR1_KEY, VALIDATOR1_ADDR);
     assert.equal(tx.receipt.status, true, "successful TX status expected");
     
     const validatorSetLengthBN = await instance.validatorSetSize.call();
@@ -68,8 +68,9 @@ describe('Governance', () => {
     const validatorPubKeys = [];
     const validatorSetLengthBN = await instance.validatorSetSize.call();
     const validatorSetLength = parseInt(validatorSetLengthBN.toString());
+
     for(let i=0; i < validatorSetLength; i++) {
-      const pubKey = await instance._validatorPubKeys(i, {});
+      const pubKey = await instance.validatorPubKey.call(i, {});
       validatorPubKeys.push(pubKey);
     }
 
@@ -79,13 +80,14 @@ describe('Governance', () => {
   it("should remove the first validator", async () => {
     const instance = await ValidatorSet.deployed();
 
-    const tx = await instance.removeValidator(VALIDATOR1_KEY, VALIDATOR1_ADDR);
+    await instance.removeValidator(VALIDATOR1_KEY, VALIDATOR1_ADDR);
 
     const validatorPubKeys = [];
     const validatorAmountBN = await instance.validatorSetSize.call();
     const validatorAmount = parseInt(validatorAmountBN.toString());
+
     for(let i=0; i < validatorAmount; i++) {
-      const pubKey = await instance._validatorPubKeys(i, {});
+      const pubKey = await instance.validatorPubKey.call(i, {});
       validatorPubKeys.push(pubKey);
     }
 
@@ -112,7 +114,7 @@ describe('Governance', () => {
     const validatorSetLengthBN = await instance.validatorSetSize.call();
     const validatorSetLength = parseInt(validatorSetLengthBN.toString());
     for(let i=0; i < validatorSetLength; i++) {
-      const pubKey = await instance._validatorPubKeys(i, {});
+      const pubKey = await instance.validatorPubKey.call(i, {});
       validatorPubKeys.push(pubKey);
     }
 

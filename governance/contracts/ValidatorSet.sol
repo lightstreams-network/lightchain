@@ -4,43 +4,38 @@ import "./Ownable.sol";
 
 contract ValidatorSet is Ownable {
 
-  mapping(bytes32 => address) internal _vAccAddress;
-  string[] public _vPubKeyAddresses;
+  mapping(bytes20 => address) internal _vAccountAddresses;
+  bytes20[] public _vPubKeyAddresses;
 
   bool public _freeze = false;
   address public _nextVersion;
 
-  event ValidatorAdded(bytes32 key, address vAddress, string vPubKeyAddress);
-  event ValidatorRemoved(bytes32 key, address vAddress, string vPubKeyAddress);
-  event SetNextVersion(address vAddress);
+  event ValidatorAdded(bytes20 vPubKeyAddress, address vAddress);
+  event ValidatorRemoved(bytes20 vPubKeyAddress, address vAddress);
+  event SetNextVersion(address nAddress);
   event Freeze();
 
-  function addValidator(string memory vPubKeyAddress, address vAddress) onlyOwner public {
+  function addValidator(bytes20 vPubKeyAddress, address vAddress) onlyOwner public {
     require(_freeze == false);
     require(vAddress != address(0x0));
-    require(bytes(vPubKeyAddress).length == 40);
+    require(_vAccountAddresses[vPubKeyAddress] == address(0x0));
 
-    bytes32 _vItemKey = calculateValidatorItemKey(vPubKeyAddress);
-    require(_vAccAddress[_vItemKey] == address(0x0));
-    
-    _vAccAddress[_vItemKey] = vAddress;
+    _vAccountAddresses[vPubKeyAddress] = vAddress;
     _vPubKeyAddresses.push(vPubKeyAddress);
 
-    emit ValidatorAdded(_vItemKey, vAddress, vPubKeyAddress);
+    emit ValidatorAdded(vPubKeyAddress, vAddress);
   }
   
-  function removeValidator(string memory vPubKeyAddress, address vAddress) onlyOwner public {
+  function removeValidator(bytes20 vPubKeyAddress, address vAddress) onlyOwner public {
     require(_freeze == false);
     require(vAddress != address(0x0));
-    require(bytes(vPubKeyAddress).length == 40);
+    require(_vAccountAddresses[vPubKeyAddress] == vAddress);
 
-    bytes32 vItemKey = calculateValidatorItemKey(vPubKeyAddress);
-    require(_vAccAddress[vItemKey] == vAddress);
+    _vAccountAddresses[vPubKeyAddress] = address(0x0);
 
-    _vAccAddress[vItemKey] = address(0x0);
     bool _foundDeletedItem = false;
     for (uint i = 0; i < _vPubKeyAddresses.length-1; i++) {
-      if (calculateValidatorItemKey(_vPubKeyAddresses[i]) == vItemKey) {
+      if (_vPubKeyAddresses[i] == vPubKeyAddress) {
         _foundDeletedItem = true;
       }
       if (_foundDeletedItem) {
@@ -50,26 +45,21 @@ contract ValidatorSet is Ownable {
 
     delete _vPubKeyAddresses[uint(_vPubKeyAddresses.length-1)];
     _vPubKeyAddresses.length--;
-    emit ValidatorRemoved(vItemKey, vAddress, vPubKeyAddress);
+
+    emit ValidatorRemoved(vPubKeyAddress, vAddress);
   }
   
-  function validatorAddress(string memory vPubKeyAddress) public view returns (address) {
-    bytes32 vItemKey = calculateValidatorItemKey(vPubKeyAddress);
-    return _vAccAddress[vItemKey];
+  function validatorAddress(bytes20 vPubKeyAddress) public view returns (address) {
+    return _vAccountAddresses[vPubKeyAddress];
   }
   
-  function validatorPubKey(uint index) public view returns (string memory) {
+  function validatorPubKey(uint index) public view returns (bytes20) {
     return _vPubKeyAddresses[index];
   }
 
   function setFreezeStatus(bool value) onlyOwner public {
     _freeze = value;
     emit Freeze();
-  }
-  
-  
-  function calculateValidatorItemKey(string memory vPubKeyAddress) pure internal returns (bytes32) {
-    return sha256(bytes(vPubKeyAddress));
   }
 
   function validatorSetSize() public view returns (uint) {
