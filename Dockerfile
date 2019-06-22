@@ -2,7 +2,10 @@ FROM golang:1.10-stretch
 
 MAINTAINER Gabriel Garrido
 
-RUN wget "https://s3.eu-central-1.amazonaws.com/lightstreams-public/lightchain/latest/lightchain-linux-amd64" -O "/usr/bin/lightchain"
+RUN apt update
+RUN apt install rsync -y
+
+COPY build/lightchain /usr/bin/lightchain
 RUN chmod a+x /usr/bin/lightchain
 
 COPY ./scripts/docker.sh /root/entrypoint.sh
