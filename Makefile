@@ -52,6 +52,7 @@ get_vendor_deps: check-tools ## Download dependencies
 .PHONY: docker
 docker: ## Build docker image for lightchain
 	@echo "Build docker image"
+	go build -o ./build/lightchain ./cmd/lightchain
 	docker build --no-cache -t lightchain:latest -f ./Dockerfile .
 
 .PHONY: docker-dev

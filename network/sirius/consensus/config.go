@@ -140,13 +140,13 @@ max_num_outbound_peers = 10
 flush_throttle_timeout = "100ms"
 
 # Maximum size of a message packet payload, in bytes
-max_packet_msg_payload_size = 3072
+max_packet_msg_payload_size = 1024
 
 # Rate at which packets can be sent, in bytes/second (Default 512000)
-send_rate = 1024000
+send_rate = 51200000
 
 # Rate at which packets can be received, in bytes/second (Default 512000)
-recv_rate = 2560000
+recv_rate = 51200000
 
 # Set true to enable the peer-exchange reactor
 pex = true
