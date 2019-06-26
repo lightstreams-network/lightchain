@@ -63,7 +63,7 @@ func (es *EthState) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDel
 // Triggered by ABCI::Commit(), to persist changes introduced in latest block.
 //
 // Returns the persisted Block.
-func (es *EthState) Persist(receiver common.Address) (ethTypes.Block, error) {
+func (es *EthState) Persist() (ethTypes.Block, error) {
 	es.mtx.Lock()
 	defer es.mtx.Unlock()
 
@@ -72,7 +72,7 @@ func (es *EthState) Persist(receiver common.Address) (ethTypes.Block, error) {
 		return ethTypes.Block{}, err
 	}
 
-	err = es.resetBlockState(receiver)
+	err = es.resetBlockState()
 	if err != nil {
 		return ethTypes.Block{}, err
 	}
@@ -84,10 +84,10 @@ func (es *EthState) ResetBlockState(receiver common.Address) error {
 	es.mtx.Lock()
 	defer es.mtx.Unlock()
 
-	return es.resetBlockState(receiver)
+	return es.resetBlockState()
 }
 
-func (es *EthState) resetBlockState(receiver common.Address) error {
+func (es *EthState) resetBlockState() error {
 	blockchain := es.ethereum.BlockChain()
 	bcState, err := blockchain.State()
 	if err != nil {
@@ -95,7 +95,7 @@ func (es *EthState) resetBlockState(receiver common.Address) error {
 	}
 
 	currentBlock := blockchain.CurrentBlock()
-	ethHeader := newBlockHeader(receiver, currentBlock)
+	ethHeader := newBlockHeader(common.Address{}, currentBlock)
 
 	es.blockState = blockState{
 		header:       ethHeader,
@@ -108,11 +108,11 @@ func (es *EthState) resetBlockState(receiver common.Address) error {
 	return nil
 }
 
-func (es *EthState) UpdateBlockState(config *params.ChainConfig, parentTime uint64, numTx uint64) {
+func (es *EthState) UpdateBlockState(config *params.ChainConfig, parentTime uint64, numTx uint64, receiver common.Address) {
 	es.mtx.Lock()
 	defer es.mtx.Unlock()
 
-	es.blockState.updateBlockState(config, parentTime, numTx)
+	es.blockState.updateBlockState(config, parentTime, numTx, receiver)
 }
 
 func (es *EthState) GasLimit() *core.GasPool {

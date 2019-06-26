@@ -89,13 +89,12 @@ func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDel
 // Persist finalises the current block and writes it to disk.
 //
 // Returns the persisted Block.
-func (db *Database) Persist(receiver common.Address) (ethTypes.Block, error) {
-	db.ethState.blockState.header.Coinbase = receiver
+func (db *Database) Persist() (ethTypes.Block, error) {
 	db.logger.Info("Persisting DB Block", "data", db.ethState.blockState)
 	db.metrics.PersistedTxsTotal.Add(float64(len(db.ethState.blockState.transactions)))
 	db.metrics.ChaindbHeight.Set(float64(db.ethState.blockState.header.Number.Uint64()))
 
-	return db.ethState.Persist(receiver)
+	return db.ethState.Persist()
 }
 
 // ResetBlockState resets the in-memory block's processing state.
@@ -105,12 +104,13 @@ func (db *Database) ResetBlockState(receiver common.Address) error {
 }
 
 // UpdateBlockState uses the tendermint header to update the eth header.
-func (db *Database) UpdateBlockState(tmHeader *tmtAbciTypes.Header) {
+func (db *Database) UpdateBlockState(tmHeader *tmtAbciTypes.Header, receiver common.Address) {
 	db.logger.Debug("Updating DB BlockState")
 	db.ethState.UpdateBlockState(
 		db.eth.APIBackend.ChainConfig(),
 		uint64(tmHeader.Time.Unix()),
 		uint64(tmHeader.GetNumTxs()),
+		receiver,
 	)
 }
 

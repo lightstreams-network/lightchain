@@ -53,11 +53,10 @@ type TendermintABCI struct {
 
 	logger         tmtLog.Logger
 	metrics        metrics.Metrics
-	curBlockHeader *tmtAbciTypes.Header
 
 	getCurrentDBState   func() (*state.StateDB, error)
 	getCurrentBlock     func() *ethTypes.Block
-	getValidatorAddress func(client *ethclient.Client, pubKey string) (common.Address, error)
+	getValidatorAddress func(client *ethclient.Client, proposer crypto.Address) (common.Address, error)
 }
 
 var _ tmtAbciTypes.Application = &TendermintABCI{}
@@ -109,8 +108,8 @@ func (abci *TendermintABCI) InitChain(req tmtAbciTypes.RequestInitChain) tmtAbci
 // 		- Optional Key-Value tags for filtering and indexing
 func (abci *TendermintABCI) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAbciTypes.ResponseBeginBlock {
 	abci.logger.Debug("Beginning new block", "hash", req.Hash)
-	abci.db.UpdateBlockState(&req.Header)
-	abci.curBlockHeader = &req.Header
+	receiver := abci.RewardReceiver(req.Header.GetProposerAddress())
+	abci.db.UpdateBlockState(&req.Header, receiver)
 
 	return tmtAbciTypes.ResponseBeginBlock{}
 }
@@ -275,7 +274,7 @@ func (abci *TendermintABCI) EndBlock(req tmtAbciTypes.RequestEndBlock) tmtAbciTy
 func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
 	abci.metrics.CommitBlockTotal.Add(1)
 	
-	block, err := abci.db.Persist(abci.RewardReceiver())
+	block, err := abci.db.Persist()
 	if err != nil {
 		abci.logger.Error("Error getting latest database state", "err", err)
 		abci.metrics.CommitErrBlockTotal.Add(1, "UNABLE_TO_PERSIST")
@@ -296,26 +295,19 @@ func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
 
 // ResetBlockState resets the in-memory block's processing state.
 func (abci *TendermintABCI) ResetBlockState() error {
-	return abci.db.ResetBlockState(abci.RewardReceiver())
+	return abci.db.ResetBlockState(common.Address{})
 }
 
 // RewardReceiver returns the receiving address based on the selected strategy
-func (abci *TendermintABCI) RewardReceiver() common.Address {
-	if abci.curBlockHeader == nil {
-		abci.logger.Error("Missing block header");
-		return common.Address{}
-	}
-	
-	pubKeyAddr := crypto.Address(abci.curBlockHeader.GetProposerAddress())
+func (abci *TendermintABCI) RewardReceiver(proposer crypto.Address) common.Address {
 	client := ethclient.NewClient(abci.ethRPCClient)
-	address, err := abci.getValidatorAddress(client, pubKeyAddr.String())
+	address, err := abci.getValidatorAddress(client, proposer)
 	if err != nil {
-		abci.logger.Error(fmt.Sprintf("Cannot fetch validator rewarded address %s (%s)", pubKeyAddr.String(), err.Error()))
+		abci.logger.Error(fmt.Sprintf("Cannot fetch validator rewarded address %s (%s)", proposer.String(), err.Error()))
 		return common.Address{}
 	}
 	
-	abci.logger.Info("Rewarding Block proposer validator...", "pubkey", pubKeyAddr.String(), "address", address.String())
-
+	abci.logger.Info("Rewarding Block proposer validator...", "pubkey", proposer.String(), "address", address.String())
 	return address
 }
 

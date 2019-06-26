@@ -11,6 +11,7 @@ import (
 	"context"
 	"math/big"
 	"encoding/hex"
+	"github.com/tendermint/tendermint/crypto"
 )
 
 const deployContractGasLimit = 2000000
@@ -117,7 +118,7 @@ func (v ValidatorSet) FetchPubKeySet(client *ethclient.Client, address common.Ad
 	return validatorSet, nil
 }
 
-func (v ValidatorSet) ValidatorAddress(client *ethclient.Client, pubKey string) (common.Address, error) {
+func (v ValidatorSet) ValidatorAddress(client *ethclient.Client, proposer crypto.Address) (common.Address, error) {
 	if v.contractAddress.String() == common.HexToAddress("0x0").String() {
 		return common.Address{}, nil
 	}
@@ -127,7 +128,7 @@ func (v ValidatorSet) ValidatorAddress(client *ethclient.Client, pubKey string) 
 		return common.Address{}, err
 	}
 
-	address, err := contractInstance.ValidatorAddress(&bind.CallOpts{}, convertToBytes(pubKey))
+	address, err := contractInstance.ValidatorAddress(&bind.CallOpts{}, convertToBytes(proposer.String()))
 	return address, err
 }
 
