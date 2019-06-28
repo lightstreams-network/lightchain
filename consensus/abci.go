@@ -16,6 +16,7 @@ import (
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
+	"time"
 )
 
 // maxTransactionSize is 32KB in order to prevent DOS attacks
@@ -97,11 +98,24 @@ func (abci *TendermintABCI) InitChain(req tmtAbciTypes.RequestInitChain) tmtAbci
 // for the validators.
 //
 // Response:
-//		- Optional Key-Value tags for filtering and indexing
+// 		- Optional Key-Value tags for filtering and indexing
 func (abci *TendermintABCI) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAbciTypes.ResponseBeginBlock {
-	abci.logger.Debug("Beginning new block", "hash", req.Hash)
-	abci.db.UpdateBlockState(&req.Header)
+	abci.logger.Debug("Beginning new block", "hash", req.Hash, "height", req.Header.Height)
+	parentBlock := abci.getCurrentBlock()
 
+	// IMPORTANT: According to Tendermint documentation and based on the consensus setup made for our network
+	// two consecutive blocks cannot generated less than one second apart. BUT we identify an issue on that assumption
+	// and reported here https://github.com/tendermint/tendermint/issues/3755. Therefore we implemented this mitigation code
+	// to prevent ethereum headers to be invalid. Learn more in https://github.com/lightstreams-network/lightchain/issues/186
+	if uint64(req.Header.Time.Unix()) <= parentBlock.Time() {
+		abci.metrics.ReplacedBlockTimeTotal.Add(1)
+		nextBlockTime := time.Unix(int64(parentBlock.Time() + 1), 0)
+		abci.logger.Error(fmt.Sprintf("Invalid consensus BlockTime. Replacing block time %d...", req.Header.Height), 
+			"original", req.Header.Time.Unix(), "replaced", nextBlockTime.Unix())
+		req.Header.Time = nextBlockTime
+	}
+	
+	abci.db.UpdateBlockState(req.Header)
 	return tmtAbciTypes.ResponseBeginBlock{}
 }
 
@@ -132,7 +146,7 @@ func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx
 		return tmtAbciTypes.ResponseCheckTx{Code: 1, Log: "INVALID_TX"}
 	}
 
-	abci.logger.Info("Checking TX", "hash", tx.Hash().String(), "nonce", tx.Nonce(), "cost", tx.Cost())
+	abci.logger.Info("Checking TX", "hash", tx.Hash().String(), "nonce", tx.Nonce(), "cost", tx.Cost(), "height", abci.db.GetBlockStateHeader().Number.Uint64())
 
 	var signer ethTypes.Signer = ethTypes.FrontierSigner{}
 	if tx.Protected() {
@@ -226,7 +240,8 @@ func (abci *TendermintABCI) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDeliv
 		return tmtAbciTypes.ResponseDeliverTx{Code: 1, Log: "INVALID_TX"}
 	}
 
-	abci.logger.Info("Delivering TX", "hash", tx.Hash().String(), "nonce", tx.Nonce(), "cost", tx.Cost(), "gas", tx.Gas(), "gas_price", tx.GasPrice())
+	abci.logger.Info("Delivering TX", "hash", tx.Hash().String(), "nonce", tx.Nonce(), "cost", tx.Cost(), 
+		"gas", tx.Gas(), "height", abci.db.GetBlockStateHeader().Number.Uint64())
 
 	res := abci.db.ExecuteTx(tx)
 	if res.IsErr() {
@@ -270,7 +285,7 @@ func (abci *TendermintABCI) Commit() tmtAbciTypes.ResponseCommit {
 		abci.metrics.CommitErrBlockTotal.Add(1, "UNABLE_TO_PERSIST")
 		panic(err)
 	}
-
+  
 	ethState, err := abci.getCurrentDBState()
 	if err != nil {
 		abci.logger.Error("Error getting next latest state", "err", err)

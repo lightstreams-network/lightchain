@@ -98,13 +98,17 @@ func (db *Database) ResetBlockState(receiver common.Address) error {
 }
 
 // UpdateBlockState uses the tendermint header to update the eth header.
-func (db *Database) UpdateBlockState(tmHeader *tmtAbciTypes.Header) {
+func (db *Database) UpdateBlockState(tmHeader tmtAbciTypes.Header) {
 	db.logger.Debug("Updating DB BlockState")
 	db.ethState.UpdateBlockState(
-		db.eth.APIBackend.ChainConfig(),
+		*db.eth.APIBackend.ChainConfig(),
 		uint64(tmHeader.Time.Unix()),
 		uint64(tmHeader.GetNumTxs()),
 	)
+}
+
+func (db *Database) GetBlockStateHeader() ethTypes.Header {
+	return *db.ethState.blockState.header
 }
 
 // GasLimit returns the maximum gas per block.
