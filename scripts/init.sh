@@ -76,7 +76,7 @@ fi
 run "$EXEC_CMD"
 
 echo "Restoring ${NETWORK} private keys"
-run "cp ./network/${NETWORK}/database/keystore/* ${DATA_DIR}/database/keystore/"		
+run "rsync -avzh --ignore-errors  ./network/${NETWORK}/database/keystore/ ${DATA_DIR}/database/keystore"
 
 popd
 

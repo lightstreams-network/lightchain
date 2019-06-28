@@ -14,7 +14,7 @@ import (
 	tmtLog "github.com/tendermint/tendermint/libs/log"
 )
 
-//----------------------------------------------------------------------
+// ----------------------------------------------------------------------
 // EthState manages concurrent access to the intermediate blockState object
 // The eth tx pool fires TxPreEvent in a go-routine,
 // and the miner subscribes to this in another go-routine and processes the tx onto
@@ -40,7 +40,7 @@ func NewEthState(ethereum *eth.Ethereum, ethCfg *eth.Config, logger tmtLog.Logge
 	return &EthState{
 		ethereum:  ethereum,
 		ethConfig: ethCfg,
-		logger: logger,
+		logger:    logger,
 	}
 }
 
@@ -108,11 +108,11 @@ func (es *EthState) resetBlockState(receiver common.Address) error {
 	return nil
 }
 
-func (es *EthState) UpdateBlockState(config *params.ChainConfig, parentTime uint64, numTx uint64) {
+func (es *EthState) UpdateBlockState(config params.ChainConfig, blockTime uint64, numTx uint64) {
 	es.mtx.Lock()
 	defer es.mtx.Unlock()
 
-	es.blockState.updateBlockState(config, parentTime, numTx)
+	es.blockState.updateBlockState(config, blockTime, numTx)
 }
 
 func (es *EthState) GasLimit() *core.GasPool {

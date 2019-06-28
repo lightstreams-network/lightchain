@@ -88,10 +88,10 @@ func (bs *blockState) persist(bc *core.BlockChain, db ethdb.Database) (ethTypes.
 	return *block, nil
 }
 
-func (bs *blockState) updateBlockState(config *params.ChainConfig, parentTime uint64, numTx uint64) {
+func (bs *blockState) updateBlockState(config params.ChainConfig, blockTime uint64, numTx uint64) {
 	parentHeader := bs.parent.Header()
-	bs.header.Time = new(big.Int).SetUint64(parentTime).Uint64()
-	bs.header.Difficulty = ethash.CalcDifficulty(config, parentTime, parentHeader)
+	bs.header.Time = new(big.Int).SetUint64(blockTime).Uint64()
+	bs.header.Difficulty = ethash.CalcDifficulty(&config, blockTime, parentHeader)
 	bs.transactions = make([]*ethTypes.Transaction, 0, numTx)
 	bs.receipts = make([]*ethTypes.Receipt, 0, numTx)
 }

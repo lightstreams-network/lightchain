@@ -130,7 +130,10 @@ func createConsensusGenesis(pv *privval.FilePV) ([]byte, error) {
 		PubKey:  pv.GetPubKey(),
 		Power:   10,
 	}}
-	
+
+	// Using less than 1 second TimeIota to simulate a consensus invalid block time 
+	genDoc.ConsensusParams.Block.TimeIotaMs = 950
+
 	genDocBytes, err := cdc.MarshalJSONIndent(genDoc, "", "  ")
 	if err != nil {
 		return nil, err

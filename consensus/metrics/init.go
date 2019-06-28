@@ -17,32 +17,35 @@ const errorCodeLabel = "error_code"
 
 // Metrics contains metrics exposed by this package.
 type Metrics struct {
-	CheckTxsTotal       CheckTxTotalMetric
-	CheckErrTxsTotal    CheckErrTxsTotalMetric
-	DeliverTxsTotal     DeliverTxsTotalMetric
-	DeliverErrTxsTotal  DeliverErrTxsTotalMetric
-	CommitBlockTotal    CommitBlockTotalMetric
-	CommitErrBlockTotal CommitErrBlockTotalMetric
+	CheckTxsTotal          CheckTxTotalMetric
+	CheckErrTxsTotal       CheckErrTxsTotalMetric
+	DeliverTxsTotal        DeliverTxsTotalMetric
+	DeliverErrTxsTotal     DeliverErrTxsTotalMetric
+	CommitBlockTotal       CommitBlockTotalMetric
+	CommitErrBlockTotal    CommitErrBlockTotalMetric
+	ReplacedBlockTimeTotal ReplacedBlockTimeTotalMetric
 }
 
 func NewMetrics(registry *prometheus.Registry) Metrics {
 	return Metrics{
-		CheckTxsTotal:       NewCheckTxTotalMetric(registry),
-		CheckErrTxsTotal:    NewCheckErrTxsTotalMetric(registry),
-		DeliverTxsTotal:     NewDeliverTxsTotalMetric(registry),
-		DeliverErrTxsTotal:  NewDeliverErrTxsTotalMetric(registry),
-		CommitBlockTotal:    NewCommitBlockTotalMetric(registry),
-		CommitErrBlockTotal: NewCommitErrBlockTotalMetric(registry),
+		CheckTxsTotal:          NewCheckTxTotalMetric(registry),
+		CheckErrTxsTotal:       NewCheckErrTxsTotalMetric(registry),
+		DeliverTxsTotal:        NewDeliverTxsTotalMetric(registry),
+		DeliverErrTxsTotal:     NewDeliverErrTxsTotalMetric(registry),
+		CommitBlockTotal:       NewCommitBlockTotalMetric(registry),
+		CommitErrBlockTotal:    NewCommitErrBlockTotalMetric(registry),
+		ReplacedBlockTimeTotal: NewReplacedBlockTimeTotalMetric(registry),
 	}
 }
 
 func NewNullMetrics() Metrics {
 	return Metrics{
-		CheckTxsTotal:       NewNullCheckTxTotalMetric(),
-		CheckErrTxsTotal:    NewNullCheckErrTrxTotalMetric(),
-		DeliverTxsTotal:     NewNullDeliverTxsTotalMetric(),
-		DeliverErrTxsTotal:  NewNullDeliverErrTxsTotalMetric(),
-		CommitBlockTotal:    NewNullCommitBlockTotalMetric(),
-		CommitErrBlockTotal: NewNullCommitErrBlockTotalMetric(),
+		CheckTxsTotal:          NewNullCheckTxTotalMetric(),
+		CheckErrTxsTotal:       NewNullCheckErrTrxTotalMetric(),
+		DeliverTxsTotal:        NewNullDeliverTxsTotalMetric(),
+		DeliverErrTxsTotal:     NewNullDeliverErrTxsTotalMetric(),
+		CommitBlockTotal:       NewNullCommitBlockTotalMetric(),
+		CommitErrBlockTotal:    NewNullCommitErrBlockTotalMetric(),
+		ReplacedBlockTimeTotal: NewNullReplacedBlockTimeTotalMetric(),
 	}
 }

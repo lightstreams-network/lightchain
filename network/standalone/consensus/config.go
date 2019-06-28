@@ -137,7 +137,7 @@ max_num_inbound_peers = 40
 max_num_outbound_peers = 10
 
 # Time to wait before flushing messages out on the connection
-flush_throttle_timeout = "100ms"
+flush_throttle_timeout = "35ms"
 
 # Maximum size of a message packet payload, in bytes
 max_packet_msg_payload_size = 1024
@@ -164,8 +164,8 @@ private_peer_ids = ""
 allow_duplicate_ip = true
 
 # Peer connection configuration.
-handshake_timeout = "20s"
-dial_timeout = "3s"
+handshake_timeout = "5s"
+dial_timeout = "1s"
 
 ##### mempool configuration options #####
 [mempool]
@@ -185,27 +185,27 @@ cache_size = 10000
 
 wal_file = "data/cs.wal/wal"
 
-timeout_propose = "8s"
-timeout_propose_delta = "500ms"
-timeout_prevote = "2s"
-timeout_prevote_delta = "500ms"
-timeout_precommit = "2s"
-timeout_precommit_delta = "500ms"
-timeout_commit = "2s"
+timeout_propose = "500ms"
+timeout_propose_delta = "100ms"
+timeout_prevote = "500ms"
+timeout_prevote_delta = "100ms"
+timeout_precommit = "500ms"
+timeout_precommit_delta = "100ms"
+timeout_commit = "500ms"
 
 # Make progress as soon as we have all the precommits (as if TimeoutCommit = 0)
 skip_timeout_commit = false
 
 # EmptyBlocks mode and possible interval between empty blocks
 create_empty_blocks = true
-create_empty_blocks_interval = "10s"
+create_empty_blocks_interval = "5s"
 
 # Reactor sleep duration parameters
 peer_gossip_sleep_duration = "100ms"
-peer_query_maj23_sleep_duration = "2s"
+peer_query_maj23_sleep_duration = "1s"
 
 # Block time parameters. Corresponds to the minimum time increment between consecutive blocks.
-blocktime_iota = "1s"
+blocktime_iota = "950ms"
 
 ##### transactions indexer configuration options #####
 [tx_index]
