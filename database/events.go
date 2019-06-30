@@ -1,9 +1,8 @@
 package database
 
 import (
-	"github.com/ethereum/go-ethereum/core"
 	"time"
-
+	"github.com/ethereum/go-ethereum/core"
 )
 
 const (
@@ -19,15 +18,12 @@ func (db *Database) txBroadcastLoop() {
 	
 	db.waitForTendermint()
 
+	go db.processTxQueueLoop()
+
 	for obj := range db.ethTxsCh {
 		db.logger.Debug("Captured NewTxsEvent from pool")
 		for _, tx := range obj.Txs {
-			if err := db.consAPI.BroadcastTx(*tx); err != nil {
-				db.metrics.BroadcastedErrTxsTotal.Add(1, err.Error())
-				db.logger.Error("Error broadcasting tx", "err", err)
-			} else {
-				db.metrics.BroadcastedTxsTotal.Add(1)
-			}
+			db.txQueue.addTx(tx)
 		}
 	}
 }
@@ -45,4 +41,24 @@ func (db *Database) waitForTendermint() {
 	}
 
 	db.logger.Info("Lightchain DB successfully connected to the Tendermint HTTP service.", "info", "Success")
+}
+
+func (db *Database) processTxQueueLoop() {
+	for {
+		if !db.txQueue.isReady() {
+			continue
+		}
+
+		for tx := db.txQueue.popTx(); tx != nil; tx = db.txQueue.popTx(){
+			if err := db.consAPI.BroadcastTx(*tx); err != nil {
+				db.metrics.BroadcastedErrTxsTotal.Add(1, err.Error())
+				db.logger.Error("Error broadcasting tx", "err", err)
+			} else {
+				db.logger.Debug("Broadcasted tx", "nonce", tx.Nonce())
+				db.metrics.BroadcastedTxsTotal.Add(1)
+			}
+		}
+		
+		time.Sleep(time.Second) 
+	}
 }

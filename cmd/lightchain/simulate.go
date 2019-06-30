@@ -94,7 +94,8 @@ func simulateTransferTx(nodeCfg node.Config) *types.Transaction {
 		panic(err)
 	}
 
-	tx, err := wallety.Transfer(client, auth, common.HexToAddress(standaloneNonExistingAddr), simulateTxAmount.String(), txclient.NewTransferTxConfig())
+	tx, err := wallety.Transfer(client, auth, common.HexToAddress(standaloneNonExistingAddr), simulateTxAmount.String(), 
+		txclient.NewTransferTxConfig(database.MinGasPrice))
 	if err != nil {
 		panic(err)
 	}

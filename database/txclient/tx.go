@@ -10,6 +10,7 @@ import (
 	"time"
 	"github.com/ethereum/go-ethereum"
 	"fmt"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -86,4 +87,12 @@ func FetchReceipt(client *ethclient.Client, tx *types.Transaction, cfg TxConfig)
 	}
 
 	return nil, fmt.Errorf("deadline for obtaining tx receipt reached")
+}
+
+func ExtractSender(tx *ethTypes.Transaction) (common.Address, error) {
+	var signer ethTypes.Signer = ethTypes.FrontierSigner{}
+	if tx.Protected() {
+		signer = ethTypes.NewEIP155Signer(tx.ChainId())
+	}
+	return ethTypes.Sender(signer, tx)
 }

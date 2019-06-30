@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
-	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
 )
 
@@ -47,7 +46,7 @@ func NewEthState(ethereum *eth.Ethereum, ethCfg *eth.Config, logger tmtLog.Logge
 // Executes TX against the eth blockchain state.
 //
 // The changes happen only inside of the Eth state, not disk!
-func (es *EthState) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
+func (es *EthState) ExecuteTx(tx *ethTypes.Transaction) error {
 	es.mtx.Lock()
 	defer es.mtx.Unlock()
 
