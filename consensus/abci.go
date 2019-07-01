@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"bytes"
+	"time"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/lightstreams-network/lightchain/database"
@@ -16,7 +17,7 @@ import (
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
-	"time"
+	tmtCmn "github.com/tendermint/tendermint/libs/common"
 )
 
 // maxTransactionSize is 32KB in order to prevent DOS attacks
@@ -100,7 +101,7 @@ func (abci *TendermintABCI) InitChain(req tmtAbciTypes.RequestInitChain) tmtAbci
 // Response:
 // 		- Optional Key-Value tags for filtering and indexing
 func (abci *TendermintABCI) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAbciTypes.ResponseBeginBlock {
-	abci.logger.Debug("Beginning new block", "hash", req.Hash, "height", req.Header.Height)
+	abci.logger.Info("Beginning new block", "hash", tmtHexHash(req.Hash), "height", req.Header.Height, "time", req.Header.Time.String())
 	parentBlock := abci.getCurrentBlock()
 
 	// IMPORTANT: According to Tendermint documentation and based on the consensus setup made for our network
@@ -110,12 +111,13 @@ func (abci *TendermintABCI) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAb
 	if uint64(req.Header.Time.Unix()) <= parentBlock.Time() {
 		abci.metrics.ReplacedBlockTimeTotal.Add(1)
 		nextBlockTime := time.Unix(int64(parentBlock.Time() + 1), 0)
-		abci.logger.Error(fmt.Sprintf("Invalid consensus BlockTime. Replacing block time %d...", req.Header.Height), 
-			"original", req.Header.Time.Unix(), "replaced", nextBlockTime.Unix())
+		abci.logger.Error("Replacing invalid consensus block time...", "height", req.Header.Height, "original", req.Header.Time.Unix(), "replaced", nextBlockTime.Unix())
+
 		req.Header.Time = nextBlockTime
 	}
 	
 	abci.db.UpdateBlockState(req.Header)
+
 	return tmtAbciTypes.ResponseBeginBlock{}
 }
 
@@ -382,4 +384,11 @@ func decodeRLP(txBytes []byte) (*ethTypes.Transaction, error) {
 		return nil, err
 	}
 	return tx, nil
+}
+
+func tmtHexHash(b []byte) string {
+	var hash tmtCmn.HexBytes
+	hash.Unmarshal(b)
+
+	return hash.String()
 }
