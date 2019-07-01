@@ -38,8 +38,7 @@ type blockState struct {
 //
 // Logic copied from `core/state_processor.go` `(p *StateProcessor) Process` that gets
 // normally executed on block persist.
-func (bs *blockState) execTx(bc *core.BlockChain, config *eth.Config, chainConfig *params.ChainConfig, 
-	blockHash common.Hash, tx *ethTypes.Transaction) error {
+func (bs *blockState) execTx(bc *core.BlockChain, config *eth.Config, chainConfig *params.ChainConfig, blockHash common.Hash, tx *ethTypes.Transaction) error {
 	// TODO: Investigate if snapshot should be used `snapshot := bs.state.Snapshot()`
 	bs.state.Prepare(tx.Hash(), blockHash, bs.txIndex)
 	receipt, _, err := core.ApplyTransaction(

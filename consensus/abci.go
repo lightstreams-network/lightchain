@@ -169,8 +169,7 @@ func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx
 
 	// Additional custom validation aside of the Ethereum default mempool validation
 	if tx.GasPrice().Uint64() < abci.db.Config().TxPool.PriceLimit {
-		abci.logger.Error("TX gas price too low", "tx_gas_price", tx.GasPrice(), "required_tx_gas_price", 
-			abci.db.Config().TxPool.PriceLimit)
+		abci.logger.Error("TX gas price too low", "tx_gas_price", tx.GasPrice(), "required_tx_gas_price", abci.db.Config().TxPool.PriceLimit)
 		abci.metrics.CheckErrTxsTotal.Add(1, "INSUFFICIENT_GAS_PRICE")
 		return tmtAbciTypes.ResponseCheckTx{Code: 1, Log: "INSUFFICIENT_GAS_PRICE"}
 	}
@@ -190,8 +189,7 @@ func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx
 	}
 
 	abci.checkTxState.SetNonce(from, abci.checkTxState.GetNonce(from) + 1)
-	abci.logger.Info("TX validated", "hash", tx.Hash().String(), "from", from.String(), 
-		"state_nonce", abci.checkTxState.GetNonce(from))
+	abci.logger.Info("TX validated", "hash", tx.Hash().String(), "from", from.String(), "state_nonce", abci.checkTxState.GetNonce(from))
 
 	return tmtAbciTypes.ResponseCheckTx{Code: tmtAbciTypes.CodeTypeOK}
 }
@@ -210,8 +208,7 @@ func (abci *TendermintABCI) doMempoolValidation(tx *ethTypes.Transaction, from c
 	}
 
 	if abci.checkTxState.GetNonce(from) != tx.Nonce() {
-		abci.logger.Error(fmt.Sprintf("Nonce not strictly increasing. Expected %d got %d", 
-			abci.checkTxState.GetNonce(from), tx.Nonce()))
+		abci.logger.Error(fmt.Sprintf("Nonce not strictly increasing. Expected %d got %d", abci.checkTxState.GetNonce(from), tx.Nonce()))
 		return fmt.Errorf("BAD_NONCE")
 	}
 

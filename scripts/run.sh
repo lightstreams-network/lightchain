@@ -24,10 +24,6 @@ while [ "$1" != "" ]; do
         --standalone) 
             NETWORK="standalone"
         ;;
-        --standalone-client) 
-            NETWORK="standalone_client"
-            IS_CLIENT=true
-        ;;
         --mainnet) 
             NETWORK="mainnet" 
         ;;
@@ -48,13 +44,6 @@ RUN_ARGS="${RUN_ARGS} --rpc --rpcaddr 0.0.0.0 --rpcport 8545 --rpcapi eth,net,we
 RUN_ARGS="${RUN_ARGS} --ws --wsaddr 0.0.0.0 --wsport 8556  --wsapi eth,net,web3,personal,debug --wsorigins=*"
 RUN_ARGS="${RUN_ARGS} --tmt_rpc_port=26657 --tmt_p2p_port=26656"
 
-if [ -n "${IS_CLIENT}" ]; then
-RUN_ARGS="--datadir=${DATA_DIR}"
-RUN_ARGS="${RUN_ARGS} --rpc --rpcaddr 0.0.0.0 --rpcport 9545 --rpcapi eth,net,web3,personal,debug"
-RUN_ARGS="${RUN_ARGS} --ws --wsaddr 0.0.0.0 --wsport 9556  --wsapi eth,net,web3,personal,debug --wsorigins=*"
-RUN_ARGS="${RUN_ARGS} --tmt_rpc_port=27657 --tmt_p2p_port=27656"
-fi
-
 pushd "$ROOT_PATH"
 
 echo -e "Compiling latest version...."
@@ -62,7 +51,7 @@ if [ -n "${IS_DEBUG}" ]; then
 	RUN_ARGS="${RUN_ARGS} --lvl=debug"
     run "make build-dev"
 else
-	RUN_ARGS="${RUN_ARGS} --lvl=debug"
+	RUN_ARGS="${RUN_ARGS} --lvl=info"
     run "make build"
 fi
 

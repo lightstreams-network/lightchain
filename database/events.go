@@ -15,7 +15,7 @@ const (
 func (db *Database) txBroadcastLoop() {
 	db.ethTxsCh = make(chan core.NewTxsEvent, txChanSize)
 	db.ethTxSub = db.eth.TxPool().SubscribeNewTxsEvent(db.ethTxsCh)
-	
+
 	db.waitForTendermint()
 
 	go db.processTxQueueLoop()
@@ -47,10 +47,11 @@ func (db *Database) waitForTendermint() {
 func (db *Database) processTxQueueLoop() {
 	for {
 		if !db.txQueue.isReady() {
-			continue
+			time.Sleep(time.Second)
+			continue;
 		}
-
-		for tx := db.txQueue.popTx(); tx != nil; tx = db.txQueue.popTx(){
+		
+		for tx := db.txQueue.popTx(); tx != nil; tx = db.txQueue.popTx() {
 			db.logger.Debug("Broadcasting tx...", "nonce", tx.Nonce())
 			if err := db.consAPI.BroadcastTx(*tx); err != nil {
 				db.metrics.BroadcastedErrTxsTotal.Add(1, err.Error())
@@ -60,7 +61,5 @@ func (db *Database) processTxQueueLoop() {
 				db.metrics.BroadcastedTxsTotal.Add(1)
 			}
 		}
-		
-		time.Sleep(time.Second) 
 	}
 }
