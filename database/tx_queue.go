@@ -8,7 +8,7 @@ import (
 	"sort"
 )
 
-const awaitingTxsTimeInMs = 1 * time.Second
+const awaitingTxsTimeInMs = 500
 
 type txQueue struct {
 	lastUpdate time.Time
@@ -44,6 +44,6 @@ func (q *txQueue) isReady() bool {
 		return false
 	}
 
-	isReady := q.lastUpdate.Add(awaitingTxsTimeInMs).Unix() < time.Now().Unix()
+	isReady := q.lastUpdate.Add(awaitingTxsTimeInMs).UnixNano() < time.Now().UnixNano()
 	return isReady
 }
