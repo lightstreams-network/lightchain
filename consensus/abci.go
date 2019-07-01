@@ -242,8 +242,7 @@ func (abci *TendermintABCI) DeliverTx(txBytes []byte) tmtAbciTypes.ResponseDeliv
 		return tmtAbciTypes.ResponseDeliverTx{Code: 1, Log: "INVALID_TX"}
 	}
 
-	abci.logger.Info("Delivering TX", "hash", tx.Hash().String(), "nonce", tx.Nonce(), "cost", tx.Cost(), 
-		"gas", tx.Gas(), "height", abci.db.GetBlockStateHeader().Number.Uint64())
+	abci.logger.Info("Delivering TX", "hash", tx.Hash().String(), "nonce", tx.Nonce(), "cost", tx.Cost(), "gas", tx.Gas(), "height", abci.db.GetBlockStateHeader().Number.Uint64())
 
 	res := abci.db.ExecuteTx(tx)
 	if res.IsErr() {
