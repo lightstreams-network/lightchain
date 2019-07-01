@@ -110,10 +110,10 @@ func (abci *TendermintABCI) BeginBlock(req tmtAbciTypes.RequestBeginBlock) tmtAb
 	// to prevent ethereum headers to be invalid. Learn more in https://github.com/lightstreams-network/lightchain/issues/186
 	if uint64(req.Header.Time.Unix()) <= parentBlock.Time() {
 		abci.metrics.ReplacedBlockTimeTotal.Add(1)
-		nextBlockTime := time.Unix(int64(parentBlock.Time() + 1), 0)
-		abci.logger.Error("Replacing invalid consensus block time...", "height", req.Header.Height, "original", req.Header.Time.Unix(), "replaced", nextBlockTime.Unix())
+		validEthBlockTime := time.Unix(int64(parentBlock.Time() + 1), 0)
+		abci.logger.Error("Replacing invalid consensus block time...", "height", req.Header.Height, "received", req.Header.Time.Unix(), "replaced", validEthBlockTime.Unix())
 
-		req.Header.Time = nextBlockTime
+		req.Header.Time = validEthBlockTime
 	}
 	
 	abci.db.UpdateBlockState(req.Header)
