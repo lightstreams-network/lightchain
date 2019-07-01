@@ -2,9 +2,33 @@
  * - Execute 100 transaction in parallel
  */
 
-const { convertPhtToWeiBN, calculateGasCostBN, extractEnvAccountAndPwd, waitFor } = require('./utils');
+const { convertPhtToWeiBN, fetchTxReceipt, extractEnvAccountAndPwd, calculateGasCostBN, waitFor } = require('./utils');
 
 const HelloBlockchainWorld = artifacts.require("HelloBlockchainWorld");
+
+const sendAsyncTx = (from, to, nonce, amountToSendBN) => {
+    return new Promise(async (resolve, reject) => {
+        web3.eth.sendTransaction({
+            nonce: web3.utils.toHex(nonce),
+            gasLimit: web3.utils.toHex('21000'),
+            from: from,
+            to: to,
+            value: amountToSendBN.toString(),
+        }, async (err, hash) => {
+            if (err != null) {
+                reject(err);
+                return;
+            }
+
+            try {
+                const receipt = await fetchTxReceipt(hash, 5);
+                resolve(receipt)
+            } catch ( err ) {
+                reject(err)
+            }
+        });
+    })
+};
 
 describe('Workload', () => {
     let ROOT_ACCOUNT = extractEnvAccountAndPwd(process.env.NETWORK).from;
@@ -20,7 +44,7 @@ describe('Workload', () => {
         const txReceipt = await web3.eth.sendTransaction({
             from: ROOT_ACCOUNT,
             to: NEW_ACCOUNT_ADDR,
-            value: convertPhtToWeiBN("0.2")
+            value: convertPhtToWeiBN("1")
         });
 
         assert.equal(txReceipt.status, "0x1", 'tx receipt should return a successful status');
@@ -81,78 +105,63 @@ describe('Workload', () => {
     it("should send two TXs in parallel with inverse nonce order", async () => {
         const nonce = await web3.eth.getTransactionCount(NEW_ACCOUNT_ADDR);
         const amountToSendBN = convertPhtToWeiBN("0.1");
-
-        const signedTx1 = await web3.eth.signTransaction({
-            nonce: nonce + 1,
-            gasPrice: '500000000000',
-            gasLimit: '21000',
-            from: NEW_ACCOUNT_ADDR,
-            to: ROOT_ACCOUNT,
-            value: amountToSendBN.toString(),
-            data: ''
-        }, NEW_ACCOUNT_PASS);
-
-        const signedTx2 = await web3.eth.signTransaction({
-            nonce: nonce + 2,
-            gasPrice: '500000000000',
-            gasLimit: '21000',
-            from: NEW_ACCOUNT_ADDR,
-            to: ROOT_ACCOUNT,
-            value: amountToSendBN.toString(),
-            data: ''
-        }, NEW_ACCOUNT_PASS);
-
-        
-        const sendSignedTx2 = new Promise((resolve, reject) => {
-            web3.eth.sendSignedTransaction(signedTx2.raw, async (err, hash) => {
-                if (err != null) {
-                    reject(err);
-                    return;
-                }
-                fetchTxReceipt(hash, txReceiptTimeout).then(function(receipt) {
-                    resolve(receipt);
-                }).catch(function(err) {
-                    reject(err);
-                });
-            });
-        });
-        
-        await waitFor(0.3);
-
-        const sendSignedTx1 = new Promise((resolve, reject) => {
-            web3.eth.sendSignedTransaction(signedTx1.raw, async (err, hash) => {
-                if (err != null) {
-                    reject(err);
-                    return;
-                }
-                fetchTxReceipt(hash, txReceiptTimeout).then((receipt) => {
-                    resolve(receipt);
-                }).catch(function(err) {
-                    reject(err);
-                });
-            });
-        });
-
         let successfulReceiptCount = 0;
         let failedReceiptCount = 0;
 
+        const sendTx1 = sendAsyncTx(NEW_ACCOUNT_ADDR, ROOT_ACCOUNT, nonce + 1, amountToSendBN);
+        const sendTx2 = sendAsyncTx(NEW_ACCOUNT_ADDR, ROOT_ACCOUNT, nonce, amountToSendBN);
+
         try {
-            const receipt = await sendSignedTx1;
+            const receipt = await sendTx1;
             if (receipt.status === true) successfulReceiptCount++;
             else failedReceiptCount++;
         } catch ( err ) {
+            console.error(err);
             failedReceiptCount++;
         }
 
         try {
-            const receipt = await sendSignedTx2;
+            const receipt = await sendTx2;
             if (receipt.status === true) successfulReceiptCount++;
             else failedReceiptCount++;
         } catch ( err ) {
+            console.error(err);
             failedReceiptCount++;
         }
 
-        assert.equal(successfulReceiptCount, 2, "only 1 tx should have succeed");
+        assert.equal(successfulReceiptCount, 2, "both txs should have succeed");
         assert.equal(failedReceiptCount, 0, "not tx should have failed");
+    });
+    
+    it("should send two TXs in inverse nonce order", async () => {
+        const nonce = await web3.eth.getTransactionCount(NEW_ACCOUNT_ADDR);
+        const amountToSendBN = convertPhtToWeiBN("0.1");
+        let successfulReceiptCount = 0;
+        let failedReceiptCount = 0;
+
+        const sendTx1 = sendAsyncTx(NEW_ACCOUNT_ADDR, ROOT_ACCOUNT, nonce + 1, amountToSendBN);
+
+        try {
+            const receipt = await sendTx1;
+            if (receipt.status === true) successfulReceiptCount++;
+            else failedReceiptCount++;
+        } catch ( err ) {
+            console.error(err);
+            failedReceiptCount++;
+        }
+
+        const sendTx2 = sendAsyncTx(NEW_ACCOUNT_ADDR, ROOT_ACCOUNT, nonce, amountToSendBN);
+
+        try {
+            const receipt = await sendTx2;
+            if (receipt.status === true) successfulReceiptCount++;
+            else failedReceiptCount++;
+        } catch ( err ) {
+            console.error(err);
+            failedReceiptCount++;
+        }
+
+        assert.equal(successfulReceiptCount, 1, "both txs should have succeed");
+        assert.equal(failedReceiptCount, 1, "not tx should have failed");
     });
 });

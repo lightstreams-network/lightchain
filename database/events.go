@@ -23,6 +23,7 @@ func (db *Database) txBroadcastLoop() {
 	for obj := range db.ethTxsCh {
 		db.logger.Debug("Captured NewTxsEvent from pool")
 		for _, tx := range obj.Txs {
+			db.logger.Debug("Adding to tx queue...", "nonce", tx.Nonce())
 			db.txQueue.addTx(tx)
 		}
 	}
@@ -50,6 +51,7 @@ func (db *Database) processTxQueueLoop() {
 		}
 
 		for tx := db.txQueue.popTx(); tx != nil; tx = db.txQueue.popTx(){
+			db.logger.Debug("Broadcasting tx...", "nonce", tx.Nonce())
 			if err := db.consAPI.BroadcastTx(*tx); err != nil {
 				db.metrics.BroadcastedErrTxsTotal.Add(1, err.Error())
 				db.logger.Error("Error broadcasting tx", "err", err)

@@ -46,7 +46,7 @@ describe('TestSimplifiedUserBalanceDoubleSpend', () => {
         }, DOUBLE_SPEND_ACC_PWD);
 
         const sendSignedTx1 = new Promise((resolve, reject) => {
-            web3.eth.sendSignedTransaction(signedTx1.raw, async (err, hash) => {
+            web3.eth.sendSignedTransaction(signedTx1.raw, (err, hash) => {
                 if (err != null) {
                     reject(err);
                     return;
@@ -60,7 +60,7 @@ describe('TestSimplifiedUserBalanceDoubleSpend', () => {
         });
 
         const sendSignedTx2 = new Promise((resolve, reject) => {
-            web3.eth.sendSignedTransaction(signedTx2.raw, async (err, hash) => {
+            web3.eth.sendSignedTransaction(signedTx2.raw, (err, hash) => {
                 if (err != null) {
                     reject(err);
                     return;
