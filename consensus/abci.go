@@ -157,8 +157,7 @@ func (abci *TendermintABCI) CheckTx(txBytes []byte) tmtAbciTypes.ResponseCheckTx
 		return tmtAbciTypes.ResponseCheckTx{Code: 1, Log: "INVALID_SENDER"}
 	}
 
-	abci.logger.Info("Checking TX", "hash", tx.Hash().String(), "from", from.String(), 
-		"nonce", tx.Nonce(), "cost", tx.Cost())
+	abci.logger.Info("Checking TX", "hash", tx.Hash().String(), "from", from.String(), "nonce", tx.Nonce(), "cost", tx.Cost())
 
 	err = abci.doMempoolValidation(tx, from)
 	if err != nil {

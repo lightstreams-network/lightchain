@@ -54,7 +54,7 @@ func (bs *blockState) execTx(bc *core.BlockChain, config *eth.Config, chainConfi
 	)
 	if err != nil {
 		// TODO: investigate if snapshot should be used `bs.state.RevertToSnapshot(snapshot)`
-		return fmt.Errorf("Error applying state TX %v", err)
+		return fmt.Errorf("error applying state TX %v", err)
 	}
 
 	bs.txIndex++
