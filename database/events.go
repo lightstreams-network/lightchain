@@ -27,17 +27,17 @@ func (db *Database) txBroadcastLoop() {
 		queue, err := db.eth.TxPool().Pending()
 		if err != nil {
 			db.logger.Error("Error reading txPool pending queue", "error", err.Error())
-			continue;
+			continue
 		}
 
 		for from, txs := range queue {
 			for _, tx := range txs {
 				broadcastedTxNonce, ok := db.broadcastedTxCache[from]
 				if !ok || broadcastedTxNonce < tx.Nonce() {
-					db.logger.Debug("Broadcasting tx...", "from", from, "nonce", tx.Nonce())
+					db.logger.Debug("Broadcasting TX...", "from", from, "nonce", tx.Nonce())
 					db.broadcastTx(from, *tx)
 				} else {
-					db.logger.Debug("Tx already broadcasted...", "from", from, "nonce", tx.Nonce())
+					db.logger.Debug("Skipping already broadcasted TX...", "from", from, "nonce", tx.Nonce())
 				}
 			}
 		}
@@ -62,10 +62,10 @@ func (db *Database) waitForTendermint() {
 func (db *Database) broadcastTx(from common.Address, tx types.Transaction) {
 	if err := db.consAPI.BroadcastTx(tx); err != nil {
 		db.metrics.BroadcastedErrTxsTotal.Add(1, err.Error())
-		db.logger.Error("Error broadcasting tx", "err", err)
+		db.logger.Error("Error broadcasting TX", "err", err)
 	} else {
 		db.metrics.BroadcastedTxsTotal.Add(1)
-		db.broadcastedTxCache[from] = tx.Nonce();
-		db.logger.Debug("Broadcasted tx", "from", from, "nonce", tx.Nonce())
+		db.broadcastedTxCache[from] = tx.Nonce()
+		db.logger.Debug("TX broadcasted", "from", from, "nonce", tx.Nonce())
 	}
 }
