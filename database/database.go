@@ -139,7 +139,10 @@ func (db *Database) APIs() []rpc.API {
 		}
 
 		if v.Namespace == "net" {
-			v.Service = dbAPI.NewPublicNetAPI(db.ethCfg.NetworkId)
+			v.Service = dbAPI.NewPublicNetAPI(
+				db.ethCfg.NetworkId,
+				db.consAPI,
+			)
 		}
 
 		if _, ok := v.Service.(*eth.PublicEthereumAPI); ok {

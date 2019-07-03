@@ -16,12 +16,14 @@ type API interface {
 	SyncProgress() (eth.SyncProgress, error)
 	BroadcastTx(tx ethTypes.Transaction) error
 	Status() (tmtcTypes.ResultStatus, error)
+	NetInfo() (tmtcTypes.ResultNetInfo, error)
 }
 
 type consensusApi struct {
 	isRunning func() bool
 	status func(ctx *tmtrpctypes.Context) (*tmtcTypes.ResultStatus, error)
 	broadcastTx func (ctx *tmtrpctypes.Context, tx tmtTypes.Tx) (*tmtcTypes.ResultBroadcastTx, error)
+	netInfo func (ctx *tmtrpctypes.Context) (*tmtcTypes.ResultNetInfo, error)
 }
 
 var _ API = &consensusApi{}
@@ -31,6 +33,7 @@ func NewConsensusApi(isRunning func() bool) API {
 		isRunning: isRunning,
 		status: tmtCore.Status, 
 		broadcastTx: tmtCore.BroadcastTxSync,
+		netInfo: tmtCore.NetInfo,
 	}
 }
 
@@ -88,6 +91,19 @@ func (a *consensusApi) Status() (tmtcTypes.ResultStatus, error) {
 	status, err := tmtCore.Status(nil)
 	if err != nil {
 		return tmtcTypes.ResultStatus{}, err
+	}
+
+	return *status, nil
+}
+
+func (a *consensusApi) NetInfo() (tmtcTypes.ResultNetInfo, error) {
+	if !a.isRunning() {
+		return tmtcTypes.ResultNetInfo{}, fmt.Errorf("Consensus node is not running")
+	}
+	
+	status, err := tmtCore.NetInfo(nil)
+	if err != nil {
+		return tmtcTypes.ResultNetInfo{}, err
 	}
 
 	return *status, nil
