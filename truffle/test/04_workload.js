@@ -53,7 +53,7 @@ describe('Workload', () => {
     it("should send batch of successful parallel TXs", async () => {
         const weiBalancePreTxBN = web3.utils.toBN(await web3.eth.getBalance(ROOT_ACCOUNT));
         const weiAmountSentBN = convertPhtToWeiBN("0.1");
-        const iterations = 100;
+        const iterations = 1000;
         const gasLimit = 21000;
         const sentFundTxReceipt = Array();
 

@@ -51,7 +51,7 @@ if [ -n "${IS_DEBUG}" ]; then
 	RUN_ARGS="${RUN_ARGS} --lvl=debug"
     run "make build-dev"
 else
-	RUN_ARGS="${RUN_ARGS} --lvl=debug"
+	RUN_ARGS="${RUN_ARGS} --lvl=info"
     run "make build"
 fi
 
