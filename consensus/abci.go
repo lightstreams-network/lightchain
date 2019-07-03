@@ -36,8 +36,8 @@ const maxTransactionSize = 32768
 // Flow:
 //		1. BeginBlock
 //		2. CheckTx
-//		3. EndBlock
-//		4. DeliverTx*
+//		3. DeliverTx*
+//		4. EndBlock
 //		5. Commit
 //		6. CheckTx (clean mempool from TXs not included in committed block)
 //
