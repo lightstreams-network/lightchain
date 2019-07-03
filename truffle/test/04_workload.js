@@ -53,7 +53,7 @@ describe('Workload', () => {
     it("should send batch of successful parallel TXs", async () => {
         const weiBalancePreTxBN = web3.utils.toBN(await web3.eth.getBalance(ROOT_ACCOUNT));
         const weiAmountSentBN = convertPhtToWeiBN("0.1");
-        const iterations = 1000;
+        const iterations = 100;
         const gasLimit = 21000;
         const sentFundTxReceipt = Array();
 
@@ -75,7 +75,7 @@ describe('Workload', () => {
             });
         }
 
-        let maxWaitTime = Date.now() + 20 * 1000; // Max wait of 20 seconds
+        let maxWaitTime = Date.now() + (iterations/15) * 1000; // Max wait of 20 seconds
         do {
             await waitFor(1);
         } while ( sentFundTxReceipt.length < iterations && maxWaitTime > Date.now() );

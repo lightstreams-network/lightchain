@@ -35,7 +35,7 @@ type Database struct {
 
 	ethState *EthState
 
-	txQueue *txQueue
+	broadcastedTxCache map[common.Address]uint64
 
 	consAPI consensusAPI.API
 	logger  tmtLog.Logger
@@ -60,7 +60,7 @@ func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensus
 		consAPI:  consAPI,
 		logger:   logger,
 		metrics:  metrics,
-		txQueue:  &txQueue{},
+		broadcastedTxCache: make(map[common.Address]uint64),
 	}
 
 	return db, nil
