@@ -17,7 +17,7 @@ import (
 	dbAPI "github.com/lightstreams-network/lightchain/database/api"
 	consensusAPI "github.com/lightstreams-network/lightchain/consensus/api"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
-	
+
 	"github.com/lightstreams-network/lightchain/database/metrics"
 	"github.com/lightstreams-network/lightchain/database/web3"
 )
@@ -34,6 +34,8 @@ type Database struct {
 	ethTxsCh chan core.NewTxsEvent
 
 	ethState *EthState
+
+	broadcastedTxCache map[common.Address]uint64
 
 	consAPI consensusAPI.API
 	logger  tmtLog.Logger
@@ -58,6 +60,7 @@ func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensus
 		consAPI:  consAPI,
 		logger:   logger,
 		metrics:  metrics,
+		broadcastedTxCache: make(map[common.Address]uint64),
 	}
 
 	return db, nil
@@ -72,7 +75,7 @@ func (db *Database) Config() *eth.Config {
 }
 
 // ExecuteTx appends a transaction to the current block.
-func (db *Database) ExecuteTx(tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
+func (db *Database) ExecuteTx(tx *ethTypes.Transaction) error {
 	db.logger.Info("Executing DB TX", "hash", tx.Hash().Hex(), "nonce", tx.Nonce())
 
 	db.updateExecuteTxMetrics(tx)
@@ -92,7 +95,7 @@ func (db *Database) Persist(receiver common.Address) (ethTypes.Block, error) {
 }
 
 // ResetBlockState resets the in-memory block's processing state.
-func (db *Database) ResetBlockState(receiver common.Address) error { 
+func (db *Database) ResetBlockState(receiver common.Address) error {
 	db.logger.Debug("Resetting DB BlockState", "receiver", receiver.Hex())
 	return db.ethState.ResetBlockState(receiver)
 }
@@ -168,9 +171,9 @@ func (db *Database) Stop() error {
 	db.eth.Engine().Close()
 	db.eth.TxPool().Stop()
 	db.eth.ChainDb().Close()
-	//if err := db.eth.Stop(); err != nil {
-	//	return err
-	//}
+	// if err := db.eth.Stop(); err != nil {
+	// 	return err
+	// }
 	return nil
 }
 

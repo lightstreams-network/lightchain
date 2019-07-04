@@ -13,8 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/eth"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/params"
-	tmtCode "github.com/tendermint/tendermint/abci/example/code"
-	tmtAbciTypes "github.com/tendermint/tendermint/abci/types"
 )
 
 // The blockState struct handles processing of TXs included in a block.
@@ -40,7 +38,7 @@ type blockState struct {
 //
 // Logic copied from `core/state_processor.go` `(p *StateProcessor) Process` that gets
 // normally executed on block persist.
-func (bs *blockState) execTx(bc *core.BlockChain, config *eth.Config, chainConfig *params.ChainConfig, blockHash common.Hash, tx *ethTypes.Transaction) tmtAbciTypes.ResponseDeliverTx {
+func (bs *blockState) execTx(bc *core.BlockChain, config *eth.Config, chainConfig *params.ChainConfig, blockHash common.Hash, tx *ethTypes.Transaction) error {
 	// TODO: Investigate if snapshot should be used `snapshot := bs.state.Snapshot()`
 	bs.state.Prepare(tx.Hash(), blockHash, bs.txIndex)
 	receipt, _, err := core.ApplyTransaction(
@@ -56,16 +54,15 @@ func (bs *blockState) execTx(bc *core.BlockChain, config *eth.Config, chainConfi
 	)
 	if err != nil {
 		// TODO: investigate if snapshot should be used `bs.state.RevertToSnapshot(snapshot)`
-		return tmtAbciTypes.ResponseDeliverTx{Code: tmtCode.CodeTypeEncodingError, Log: fmt.Sprintf("Error applying state TX %v", err)}
+		return fmt.Errorf("error applying state TX %v", err)
 	}
 
 	bs.txIndex++
-
 	// The slices are allocated in updateBlockState
 	bs.transactions = append(bs.transactions, tx)
 	bs.receipts = append(bs.receipts, receipt)
 
-	return tmtAbciTypes.ResponseDeliverTx{Code: tmtAbciTypes.CodeTypeOK}
+	return nil
 }
 
 // Persist the eth sate, update the header, make a new block and save it to disk.

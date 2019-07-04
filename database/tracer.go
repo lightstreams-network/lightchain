@@ -12,6 +12,7 @@ import (
 	"bytes"
 	"math/big"
 	"github.com/lightstreams-network/lightchain/database/web3"
+	"github.com/lightstreams-network/lightchain/database/txclient"
 )
 
 // Tracer is used to trace and assert behaviour of lightchain `database` pkg.
@@ -167,7 +168,7 @@ func (t EthDBTracer) AssertPostTxSimulationState(from common.Address, tx *types.
 		)
 	}
 
-	requiredGasPrice := big.NewInt(MinGasPrice)
+	requiredGasPrice := big.NewInt(txclient.MinGasPrice)
 	if requiredGasPrice.Cmp(tx.GasPrice()) > 0 {
 		t.Logger.Errorw(
 			"incorrect gas price. Expected default gas price",

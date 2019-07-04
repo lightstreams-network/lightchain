@@ -43,7 +43,6 @@ RUN_ARGS="--datadir=${DATA_DIR}"
 RUN_ARGS="${RUN_ARGS} --rpc --rpcaddr 0.0.0.0 --rpcport 8545 --rpcapi eth,net,web3,personal,debug"
 RUN_ARGS="${RUN_ARGS} --ws --wsaddr 0.0.0.0 --wsport 8556  --wsapi eth,net,web3,personal,debug --wsorigins=*"
 RUN_ARGS="${RUN_ARGS} --tmt_rpc_port=26657 --tmt_p2p_port=26656"
-RUN_ARGS="${RUN_ARGS} --prometheus"
 
 pushd "$ROOT_PATH"
 
