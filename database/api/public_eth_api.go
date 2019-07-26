@@ -5,6 +5,7 @@ import (
 	"github.com/ethereum/go-ethereum/eth"
 	"math/big"
 	consensusAPI "github.com/lightstreams-network/lightchain/consensus/api"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type PublicEthereumAPI struct {
@@ -26,6 +27,21 @@ func (api *PublicEthereumAPI) Hashrate() hexutil.Uint64 {
 // ChainId is the EIP-155 replay-protection chain id for the current ethereum chain config.
 func (api *PublicEthereumAPI) ChainId() hexutil.Uint64 {
 	return (hexutil.Uint64)(api.chainID.Uint64())
+}
+
+// Etherbase is the address that mining rewards will be send to
+func (s *PublicEthereumAPI) Etherbase() (common.Address, error) {
+	return common.Address{}, nil
+}
+
+// Coinbase is the address that mining rewards will be send to (alias for Etherbase)
+func (s *PublicEthereumAPI) Coinbase() (common.Address, error) {
+	return common.Address{}, nil
+}
+
+// Mining returns an indication if this node is currently mining.
+func (s *PublicEthereumAPI) Mining() bool {
+	return false
 }
 
 // Syncing returns whether or not the current node is syncing with other peers. Returns false if not, or a struct
