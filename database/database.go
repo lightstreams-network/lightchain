@@ -51,7 +51,7 @@ func NewDatabase(ctx *node.ServiceContext, ethCfg *eth.Config, consAPI consensus
 	currentBlock := ethereum.BlockChain().CurrentBlock()
 	ethereum.EventMux().Post(core.ChainHeadEvent{currentBlock})
 
-	ethereum.BlockChain().SetValidator(NullBlockValidator{})
+	//ethereum.BlockChain().SetValidator(NullBlockValidator{})
 
 	db := &Database{
 		eth:      ethereum,

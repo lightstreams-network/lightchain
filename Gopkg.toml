@@ -8,7 +8,15 @@
 
 [[constraint]]
   name = "github.com/ethereum/go-ethereum"
-  version = "1.8.27"
+  version = "1.9.2"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/mitchellh/go-homedir"
+
+[[constraint]]
+  name = "go.uber.org/zap"
+  version = "1.8.0"
 
 [[override]]
   name = "github.com/tendermint/iavl"
@@ -21,28 +29,11 @@
 [[override]]
   name = "github.com/tendermint/go-amino"
   version = "~0.14.1"
-  
+
 [[override]]
   name = "golang.org/x/crypto"
   revision = "ff983b9c42bc9fbf91556e191cc8efb585c16908"
 
-[[constraint]]
-  branch = "master"
-  name = "github.com/mitchellh/go-homedir"
-
-[[constraint]]
-  name = "go.uber.org/zap"
-  version = "1.8.0"
-
-[prune]
-  non-go = true
-  go-tests = true
-  unused-packages = true
-  [[prune.project]]
-    name = "github.com/ethereum/go-ethereum"
-    non-go = false
-    unused-packages = false
-  [[prune.project]]
-    name = "github.com/karalabe/hid"
-    non-go = false
-    unused-packages = false
+[[override]]
+  name = "github.com/russross/blackfriday"
+  version = "1.5.2"

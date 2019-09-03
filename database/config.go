@@ -1,7 +1,6 @@
 package database
 
 import (
-	"time"
 	"path/filepath"
 	"errors"
 	"gopkg.in/urfave/cli.v1"
@@ -47,8 +46,8 @@ type GethConfig struct {
 
 func NewConfig(dataDir string, metrics bool, ctx *cli.Context) (Config, error) {
 	gethCfg := GethConfig{
-		EthCfg:  eth.DefaultConfig,
-		NodeCfg: DefaultEthNodeConfig(dataDir),
+		EthCfg:   eth.DefaultConfig,
+		NodeCfg:  DefaultEthNodeConfig(dataDir),
 	}
 
 	// Configure ethereum node server
@@ -57,7 +56,7 @@ func NewConfig(dataDir string, metrics bool, ctx *cli.Context) (Config, error) {
 	gethCfg.NodeCfg.P2P.NoDiscovery = true
 	gethCfg.NodeCfg.DataDir = dataDir
 
-	// IMPORTANT: If we do not define ".Name" Ethereum lib will automatically set it by the process name which will use 
+	// IMPORTANT: If we do not define ".Name" Ethereum lib will automatically set it by the process name which will use
 	// to generate every subfolder underneath
 	gethCfg.NodeCfg.Name = "."
 
@@ -71,13 +70,6 @@ func NewConfig(dataDir string, metrics bool, ctx *cli.Context) (Config, error) {
 	ethUtils.SetEthConfig(ctx, ethereum, &gethCfg.EthCfg)
 	gethCfg.EthCfg.Ethash.PowMode = ethash.ModeFake
 
-	// Due to the low usages of the blockchain we need to reduce cache size to prevent huge number block replies on every restart. 
-	// @TODO once the usage of blockchain is larger we should tune these values again accordingly
-	gethCfg.EthCfg.DatabaseCache = 256 // MB
-	gethCfg.EthCfg.TrieCleanCache = 64 // MB
-	gethCfg.EthCfg.TrieDirtyCache = 0 // MB
-	gethCfg.EthCfg.TrieTimeout = 10 * time.Minute
-
 	// To prevent DDOS TX spam, a min gas price must be defined
 	//
 	// 1 PHT = 0.15$
@@ -87,7 +79,7 @@ func NewConfig(dataDir string, metrics bool, ctx *cli.Context) (Config, error) {
 	// GPO is responsible for suggesting the right gas price so users don't have to
 	gethCfg.EthCfg.GPO.Default = big.NewInt(txclient.MinGasPrice)
 	// We don't use mining but this value is read from miner config anyway and used around the codebase
-	gethCfg.EthCfg.MinerGasPrice = big.NewInt(txclient.MinGasPrice)
+	gethCfg.EthCfg.Miner.GasPrice = big.NewInt(txclient.MinGasPrice)
 	// The TxPool is the most important and ensures TX price validation can happen, also web3 is using it
 	gethCfg.EthCfg.TxPool.PriceLimit = big.NewInt(txclient.MinGasPrice).Uint64()
 	gethCfg.EthCfg.TxPool.NoLocals = true

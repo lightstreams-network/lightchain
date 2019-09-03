@@ -13,13 +13,20 @@ var (
 	RPCListenAddrFlag = ethUtils.RPCListenAddrFlag
 	RPCPortFlag = ethUtils.RPCPortFlag
 	RPCApiFlag = ethUtils.RPCApiFlag
+	RPCCORSDomainFlag = ethUtils.RPCCORSDomainFlag
+	RPCVirtualHostsFlag = ethUtils.RPCVirtualHostsFlag
+	RPCInsecureUnlockAllowedFlag = ethUtils.InsecureUnlockAllowedFlag
+
 	WSEnabledFlag = ethUtils.WSEnabledFlag
 	WSListenAddrFlag = ethUtils.WSListenAddrFlag
 	WSPortFlag = ethUtils.WSPortFlag
 	WSApiFlag = ethUtils.WSApiFlag
-	RPCCORSDomainFlag = ethUtils.RPCCORSDomainFlag
-	RPCVirtualHostsFlag = ethUtils.RPCVirtualHostsFlag
 	WSAllowedOriginsFlag = ethUtils.WSAllowedOriginsFlag
+
+	CacheFlag = ethUtils.CacheFlag
+	CacheDatabaseFlag = ethUtils.CacheDatabaseFlag
+	CacheTrieFlag = ethUtils.CacheTrieFlag
+	CacheGCFlag = ethUtils.CacheGCFlag
 )
 
 func addEthNodeFlags(cmd *cobra.Command) {
@@ -30,34 +37,40 @@ func addEthNodeFlags(cmd *cobra.Command) {
 	cmd.Flags().String(RPCApiFlag.GetName(), RPCApiFlag.Value, RPCApiFlag.Usage)
 	cmd.Flags().String(RPCCORSDomainFlag.GetName(), RPCCORSDomainFlag.Value, RPCCORSDomainFlag.Usage)
 	cmd.Flags().String(RPCVirtualHostsFlag.GetName(), RPCVirtualHostsFlag.Value, RPCVirtualHostsFlag.Usage)
-	
+	cmd.Flags().Bool(RPCInsecureUnlockAllowedFlag.GetName(), false, RPCInsecureUnlockAllowedFlag.Usage)
+
 	// WS Flags
 	cmd.Flags().Bool(WSEnabledFlag.GetName(), false, WSEnabledFlag.Usage)
 	cmd.Flags().String(WSListenAddrFlag.GetName(), WSListenAddrFlag.Value, WSListenAddrFlag.Usage)
 	cmd.Flags().Int(WSPortFlag.GetName(), WSPortFlag.Value, WSPortFlag.Usage)
 	cmd.Flags().String(WSApiFlag.GetName(), WSApiFlag.Value, WSApiFlag.Usage)
 	cmd.Flags().String(WSAllowedOriginsFlag.GetName(), WSAllowedOriginsFlag.Usage, WSAllowedOriginsFlag.Usage)
+
+	// General
+	cmd.Flags().Int(CacheFlag.GetName(), CacheFlag.Value, CacheFlag.Usage)
+	cmd.Flags().Int(CacheDatabaseFlag.GetName(), CacheDatabaseFlag.Value, CacheDatabaseFlag.Usage)
+	cmd.Flags().Int(CacheTrieFlag.GetName(), CacheTrieFlag.Value, CacheTrieFlag.Usage)
+	cmd.Flags().Int(CacheGCFlag.GetName(), CacheGCFlag.Value, CacheGCFlag.Usage)
 }
 
 func newNodeClientCtx(dataDir string, cmd *cobra.Command) *cli.Context {
-
-	app := ethUtils.NewApp("0.0.0", "the lightchain command line interface")
+	app := ethUtils.NewApp("0.0.0", "0/0/0000", "Lightchain App")
 	flagSet := flag.NewFlagSet("Ethereum CLI ctx", flag.ExitOnError)
 
 	flagSet.String(ethUtils.DataDirFlag.GetName(), dataDir, ethUtils.DataDirFlag.Usage)
 
 	rpcEnabledFlagValue, _ := cmd.Flags().GetBool(RPCEnabledFlag.GetName())
 	flagSet.Bool(RPCEnabledFlag.GetName(), rpcEnabledFlagValue, RPCEnabledFlag.Usage)
-	flagSet.Set(RPCEnabledFlag.GetName(), strconv.FormatBool(rpcEnabledFlagValue)) 
-	
+	flagSet.Set(RPCEnabledFlag.GetName(), strconv.FormatBool(rpcEnabledFlagValue))
+
 	rpcListenAddrValue, _ := cmd.Flags().GetString(RPCListenAddrFlag.GetName())
 	flagSet.String(RPCListenAddrFlag.GetName(), rpcListenAddrValue, RPCListenAddrFlag.Usage)
 	flagSet.Set(RPCListenAddrFlag.GetName(), rpcListenAddrValue)
-	
+
 	rpcPortFlagValue, _ := cmd.Flags().GetInt(RPCPortFlag.GetName())
 	flagSet.Int(RPCPortFlag.GetName(), rpcPortFlagValue, RPCPortFlag.Usage)
 	flagSet.Set(RPCPortFlag.GetName(), strconv.Itoa(rpcPortFlagValue))
-	
+
 	rpcApiFlagValue, _ := cmd.Flags().GetString(RPCApiFlag.GetName())
 	flagSet.String(RPCApiFlag.GetName(), rpcApiFlagValue, RPCApiFlag.Usage)
 	flagSet.Set(RPCApiFlag.GetName(), rpcApiFlagValue)
@@ -65,27 +78,31 @@ func newNodeClientCtx(dataDir string, cmd *cobra.Command) *cli.Context {
 	wsEnabledFlagValue, _ := cmd.Flags().GetBool(WSEnabledFlag.GetName())
 	flagSet.Bool(WSEnabledFlag.GetName(), wsEnabledFlagValue, WSEnabledFlag.Usage)
 	flagSet.Set(WSEnabledFlag.GetName(), strconv.FormatBool(wsEnabledFlagValue))
-	
+
 	wsListenAddrFlagValue, _ := cmd.Flags().GetString(WSListenAddrFlag.GetName())
 	flagSet.String(WSListenAddrFlag.GetName(), wsListenAddrFlagValue, WSListenAddrFlag.Usage)
 	flagSet.Set(WSListenAddrFlag.GetName(), wsListenAddrFlagValue)
-	
+
 	wsPortFlagValue, _ := cmd.Flags().GetInt(WSPortFlag.GetName())
 	flagSet.Int(WSPortFlag.GetName(), wsPortFlagValue, WSPortFlag.Usage)
 	flagSet.Set(WSPortFlag.GetName(), strconv.Itoa(wsPortFlagValue))
-	
+
 	wsApiFlagValue, _ := cmd.Flags().GetString(WSApiFlag.GetName())
 	flagSet.String(WSApiFlag.GetName(), wsApiFlagValue, WSApiFlag.Usage)
 	flagSet.Set(WSApiFlag.GetName(), wsApiFlagValue)
-	
+
 	rpcCORSDomainFlagValue, _ := cmd.Flags().GetString(RPCCORSDomainFlag.GetName())
 	flagSet.String(RPCCORSDomainFlag.GetName(), rpcCORSDomainFlagValue, RPCCORSDomainFlag.Usage)
 	flagSet.Set(RPCCORSDomainFlag.GetName(), rpcCORSDomainFlagValue)
-	
+
 	rpcVirtualHostsFlagValue, _ := cmd.Flags().GetString(RPCVirtualHostsFlag.GetName())
 	flagSet.String(RPCVirtualHostsFlag.GetName(), rpcVirtualHostsFlagValue, RPCVirtualHostsFlag.Usage)
 	flagSet.Set(RPCVirtualHostsFlag.GetName(), rpcVirtualHostsFlagValue)
-	
+
+	rpcInsecureUnlockAllowedFlagValue, _ := cmd.Flags().GetBool(RPCInsecureUnlockAllowedFlag.GetName())
+	flagSet.Bool(RPCInsecureUnlockAllowedFlag.GetName(), rpcInsecureUnlockAllowedFlagValue, RPCInsecureUnlockAllowedFlag.Usage)
+	flagSet.Set(RPCInsecureUnlockAllowedFlag.GetName(), strconv.FormatBool(rpcInsecureUnlockAllowedFlagValue))
+
 	wsAllowedOriginsFlagValue, _ := cmd.Flags().GetString(WSAllowedOriginsFlag.GetName())
 	flagSet.String(WSAllowedOriginsFlag.GetName(), wsAllowedOriginsFlagValue, WSAllowedOriginsFlag.Usage)
 	flagSet.Set(WSAllowedOriginsFlag.GetName(), wsAllowedOriginsFlagValue)
@@ -93,6 +110,23 @@ func newNodeClientCtx(dataDir string, cmd *cobra.Command) *cli.Context {
 	// Default values required
 	flagSet.String(ethUtils.GCModeFlag.GetName(), ethUtils.GCModeFlag.Value, ethUtils.GCModeFlag.Usage)
 	flagSet.Set(ethUtils.GCModeFlag.GetName(), ethUtils.GCModeFlag.Value)
+
+	// General
+	cacheFlagValue, _ := cmd.Flags().GetInt(CacheFlag.GetName())
+	flagSet.Int(CacheFlag.GetName(), cacheFlagValue, CacheFlag.Usage)
+	flagSet.Set(CacheFlag.GetName(), strconv.Itoa(cacheFlagValue))
+
+	cacheDatabaseFlagValue, _ := cmd.Flags().GetInt(CacheDatabaseFlag.GetName())
+	flagSet.Int(CacheDatabaseFlag.GetName(), cacheDatabaseFlagValue, CacheDatabaseFlag.Usage)
+	flagSet.Set(CacheDatabaseFlag.GetName(), strconv.Itoa(cacheDatabaseFlagValue))
+
+	cacheTrieFlagValue, _ := cmd.Flags().GetInt(CacheTrieFlag.GetName())
+	flagSet.Int(CacheTrieFlag.GetName(), cacheTrieFlagValue, CacheTrieFlag.Usage)
+	flagSet.Set(CacheTrieFlag.GetName(), strconv.Itoa(cacheTrieFlagValue))
+
+	cacheGCFlagValue, _ := cmd.Flags().GetInt(CacheGCFlag.GetName())
+	flagSet.Int(CacheGCFlag.GetName(), cacheGCFlagValue, CacheGCFlag.Usage)
+	flagSet.Set(CacheGCFlag.GetName(), strconv.Itoa(cacheGCFlagValue))
 
 	ctx := cli.NewContext(app, flagSet, nil)
 	return ctx

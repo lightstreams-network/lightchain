@@ -7,14 +7,13 @@ import (
 	"reflect"
 	"fmt"
 	"io/ioutil"
-	"github.com/ethereum/go-ethereum/ethdb"
-	
 	ethCore "github.com/ethereum/go-ethereum/core"
 	tmtLog "github.com/tendermint/tendermint/libs/log"
-	
+
 	"github.com/lightstreams-network/lightchain/network"
 	"github.com/lightstreams-network/lightchain/log"
 	stdtracer "github.com/lightstreams-network/lightchain/tracer"
+	"github.com/ethereum/go-ethereum/core/rawdb"
 )
 
 func Init(cfg Config, ntw network.Network, trcCfg stdtracer.Config) error {
@@ -33,12 +32,12 @@ func Init(cfg Config, ntw network.Network, trcCfg stdtracer.Config) error {
 	if genesisBlob, err = ntw.DatabaseGenesis(); err != nil {
 		return err
 	}
-	
+
 	if err = writeKeystoreFiles(logger, keystoreDir, keystoreFiles); err != nil {
 		err = fmt.Errorf("could not write keystore files: %v", err)
 		return err
 	}
-	
+
 	genesis, err := parseBlobGenesis(genesisBlob)
 	if err != nil {
 		err = fmt.Errorf("unable to parse genesis file. err: %v", err)
@@ -51,7 +50,7 @@ func Init(cfg Config, ntw network.Network, trcCfg stdtracer.Config) error {
 	}
 	logger.Info("Generated genesis block", "path", cfg.genesisPath())
 
-	chainDb, err := ethdb.NewLDBDatabase(cfg.ChainDbDir(), 0, 0)
+	chainDb, err := rawdb.NewLevelDBDatabase(cfg.ChainDbDir(), 0, 0, "eth/db/chaindata/")
 	if err != nil {
 		err = fmt.Errorf("failed to open LDBD DB: %v", err)
 		return err
@@ -68,7 +67,7 @@ func Init(cfg Config, ntw network.Network, trcCfg stdtracer.Config) error {
 
 	trc, err := NewTracer(trcCfg, cfg.ChainDbDir())
 	trc.AssertPersistedGenesisBlock(*genesis)
-	
+
 	return nil
 }
 
@@ -91,7 +90,7 @@ func writeGenesisFile(genesisPath string, genesis *ethCore.Genesis) error {
 	if err != nil {
 		return err
 	}
-	
+
 	f, err := os.Create(genesisPath)
 	if err != nil {
 		return err
@@ -100,7 +99,7 @@ func writeGenesisFile(genesisPath string, genesis *ethCore.Genesis) error {
 	if _, err := f.Write(genesisBlob); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 

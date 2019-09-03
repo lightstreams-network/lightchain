@@ -2,7 +2,6 @@ package database
 
 import (
 	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/state"
 
@@ -56,7 +55,7 @@ func NewTracer(cfg stdtracer.Config, chainDataDir string) (Tracer, error) {
 func (t EthDBTracer) AssertPersistedGenesisBlock(genesis core.Genesis) {
 	t.Logger.Infow("Tracing if ETH DB wrote a valid genesis block to disk...", "chaindata", t.chainDataDir)
 
-	chainDb, err := ethdb.NewLDBDatabase(t.chainDataDir, 0, 0)
+	chainDb, err := rawdb.NewLevelDBDatabase(t.chainDataDir, 0, 0, "eth/db/chaindata/")
 	if err != nil {
 		t.Logger.Errorw("unable to open LDB db", "err", err)
 		return
@@ -96,7 +95,7 @@ func (t EthDBTracer) AssertPersistedGenesisBlock(genesis core.Genesis) {
 func (t EthDBTracer) AssertPostTxSimulationState(from common.Address, tx *types.Transaction) {
 	t.Logger.Infow("Tracing if ETH DB is in a valid state after simulation...", "chaindata", t.chainDataDir)
 
-	chainDb, err := ethdb.NewLDBDatabase(t.chainDataDir, 0, 0)
+	chainDb, err := rawdb.NewLevelDBDatabase(t.chainDataDir, 0, 0, "eth/db/chaindata/")
 	if err != nil {
 		t.Logger.Errorw("unable to open LDB db", "err", err)
 		return

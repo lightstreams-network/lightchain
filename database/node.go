@@ -40,7 +40,7 @@ func NewNode(cfg *Config, consensusAPI conAPI.API, registry *prometheus.Registry
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var trackedMetrics metrics.Metrics
 	if cfg.metrics {
 		trackedMetrics = metrics.NewMetrics(registry)
@@ -131,16 +131,14 @@ func registerEventHandlers(n *Node, events chan accounts.WalletEvent) error {
 		n.logger.Error(fmt.Errorf("failed to attach to self: %v", err).Error())
 		return err
 	}
-	stateReader := ethclient.NewClient(rpcClient)
+	chainStateReader := ethclient.NewClient(rpcClient)
 
+	// Open any wallets already attached
 	for _, wallet := range n.ethereum.AccountManager().Wallets() {
 		if err := wallet.Open(""); err != nil {
 			n.logger.Error("Failed to open wallet", "url", wallet.URL(), "err", err)
-		} else {
-			wallet.SelfDerive(accounts.DefaultBaseDerivationPath, stateReader)
 		}
 	}
-
 	// Listen for wallet event till termination
 	for event := range events {
 		switch event.Kind {
@@ -152,11 +150,13 @@ func registerEventHandlers(n *Node, events chan accounts.WalletEvent) error {
 			status, _ := event.Wallet.Status()
 			n.logger.Info("New wallet appeared", "url", event.Wallet.URL(), "status", status)
 
+			var derivationPaths []accounts.DerivationPath
 			if event.Wallet.URL().Scheme == "ledger" {
-				event.Wallet.SelfDerive(accounts.DefaultLedgerBaseDerivationPath, stateReader)
-			} else {
-				event.Wallet.SelfDerive(accounts.DefaultBaseDerivationPath, stateReader)
+				derivationPaths = append(derivationPaths, accounts.LegacyLedgerBaseDerivationPath)
 			}
+			derivationPaths = append(derivationPaths, accounts.DefaultBaseDerivationPath)
+
+			event.Wallet.SelfDerive(derivationPaths, chainStateReader)
 
 		case accounts.WalletDropped:
 			n.logger.Info("Old wallet dropped", "url", event.Wallet.URL())
