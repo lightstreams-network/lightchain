@@ -6,11 +6,13 @@ package database
 const Genesis = `
 {
     "config": {
-        "chainId": 162,
+        "chainId": 161,
         "eip150Block": 0,
         "eip155Block": 0,
         "eip158Block": 0,
-        "ByzantiumBlock": 0
+        "ByzantiumBlock": 0,
+        "ConstantinopleBlock": 558000,
+        "PetersburgBlock": 558001
     },
     "nonce": "1",
     "difficulty": "1024",
