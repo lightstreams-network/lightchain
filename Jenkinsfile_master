@@ -1,0 +1,101 @@
+pipeline {
+    agent none
+
+    options {
+	timestamps()
+	disableConcurrentBuilds()
+	ansiColor('xterm')
+	skipDefaultCheckout()
+    }
+
+    environment {
+	aws_access_id = credentials('aws-jenkins-access-id')
+	aws_access_key = credentials('aws-jenkins-access-key')
+    }
+
+    stages {
+	stage('Generate lightchain binary') {
+	    agent {
+		docker {
+		    image 'techknowlogick/xgo:latest'
+		    args '-u root:root --entrypoint=\'\''
+		}
+	    }
+	    steps {
+		script {
+		    checkout([
+			$class: 'GitSCM',
+			branches: [[name: '*/master']],
+			doGenerateSubmoduleConfigurations: false,
+			extensions: [],
+			submoduleCfg: [],
+			userRemoteConfigs: [[credentialsId: 'devops', url: 'git@github.com:lightstreams-network/lightchain.git']]
+		    ])
+		    def repo_path = "/var/jenkins_home/workspace/lightchain.master"
+		    def go_ls_path = "/go/src/github.com/lightstreams-network/lightchain"
+		    def commands = [
+			// Install curl
+			"apt update && apt install -y curl",
+			// Install dep
+			"curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh",
+			// lightchain dependencies
+			"mkdir -p /go/src/github.com/lightstreams-network",
+			"cp -r ${repo_path} ${go_ls_path}",
+			"cd ${go_ls_path} && /go/bin/dep ensure",
+			// Cross compile for linux and OSX
+			"cd ${go_ls_path} && xgo --targets=linux/amd64,darwin-10.10/amd64 ./cmd/lightchain",
+			// Copy to shared folder so it is visible by other stages
+			"cp /build/lightchain-linux-amd64 ${repo_path}/",
+			"cp /build/lightchain-10.10-amd64 ${repo_path}/lightchain-osx"
+		    ]
+
+		    for (command in commands) {
+			sh "${command}"
+		    }
+		}
+	    }
+	}
+	stage('AWS tag current version') {
+	    agent {
+		docker {
+		    image 'python:3.7.4'
+		    args '-u root:root'
+		}
+	    }
+	    steps {
+		script {
+		    def repo_path = "/var/jenkins_home/workspace/lightchain.master"
+		    // Get current latest binary
+		    sh 'wget "https://s3.eu-central-1.amazonaws.com/lightstreams-public/lightchain/latest/lightchain-linux-amd64" -O /tmp/lightchain'
+		    sh "chmod +x /tmp/lightchain"
+		    def latest_version = "v" + sh (
+			script: "/tmp/lightchain version | cut -d' ' -f2",
+			returnStdout: true
+		    ).replaceAll("\n", "")
+		    // def version_match = (latest_version_str =~ /([\d.])+/)
+		    // def latest_version = "v" + version_match[0].getAt(0)
+
+		    def aws_bin = "/root/.local/bin/aws"
+		    def s3_bucket = "s3://lightstreams-public/lightchain"
+		    def commands = [
+			// Setup awscli
+			"pip3 install awscli --upgrade --user",
+			"mkdir /root/.aws",
+			"echo '[default]\nregion=eu-central-1\noutput=json' > /root/.aws/config",
+			"echo '[default]\naws_access_key_id=${env.aws_access_id}\naws_secret_access_key=${env.aws_access_key}' > /root/.aws/credentials",
+			// Move current latest to its version folder
+			"${aws_bin} s3 cp ${s3_bucket}/latest/lightchain-linux-amd64 ${s3_bucket}/${latest_version}/lightchain-linux-amd64 --acl public-read",
+			"${aws_bin} s3 cp ${s3_bucket}/latest/lightchain-osx ${s3_bucket}/${latest_version}/lightchain-osx --acl public-read",
+			// Upload the new latest versions
+			"${aws_bin} s3 cp ${repo_path}/lightchain-linux-amd64 ${s3_bucket}/latest/lightchain-linux-amd64 --acl public-read",
+			"${aws_bin} s3 cp ${repo_path}/lightchain-osx ${s3_bucket}/latest/lightchain-osx --acl public-read"
+		    ]
+
+		    for (command in commands) {
+			sh "${command}"
+		    }
+		}
+	    }
+	}
+    }
+}
