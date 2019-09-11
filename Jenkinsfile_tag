@@ -46,7 +46,7 @@ pipeline {
 			"cd ${go_ls_path} && xgo --targets=linux/amd64,darwin-10.10/amd64 ./cmd/lightchain",
 			// Copy to shared folder so it is visible by other stages
 			"cp /build/lightchain-linux-amd64 ${repo_path}/",
-			"cp /build/lightchain-10.10-amd64 ${repo_path}/lightchain-osx"
+			"cp /build/lightchain-darwin-10.10-amd64 ${repo_path}/lightchain-osx"
 		    ]
 
 		    for (command in commands) {
