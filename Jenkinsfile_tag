@@ -31,7 +31,7 @@ pipeline {
 			submoduleCfg: [],
 			userRemoteConfigs: [[credentialsId: 'devops', url: 'git@github.com:lightstreams-network/lightchain.git']]
 		    ])
-		    def repo_path = "/var/jenkins_home/workspace/lightchain.master"
+		    def repo_path = "/var/jenkins_home/workspace/lightchain.tag"
 		    def go_ls_path = "/go/src/github.com/lightstreams-network/lightchain"
 		    def commands = [
 			// Install curl
@@ -64,7 +64,7 @@ pipeline {
 	    }
 	    steps {
 		script {
-		    def repo_path = "/var/jenkins_home/workspace/lightchain.master"
+		    def repo_path = "/var/jenkins_home/workspace/lightchain.tag"
 		    // Get current latest binary
 		    sh 'wget "https://s3.eu-central-1.amazonaws.com/lightstreams-public/lightchain/latest/lightchain-linux-amd64" -O /tmp/lightchain'
 		    sh "chmod +x /tmp/lightchain"
