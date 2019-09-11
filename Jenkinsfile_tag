@@ -25,7 +25,7 @@ pipeline {
 		script {
 		    checkout([
 			$class: 'GitSCM',
-			branches: [[name: '*/master']],
+			branches: [[name: "${params.TAG}"]],
 			doGenerateSubmoduleConfigurations: false,
 			extensions: [],
 			submoduleCfg: [],
@@ -83,10 +83,12 @@ pipeline {
 			"mkdir /root/.aws",
 			"echo '[default]\nregion=eu-central-1\noutput=json' > /root/.aws/config",
 			"echo '[default]\naws_access_key_id=${env.aws_access_id}\naws_secret_access_key=${env.aws_access_key}' > /root/.aws/credentials",
-			// Move current latest to its version folder
-			"${aws_bin} s3 cp ${s3_bucket}/latest/lightchain-linux-amd64 ${s3_bucket}/${latest_version}/lightchain-linux-amd64 --acl public-read",
-			"${aws_bin} s3 cp ${s3_bucket}/latest/lightchain-osx ${s3_bucket}/${latest_version}/lightchain-osx --acl public-read",
-			// Upload the new latest versions
+
+			// Upload the new tag
+			"${aws_bin} s3 cp ${repo_path}/lightchain-linux-amd64 ${s3_bucket}/${params.TAG}/lightchain-linux-amd64 --acl public-read",
+			"${aws_bin} s3 cp ${repo_path}/lightchain-osx ${s3_bucket}/${params.TAG}/lightchain-osx --acl public-read",
+
+			// Upload the new tag as latest
 			"${aws_bin} s3 cp ${repo_path}/lightchain-linux-amd64 ${s3_bucket}/latest/lightchain-linux-amd64 --acl public-read",
 			"${aws_bin} s3 cp ${repo_path}/lightchain-osx ${s3_bucket}/latest/lightchain-osx --acl public-read"
 		    ]
