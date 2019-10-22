@@ -32,7 +32,7 @@ func NewNode(cfg *Config, registry *prometheus.Registry) (*Node, error) {
 
 	nodeKeyFile := cfg.tendermintCfg.NodeKeyFile()
 	if ! tmtCommon.FileExists(nodeKeyFile) {
-		return nil, fmt.Errorf("tendermint key file does not exists")
+		return nil, fmt.Errorf("tendermint key file '%s' does not exists", nodeKeyFile)
 	}
 
 	nodeKey, err := p2p.LoadOrGenNodeKey(nodeKeyFile)
@@ -106,7 +106,7 @@ func (n *Node) Stop() error {
 		<-n.tendermint.Quit()
 		n.logger.Info("Tendermint node stopped")
 	}
-	
+
 	for ctxID, db := range n.dbs {
 		n.logger.Info(fmt.Sprintf("Closing database '%s'...", ctxID))
 		db.Close()
