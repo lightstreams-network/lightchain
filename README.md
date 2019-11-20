@@ -268,12 +268,11 @@ If you find any bugs or simply have a question, please [write an issue](https://
 
 ## Help
 Need help? have questions? any feedback? Get in touch with us.
-* [Telegram](https://t.me/LightstreamsDevelopers)
+* [Discord](https://discordapp.com/invite/FXHZUKX)
 * [Discuss Forum](https://discuss.lightstreams.network/c/dev)
 
 ## Contributors
 
 - [Lukáš Lukáč](https://github.com/EnchanterIO), [Twitter](https://twitter.com/BlocksByLukas)
 - [Gabriel Garrido](https://github.com/ggarri)
-- [Andrew Zappella](https://github.com/azappella)
 - [Michael Smolenski](https://github.com/mikesmo)
