@@ -8,7 +8,7 @@ We are currently working hard to release the **Lightstreams main network** which
 
 ## Documentation
 
-You can find more detailed documentation in the [lightchain CLI reference documentation](https://docs.lightstreams.network/cli-docs/lightchain).
+You can find more detailed documentation in the [lightchain CLI reference documentation](https://docs.lightstreams.network/products-1/lightchain).
 
 ## Pre-requirements
 
@@ -138,7 +138,7 @@ Flags:
 
 ```
 
-If you want to know more about how to use `lightchain` command line client, see [our online documentation](https://docs.lightstreams.network/cli-docs/lightchain/)
+If you want to know more about how to use `lightchain` command line client, see [our online documentation](https://docs.lightstreams.network/products-1/lightchain/lightchain-commands)
 
 ## Metrics
 [Read how to run metrics explorer](METRICS.md)
@@ -169,9 +169,10 @@ That was likely caused due to an synchronization issue after a transaction
 
 ### Leth
 Lightstreams created a command line application called `leth` to run and manage a lightstreams node, as well as interact with the Lightstreams network
- - [leth documentation](https://docs.lightstreams.network/getting-started/).
+ - [leth documentation](https://docs.lightstreams.network/products-1/smart-vault/getting-started).
 
-Leth wraps `geth` & `ipfs` into a simple, easy-to-use interface and which connects to the Lightstreams network. For convenience, we provide an [HTTP gateway API](https://docs.lightstreams.network/api-docs/) or you can also use the [command line client](https://docs.lightstreams.network/cli-docs/leth/)
+Leth wraps `geth` & `ipfs` into a simple, easy-to-use interface and which connects to the Lightstreams network. For convenience, we provide an 
+[HTTP gateway API](https://docs-api.lightstreams.network/) or you can also use the [command line client](https://docs.lightstreams.network/products-1/smart-vault/sdk/leth)
 
 ## Docker
 In case you prefer to use Docker, follow the instructions below.
