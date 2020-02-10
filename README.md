@@ -2,6 +2,10 @@
 
 This is the official Lightstreams implementation of a proof-of-authority (PoA) blockchain. Lightchain is an ethereum-compatible blockchain which uses byzantine consensus to replace the original proof-of-work (PoW) from Ethereum. This is achieved by integrating [`tendermint`](https://github.com/tendermint/tendermint) for the consensus layer.
 
+## Disclosures and Disclaimer
+
+https://docs.lightstreams.network/products/lightchain/disclosures-and-disclaimer
+
 ## About Lightstreams
 
 We are currently working hard to release the **Lightstreams main network** which aims to provide a fast, privacy-enabled, content-sharing blockchain. Stay tuned about our project's progress by reading [the lightstreams blog](https://medium.com/lightstreams) or by checking out the [Lightstreams' website](https://www.lightstreams.network).
@@ -41,14 +45,14 @@ Version: 1.0.0-beta Mainnet
 
 ## Create a Lightstreams node
 
-Lightstreams provides its own MainNet network, and a testnet called `sirius`. 
+Lightstreams provides its own MainNet network, and a testnet called `sirius`.
 By default, all new created nodes get connected to MainNet and synchronized, but alternatively
 you can choose to connect to `sirius` or even run isolate network using `standalone`, more information is detailed
 above.
- 
+
 ### Node initialization
 
-To initialise a new node you need to run `lightchain init`. The local path where blockchain 
+To initialise a new node you need to run `lightchain init`. The local path where blockchain
 files are going to be stored is set to `${HOME}/.lightchain`. You can change using the `--datadir` flag
 ```
 lightchain init
@@ -62,7 +66,7 @@ lightchain run
 ```
 
 After you run the command above, the network synchronization will take several minutes, so grab a coffee
-while you wait :)  
+while you wait :)
 
 ### Node launch with RPC open
 
@@ -76,7 +80,7 @@ lightchain run --datadir="${HOME}/.lightchain" --rpc --rpcaddr=0.0.0.0 --rpcport
 
 ### Mainnet
 
-To see the current state of the `MainNet` network and check the status of your transactions, 
+To see the current state of the `MainNet` network and check the status of your transactions,
 you can go to the **[lightstreams block explorer](https://explorer.mainnet.lightstreams.io/home)**
 
 
@@ -87,7 +91,7 @@ To run a node using `sirius` network you will need to initialize your node using
 lightchain init --datadir="${HOME}/.lightchain_sirius" --sirius
 ```
 
-To see the current state of the `sirius` network and check the status of your transactions, 
+To see the current state of the `sirius` network and check the status of your transactions,
 you can go to the **[lightstreams block explorer](https://explorer.sirius.lightstreams.io/home)**
 
 To **request free tokens** Please sign up to the [Lightstreams Community Forum](https://discuss.lightstreams.network) and [follow the instructions in this thread](https://discuss.lightstreams.network/t/request-test-tokens/64) to obtain free tokens to use in our test network Sirius.
@@ -101,8 +105,8 @@ lightchain init --datadir="${HOME}/.lightchain_standalone" --standalone
 
 Using this network you won't need to synchronize to anyone as you a running an independent network
 where you are the only validator node.
- 
-To use this network at the genesis block, the account `0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e` has been initialized with _300M Photons_. 
+
+To use this network at the genesis block, the account `0xc916cfe5c83dd4fc3c3b0bf2ec2d4e401782875e` has been initialized with _300M Photons_.
 Its passphrase is `WelcomeToSirius`.
 
 ## Documentation
@@ -153,14 +157,14 @@ Nonce not strictly increasing. Expected YYYY got XXXX engine=consensus module=AB
 ```
 
 That was likely caused due to an synchronization issue after a transaction
- was executed from your local node. Due to that connection problem the 
+ was executed from your local node. Due to that connection problem the
  local state becomes invalid and the nonce of account used to performes
  that transaction stays behind the real one.
- 
- We have an open issue to resolve this problem 
- 
- In meanwhile our team resolve the issue [#70](https://github.com/lightstreams-network/lightchain/issues/70), 
- there is an alternative solution: 
+
+ We have an open issue to resolve this problem
+
+ In meanwhile our team resolve the issue [#70](https://github.com/lightstreams-network/lightchain/issues/70),
+ there is an alternative solution:
  * Shut down your node
  * Remove the memory state saved on `$rm ${DATADIR}/database/transactions.rlp`
  * Start the node again `lightchain run...`
@@ -171,7 +175,7 @@ That was likely caused due to an synchronization issue after a transaction
 Lightstreams created a command line application called `leth` to run and manage a lightstreams node, as well as interact with the Lightstreams network
  - [leth documentation](https://docs.lightstreams.network/products-1/smart-vault/getting-started).
 
-Leth wraps `geth` & `ipfs` into a simple, easy-to-use interface and which connects to the Lightstreams network. For convenience, we provide an 
+Leth wraps `geth` & `ipfs` into a simple, easy-to-use interface and which connects to the Lightstreams network. For convenience, we provide an
 [HTTP gateway API](https://docs-api.lightstreams.network/) or you can also use the [command line client](https://docs.lightstreams.network/products-1/smart-vault/sdk/leth)
 
 ## Docker
@@ -187,7 +191,7 @@ make docker_aws
 ```
 
 Once that is completed, you just need to run the following command
-which will create your container with a running instance of lightchain.  
+which will create your container with a running instance of lightchain.
 ```
 export HOST_DATADIR=${HOME}/.lightchain_docker
 
@@ -201,7 +205,7 @@ Where `${HOST_DATADIR}` is the path in the host disk to
 persist lightchain data. In case a volume is not used the node data
 will be lost after the container is closed.
 
-Alternatively to `sirius`, as NETWORK, you can also choose `mainnet` and `standalone`. 
+Alternatively to `sirius`, as NETWORK, you can also choose `mainnet` and `standalone`.
 
 As you can see several ports has been mapped to your local environment:
 - `8545` which exposes the rpc api of Ethereum
@@ -265,7 +269,7 @@ go test ./...
 - tendermint, [source](https://github.com/tendermint/tendermint),[license](https://github.com/tendermint/tendermint/blob/master/LICENSE)
 
 ## Bugs, Issues, Questions
-If you find any bugs or simply have a question, please [write an issue](https://github.com/lightstreams-network/lightchain/issues) and we'll try and help as best we can.   
+If you find any bugs or simply have a question, please [write an issue](https://github.com/lightstreams-network/lightchain/issues) and we'll try and help as best we can.
 
 ## Help
 Need help? have questions? any feedback? Get in touch with us.
