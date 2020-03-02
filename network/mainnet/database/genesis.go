@@ -10,7 +10,9 @@ const Genesis = `
         "eip150Block": 0,
         "eip155Block": 0,
         "eip158Block": 0,
-        "ByzantiumBlock": 0
+        "ByzantiumBlock": 0,
+        "ConstantinopleBlock": 492834,
+        "PetersburgBlock": 492834
     },
     "nonce": "1",
     "difficulty": "1024",
