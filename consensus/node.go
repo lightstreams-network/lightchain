@@ -2,6 +2,8 @@ package consensus
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/privval"
 	"github.com/lightstreams-network/lightchain/log"
@@ -107,9 +109,13 @@ func (n *Node) Stop() error {
 		n.logger.Info("Tendermint node stopped")
 	}
 
+	// Wait a seconds to buy time for tendermint to finish node stopping events
+	<-time.After(time.Second)
+	
 	for ctxID, db := range n.dbs {
 		n.logger.Info(fmt.Sprintf("Closing database '%s'...", ctxID))
 		db.Close()
+		n.logger.Info(fmt.Sprintf("Database '%s' closed", ctxID))
 	}
 
 	return nil
