@@ -1,5 +1,7 @@
 # Lightchain
 
+**Lightchain = Ethereum + Tendermint**
+
 This is the official Lightstreams implementation of a proof-of-authority (PoA) blockchain. Lightchain is an ethereum-compatible blockchain which uses byzantine consensus to replace the original proof-of-work (PoW) from Ethereum. This is achieved by integrating [`tendermint`](https://github.com/tendermint/tendermint) for the consensus layer.
 
 ## Disclosures and Disclaimer
@@ -8,7 +10,7 @@ https://docs.lightstreams.network/products/lightchain/disclosures-and-disclaimer
 
 ## About Lightstreams
 
-We are currently working hard to release the **Lightstreams main network** which aims to provide a fast, privacy-enabled, content-sharing blockchain. Stay tuned about our project's progress by reading [the lightstreams blog](https://medium.com/lightstreams) or by checking out the [Lightstreams' website](https://www.lightstreams.network).
+[Website](https://www.lightstreams.network) | [Blog](https://medium.com/lightstreams)
 
 ## Documentation
 
@@ -261,6 +263,35 @@ To know more about how Lightchain works and how Tendermint is integrated to perf
 ### Running Unit Tests
 ```bash
 go test ./...
+```
+
+## Generating CHANGELOG.md
+
+### Install generator
+```
+gem install github_changelog_generator
+```
+
+### Generate a Github API token
+```
+https://github.com/settings/tokens/new?description=GitHub%20Changelog%20Generator%20token
+```
+
+### Export the token
+```
+export CHANGELOG_GITHUB_TOKEN="«your-40-digit-github-token»"
+```
+
+### Generate the log
+```
+github_changelog_generator -u lightstreams-network -p lightchain --token «your-40-digit-github-token»
+```
+
+### Troubleshooting
+
+Sometimes the script fails. Remove the cache file and re-run
+```
+rm -rf /tmp/github-changelog-http-cache
 ```
 
 ## Credit & Licenses
